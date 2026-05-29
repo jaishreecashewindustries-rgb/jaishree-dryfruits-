@@ -4,7 +4,7 @@
 
 // ---- Fetch All Products ----
 async function fetchProducts(filters = {}) {
-  let q = _db.collection('products').where('active', '==', true);
+  let q = _db.collection('products');
   if (filters.category) q = q.where('category', '==', filters.category);
   if (filters.sort === 'price_asc')  q = q.orderBy('minPrice', 'asc');
   if (filters.sort === 'price_desc') q = q.orderBy('minPrice', 'desc');
