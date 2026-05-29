@@ -1,31 +1,27 @@
-// ============================================================
-// PURE NUTS — Firebase Configuration
-// ============================================================
-// Sirf yahan apna Firebase config paste karo
-// Firebase Console → Project Settings → Your Apps → Web App
-// ============================================================
-
 const FIREBASE_CONFIG = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyB99uqHkQkG87qN89mFr65pW2vG8Q3GuN4",
+  authDomain: "jaishreedryfruits-973dd.firebaseapp.com",
+  projectId: "jaishreedryfruits-973dd",
+  storageBucket: "jaishreedryfruits-973dd.firebasestorage.app",
+  messagingSenderId: "341935442574",
+  appId: "1:341935442574:web:9b46c9578302e20db357df",
+  measurementId: "G-FQ4730WZ17"
 };
 
-// Admin email — jo email Firebase Auth mein register karoge
-const ADMIN_EMAIL = "admin@purenuts.com";
-
-// Razorpay Key (baad mein add karo)
-const RAZORPAY_KEY = "YOUR_RAZORPAY_KEY";
-
-// WhatsApp number (orders ke liye)
-const WHATSAPP_NUMBER = "919999999999";
-
-// Free delivery threshold
-const FREE_DELIVERY_ABOVE = 499;
-const DELIVERY_CHARGE = 60;
-
-// GST rate
-const GST_RATE = 0; // dry fruits = 0% GST currently
+const APP_CONFIG = {
+  adminEmail:        "jitpansari@gmail.com",
+  razorpayKey:       "YOUR_RAZORPAY_KEY",
+  whatsappNumber:    "917568577968",
+  freeDeliveryAbove: 499,
+  deliveryCharge:    60,
+  gstRate:           0,
+  currency:          "₹",
+  appName:           "JAI SHREE DRY FRUITS",
+  firmName:          "JAI SHREE CASHEW INDUSTRIES",
+  tagline:           "Premium Dry Fruits — Direct from Factory",
+  gst:               "08ADJPP5115H1ZH",
+  phone1:            "7568577968",
+  phone2:            "9950062186",
+  address:           "41, Barah Ji Ki Gali, Gangauri Bazar, Jaipur - 302001",
+  city:              "Jaipur, Rajasthan"
+};
