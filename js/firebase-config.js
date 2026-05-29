@@ -9,7 +9,7 @@ const FIREBASE_CONFIG = {
 };
 
 const APP_CONFIG = {
-  adminEmail:        "admin@jaishreecashew.com",
+  adminEmail:        "jitpansari@gmail.com",
   razorpayKey:       "YOUR_RAZORPAY_KEY",
   whatsappNumber:    "917568577968",
   freeDeliveryAbove: 499,
