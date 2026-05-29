@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — JAI SHREE DRY FRUITS</title>
+
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/mobile.css">
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+  <style>
+    body { background:#F0F2F5; }
+    .admin-sidebar-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99; }
+    .admin-sidebar.open ~ .admin-sidebar-overlay { display:block; }
+  </style>
+</head>
+<body class="admin-body">
+
+<!-- ============================================================
+     ADMIN LOGIN SCREEN (shown if not logged in)
+     ============================================================ -->
+<div id="admin-login-modal" style="display:none;position:fixed;inset:0;z-index:999;background:var(--brown);align-items:center;justify-content:center;padding:var(--space-6)">
+  <div class="admin-login-card">
+    <div class="admin-login-logo">PURE<span>NUTS</span></div>
+    <div class="admin-login-sub">Admin Panel — Authorized Access Only</div>
+    <div class="form-group">
+      <label class="form-label">Admin Email</label>
+      <input type="email" class="form-input" id="admin-email" placeholder="admin@jaishreecashew.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input type="password" class="form-input" id="admin-password" placeholder="Password"
+        onkeydown="if(event.key==='Enter')adminLogin()">
+    </div>
+    <button class="btn btn-primary btn-block" id="admin-login-btn" onclick="adminLogin()">Login to Admin</button>
+    <p style="margin-top:var(--space-4);font-size:var(--text-xs);color:var(--text-muted);text-align:center">
+      <a href="index.html" style="color:var(--gold)">← Back to Store</a>
+    </p>
+  </div>
+</div>
+
+<!-- ============================================================
+     ADMIN LAYOUT
+     ============================================================ -->
+<div class="admin-layout" id="admin-layout" style="display:none">
+
+  <!-- SIDEBAR -->
+  <aside class="admin-sidebar" id="admin-sidebar">
+    <div class="admin-sidebar-logo">
+      <div style="margin-bottom:4px"><img src="assets/logo.png" alt="Jai Shree" style="height:44px;width:auto;filter:brightness(0) invert(1)"></div>
+      <div class="logo-sub">Admin Panel</div>
+    </div>
+
+    <nav class="admin-nav">
+      <div class="admin-nav-group">Main</div>
+      <div class="admin-nav-item active" data-tab="dashboard" onclick="switchAdminTab('dashboard')">
+        <span class="nav-icon">📊</span> Dashboard
+      </div>
+
+      <div class="admin-nav-group">Store</div>
+      <div class="admin-nav-item" data-tab="products" onclick="switchAdminTab('products')">
+        <span class="nav-icon">🥜</span> Products
+      </div>
+      <div class="admin-nav-item" data-tab="categories" onclick="switchAdminTab('categories')">
+        <span class="nav-icon">📂</span> Categories
+      </div>
+      <div class="admin-nav-item" data-tab="inventory" onclick="switchAdminTab('inventory')">
+        <span class="nav-icon">📦</span> Inventory
+      </div>
+
+      <div class="admin-nav-group">Sales</div>
+      <div class="admin-nav-item" data-tab="orders" onclick="switchAdminTab('orders')">
+        <span class="nav-icon">🛒</span> Orders
+        <span class="nav-badge" id="pending-badge">0</span>
+      </div>
+      <div class="admin-nav-item" data-tab="customers" onclick="switchAdminTab('customers')">
+        <span class="nav-icon">👥</span> Customers
+      </div>
+      <div class="admin-nav-item" data-tab="coupons" onclick="switchAdminTab('coupons')">
+        <span class="nav-icon">🎟️</span> Coupons
+      </div>
+
+      <div class="admin-nav-group">Content</div>
+      <div class="admin-nav-item" data-tab="banners" onclick="switchAdminTab('banners')">
+        <span class="nav-icon">🖼️</span> Banners
+      </div>
+      <div class="admin-nav-item" data-tab="reviews" onclick="switchAdminTab('reviews')">
+        <span class="nav-icon">⭐</span> Reviews
+      </div>
+      <div class="admin-nav-item" data-tab="newsletter" onclick="switchAdminTab('newsletter')">
+        <span class="nav-icon">📧</span> Newsletter
+      </div>
+
+      <div class="admin-nav-group">Reports</div>
+      <div class="admin-nav-item" data-tab="reports" onclick="switchAdminTab('reports')">
+        <span class="nav-icon">📈</span> Reports
+      </div>
+
+      <div class="admin-nav-group">Settings</div>
+      <div class="admin-nav-item" data-tab="settings" onclick="switchAdminTab('settings')">
+        <span class="nav-icon">⚙️</span> Settings
+      </div>
+    </nav>
+
+    <div class="admin-sidebar-footer">
+      <div class="admin-user-info">
+        <div class="admin-avatar" id="admin-avatar">A</div>
+        <div>
+          <div class="admin-user-name" id="admin-user-name">Admin</div>
+          <div class="admin-user-role">Super Admin</div>
+        </div>
+      </div>
+      <button class="admin-logout-btn" onclick="logoutUser()">🚪 Logout</button>
+    </div>
+  </aside>
+  <div class="admin-sidebar-overlay" onclick="closeAdminSidebar()"></div>
+
+  <!-- MAIN CONTENT -->
+  <main class="admin-main">
+
+    <!-- TOPBAR -->
+    <div class="admin-topbar">
+      <div class="admin-topbar-left">
+        <button class="admin-hamburger" id="admin-hamburger" onclick="toggleAdminSidebar()">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="admin-topbar-title" id="topbar-title">Dashboard</div>
+      </div>
+      <div class="admin-topbar-right">
+        <div class="search-wrap topbar-search">
+          <input type="text" placeholder="Search orders, products...">
+        </div>
+        <a href="index.html" target="_blank" class="btn-sm">🌐 View Store</a>
+        <div style="width:36px;height:36px;background:var(--gold-pale);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem">👤</div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="admin-content">
+
+      <!-- ====================================================
+           DASHBOARD
+           ==================================================== -->
+      <div class="admin-section active" id="section-dashboard">
+
+        <!-- Stats -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">💰</div>
+            <div class="stat-value" id="stat-revenue">₹0</div>
+            <div class="stat-label">Total Revenue</div>
+            <div class="stat-change up" id="stat-revenue-change">↑ Loading...</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🛒</div>
+            <div class="stat-value" id="stat-orders">0</div>
+            <div class="stat-label">Total Orders</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🕐</div>
+            <div class="stat-value" id="stat-today">0</div>
+            <div class="stat-label">Today's Orders</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-value" id="stat-pending">0</div>
+            <div class="stat-label">Pending Orders</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-value" id="stat-customers">0</div>
+            <div class="stat-label">Customers</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🥜</div>
+            <div class="stat-value" id="stat-products">0</div>
+            <div class="stat-label">Products</div>
+          </div>
+        </div>
+
+        <!-- Charts + Recent Orders -->
+        <div class="dashboard-grid">
+          <div>
+            <!-- Revenue Chart -->
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div class="admin-card-title">📈 Revenue (Last 7 Days)</div>
+                <button class="btn-sm" onclick="loadDashboard()">Refresh</button>
+              </div>
+              <div class="admin-card-body">
+                <div id="revenue-chart"><div style="text-align:center;color:var(--text-muted);padding:var(--space-8)">Loading chart...</div></div>
+              </div>
+            </div>
+
+            <!-- Recent Orders -->
+            <div class="admin-card" style="margin-top:var(--space-5)">
+              <div class="admin-card-header">
+                <div class="admin-card-title">🛒 Recent Orders</div>
+                <button class="btn-sm" onclick="switchAdminTab('orders')">View All →</button>
+              </div>
+              <div class="table-wrap">
+                <table>
+                  <thead><tr>
+                    <th>Order ID</th><th>Customer</th><th>Amount</th>
+                    <th>Status</th><th>Date</th><th>Action</th>
+                  </tr></thead>
+                  <tbody id="recent-orders-body">
+                    <tr><td colspan="6" class="empty">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right panel -->
+          <div>
+            <!-- Low Stock Alert -->
+            <div class="admin-card">
+              <div class="admin-card-header">
+                <div class="admin-card-title">⚠️ Low Stock Alert</div>
+              </div>
+              <div class="admin-card-body" id="low-stock-list">
+                <div style="color:var(--text-muted);font-size:var(--text-sm)">Loading...</div>
+              </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="admin-card" style="margin-top:var(--space-4)">
+              <div class="admin-card-header">
+                <div class="admin-card-title">⚡ Quick Actions</div>
+              </div>
+              <div class="admin-card-body" style="display:flex;flex-direction:column;gap:var(--space-3)">
+                <button class="btn btn-primary btn-block" onclick="openProductModal()">+ Add New Product</button>
+                <button class="btn btn-outline btn-block" onclick="switchAdminTab('orders');loadAdminOrders('pending')">View Pending Orders</button>
+                <button class="btn btn-outline btn-block" onclick="openCouponModal()">+ Create Coupon</button>
+                <a href="index.html" target="_blank" class="btn btn-ghost btn-block" style="text-align:center">🌐 View Live Store</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================
+           PRODUCTS
+           ==================================================== -->
+      <div class="admin-section" id="section-products">
+        <div class="admin-section-header">
+          <div class="admin-section-title">Products</div>
+          <button class="btn btn-primary" onclick="openProductModal()">+ Add Product</button>
+        </div>
+
+        <div class="admin-search-bar">
+          <div class="search-wrap" style="max-width:300px">
+            <input type="text" placeholder="Search products..." oninput="adminSearch('admin-products-body', this.value)">
+          </div>
+          <select class="sort-select" onchange="loadAdminProductsFiltered(this.value)">
+            <option value="">All Categories</option>
+          </select>
+          <label class="toggle" title="Show inactive too">
+            <input type="checkbox" id="show-inactive" onchange="loadAdminProducts()">
+            <span class="toggle-slider"></span>
+          </label>
+          <span style="font-size:var(--text-xs);color:var(--text-muted)">Show inactive</span>
+        </div>
+
+        <div class="admin-card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Image</th><th>Product</th><th>Variants & Price</th>
+                <th>Stock</th><th>Active</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="admin-products-body">
+                <tr><td colspan="6" class="empty">Loading products...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================
+           CATEGORIES
+           ==================================================== -->
+      <div class="admin-section" id="section-categories">
+        <div class="admin-section-header">
+          <div class="admin-section-title">Categories</div>
+          <button class="btn btn-primary" onclick="openCategoryModal()">+ Add Category</button>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-body">
+            <div id="admin-categories-list">Loading...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================
+           INVENTORY
+           ==================================================== -->
+      <div class="admin-section" id="section-inventory">
+        <div class="admin-section-header">
+          <div class="admin-section-title">Inventory</div>
+        </div>
+        <div class="admin-card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Product</th><th>Stock</th><th>Status</th><th>Update</th></tr></thead>
+              <tbody id="inventory-body">
+                <tr><td colspan="4" class="empty">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================
+           ORDERS
+           ==================================================== -->
+      <div class="admin-section" id="section-orders">
+        <div class="admin-section-header">
+          <div class="admin-section-title">Orders</div>
+          <button class="btn btn-outline btn-sm" onclick="exportOrdersCSV()">📥 Export CSV</button>
+        </div>
+
+        <div class="tabs" style="margin-bottom:var(--space-4)">
+          <button class="tab-btn active" onclick="filterOrders('all',this)">All Orders</button>
+          <button class="tab-btn" onclick="filterOrders('pending',this)">⏳ Pending</button>
+          <button class="tab-btn" onclick="filterOrders('confirmed',this)">✅ Confirmed</button>
+          <button class="tab-btn" onclick="filterOrders('packed',this)">📦 Packed</button>
+          <button class="tab-btn" onclick="filterOrders('shipped',this)">🚚 Shipped</button>
+          <button class="tab-btn" onclick="filterOrders('delivered',this)">🎉 Delivered</button>
+          <button class="tab-btn" onclick="filterOrders('cancelled',this)">❌ Cancelled</button>
+        </div>
+
+        <div class="admin-search-bar">
+          <div class="search-wrap" style="max-width:300px">
+            <input type="text" placeholder="Search by order ID or customer..." oninput="adminSearch('admin-orders-body', this.value)">
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Order ID</th><th>Customer</th><th>Items</th>
+                <th>Total</th><th>Payment</th><th>Status</th><th>Date</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="admin-orders-body">
+                <tr><td colspan="8" class="empty">Loading orders...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================
+           CUSTOMERS
+           ==================================================== -->
+      <div class="admin-section" id="section-customers">
+        <div class="admin-section-header">
+          <div class="admin-section-title">Customers</div>
+          <button class="btn btn-outline btn-sm" onclick="exportCustomersCSV()">📥 Export</button>
+        </div>
+
+        <div class="admin-search-bar">
+          <div class="search-wrap" style="max-width:300px">
+            <input type="text" placeholder="Search customers..." oninput="adminSearch('admin-customers-body', this.value)">
+          </div>
+        </div>
+
+        <div class="admin-card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Name</th><th>Email</th><th>Phone</th>
+                <th>Orders</th><th>Total Spent</th><th>Joined</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="admin-customers-body">
+                <tr><td colspan="7" class="empty">Loading customers...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================
+           COUPONS
+           ==================================================== -->
+      <div class="admin-section" id="section-coupons">
+        <div class="admin-section-header">
+          <div class="admin-section-title">Coupons & Discounts</div>
+          <button class="btn btn-primary" onclick="openCouponModal()">+ Create Coupon</button>
+        </div>
+        <div class="admin-card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Code</th><th>Discount</th><th>Min Order</th>
+                <th>Expires</th><th>Active</th><th>Delete</th>
+              </tr></thead>
+              <tbody id="admin-coupons-body">
+                <tr><td colspan="6" class="empty">No coupons yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================
+           BANNERS
+           ==================================================== -->
+      <div class="admin-section" id="section-banners">
+        <div class="admin-section-header">
+          <div class="admin-section-title">Banners & Homepage</div>
+          <button class="btn btn-primary" onclick="openBannerModal()">+ Add Banner</button>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-body">
+            <p style="font-size:var(--text-sm);color:var(--text-muted);margin-bottom:var(--space-4)">
+              Manage homepage hero banners, promotional images and announcement text.
+            </p>
+            <div id="admin-banners-list">Loading...</div>
+          </div>
+        </div>
+
+        <!-- Announcement Bar -->
+        <div class="admin-card" style="margin-top:var(--space-5)">
+          <div class="admin-card-header">
+            <div class="admin-card-title">📢 Announcement Bar</div>
+          </div>
+          <div class="admin-card-body">
+            <div class="form-group">
+              <label class="form-label">Announcement Text</label>
+              <input type="text" class="form-input" id="announcement-text" placeholder="e.g. Free delivery on orders above ₹499 | Use code FIRST10 for 10% off">
+            </div>
+            <button class="btn btn-primary" onclick="saveAnnouncementText()">Save Announcement</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================
+           REVIEWS
+           ==================================================== -->
+      <div class="admin-section" id="section-reviews">
+        <div class="admin-section-header">
+          <div class="admin-section-title">Product Reviews</div>
+        </div>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="loadReviews('pending',this)">⏳ Pending Approval</button>
+          <button class="tab-btn" onclick="loadReviews('approved',this)">✅ Approved</button>
+        </div>
+        <div class="admin-card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Product</th><th>Customer</th><th>Rating</th><th>Comment</th><th>Date</th><th>Actions</th></tr></thead>
+              <tbody id="admin-reviews-body">
+                <tr><td colspan="6" class="empty">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================
+           NEWSLETTER
+           ==================================================== -->
+      <div class="admin-section" id="section-newsletter">
+        <div class="admin-section-header">
+          <div class="admin-section-title">Newsletter Subscribers</div>
+          <button class="btn btn-outline btn-sm" onclick="exportNewsletterCSV()">📥 Export</button>
+        </div>
+        <div class="admin-card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Email</th><th>Subscribed On</th><th>Remove</th></tr></thead>
+              <tbody id="admin-newsletter-body">
+                <tr><td colspan="3" class="empty">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================
+           REPORTS
+           ==================================================== -->
+      <div class="admin-section" id="section-reports">
+        <div class="admin-section-header">
+          <div class="admin-section-title">Reports & Analytics</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-icon">📅</div><div class="stat-value" id="report-today-rev">₹0</div><div class="stat-label">Today Revenue</div></div>
+          <div class="stat-card"><div class="stat-icon">📆</div><div class="stat-value" id="report-month-rev">₹0</div><div class="stat-label">This Month</div></div>
+          <div class="stat-card"><div class="stat-icon">📊</div><div class="stat-value" id="report-avg-order">₹0</div><div class="stat-label">Avg Order Value</div></div>
+          <div class="stat-card"><div class="stat-icon">🔁</div><div class="stat-value" id="report-repeat">0%</div><div class="stat-label">Repeat Customers</div></div>
+        </div>
+        <div class="admin-card" style="margin-top:var(--space-5)">
+          <div class="admin-card-header">
+            <div class="admin-card-title">📦 Top Selling Products</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Product</th><th>Units Sold</th><th>Revenue</th></tr></thead>
+              <tbody id="top-products-body"><tr><td colspan="3" class="empty">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====================================================
+           SETTINGS
+           ==================================================== -->
+      <div class="admin-section" id="section-settings">
+        <div class="admin-section-header">
+          <div class="admin-section-title">Store Settings</div>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-header"><div class="admin-card-title">🏪 General Settings</div></div>
+          <div class="admin-card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Store Name</label>
+                <input type="text" class="form-input" id="setting-store-name" value="JAI SHREE DRY FRUITS">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone Number</label>
+                <input type="text" class="form-input" id="setting-phone" placeholder="+91 99999 99999">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" id="setting-email" placeholder="hello@jaishree.in">
+              </div>
+              <div class="form-group">
+                <label class="form-label">WhatsApp Number</label>
+                <input type="text" class="form-input" id="setting-whatsapp" placeholder="919999999999">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Free Delivery Above (₹)</label>
+                <input type="number" class="form-input" id="setting-free-delivery" value="499">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Delivery Charge (₹)</label>
+                <input type="number" class="form-input" id="setting-delivery-charge" value="60">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Address</label>
+              <textarea class="form-textarea" id="setting-address" rows="2" placeholder="Factory address..."></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+          </div>
+        </div>
+
+        <!-- Firebase Config display -->
+        <div class="admin-card" style="margin-top:var(--space-5)">
+          <div class="admin-card-header"><div class="admin-card-title">🔥 Firebase Config</div></div>
+          <div class="admin-card-body">
+            <p style="font-size:var(--text-sm);color:var(--text-muted);margin-bottom:var(--space-3)">
+              To update Firebase config, edit <code>js/firebase-config.js</code> file directly.
+            </p>
+            <div style="background:var(--gray-100);border-radius:var(--radius-lg);padding:var(--space-4);font-family:monospace;font-size:var(--text-xs);color:var(--gray-700)" id="firebase-config-display">
+              Loading config...
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /admin-content -->
+  </main><!-- /admin-main -->
+</div><!-- /admin-layout -->
+
+<!-- ============================================================
+     PRODUCT MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="product-modal" onclick="if(event.target===this)closeModal('product-modal')">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title" id="product-modal-title">Add New Product</span>
+      <button class="modal-close" onclick="closeModal('product-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="product-form" onsubmit="return false">
+        <input type="hidden" id="product-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Product Name <span class="required">*</span></label>
+            <input type="text" class="form-input" id="prod-name" placeholder="e.g. Premium Cashews W180">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category <span class="required">*</span></label>
+            <input type="text" class="form-input" id="prod-category" placeholder="e.g. Cashews" list="category-datalist">
+            <datalist id="category-datalist"></datalist>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-textarea" id="prod-desc" rows="3" placeholder="Product description..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Badge (optional)</label>
+            <select class="form-select" id="prod-badge">
+              <option value="">No Badge</option>
+              <option value="Best Seller">🔥 Best Seller</option>
+              <option value="New">🆕 New</option>
+              <option value="Sale">🏷️ Sale</option>
+              <option value="Premium">⭐ Premium</option>
+              <option value="Organic">🌿 Organic</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Stock Quantity</label>
+            <input type="number" class="form-input" id="prod-stock" placeholder="0" min="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Original Price (for strikethrough)</label>
+            <input type="number" class="form-input" id="prod-original-price" placeholder="₹ (optional)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Tags (comma separated)</label>
+            <input type="text" class="form-input" id="prod-tags" placeholder="cashew, premium, natural">
+          </div>
+        </div>
+
+        <!-- Variants -->
+        <div style="margin-bottom:var(--space-5)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-3)">
+            <label class="form-label" style="margin:0">Variants & Prices <span class="required">*</span></label>
+            <button type="button" class="btn-sm" onclick="addVariantRow()">+ Add Variant</button>
+          </div>
+          <div id="variant-list"></div>
+        </div>
+
+        <!-- Image Upload -->
+        <div class="form-group">
+          <label class="form-label">Product Images</label>
+          <div class="img-upload-area" onclick="document.getElementById('prod-images').click()">
+            <input type="file" id="prod-images" multiple accept="image/*" onchange="handleImagePreview(this)">
+            <div class="img-upload-icon">📷</div>
+            <div class="img-upload-text">Click to upload images (multiple allowed)<br><small>JPG, PNG, WEBP — Max 5MB each</small></div>
+          </div>
+          <div class="img-preview-grid" id="img-preview"></div>
+        </div>
+
+        <div class="form-group" style="display:flex;align-items:center;gap:var(--space-3)">
+          <label class="toggle">
+            <input type="checkbox" id="prod-active" checked>
+            <span class="toggle-slider"></span>
+          </label>
+          <span style="font-size:var(--text-sm);font-weight:var(--fw-medium);color:var(--brown)">Product Active (visible on store)</span>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('product-modal')">Cancel</button>
+      <button class="btn btn-primary" id="save-product-btn" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     CATEGORY MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="category-modal" onclick="if(event.target===this)closeModal('category-modal')">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <span class="modal-title" id="category-modal-title">Add Category</span>
+      <button class="modal-close" onclick="closeModal('category-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="cat-id">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Category Name <span class="required">*</span></label>
+          <input type="text" class="form-input" id="cat-name" placeholder="e.g. Cashews">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Emoji</label>
+          <input type="text" class="form-input" id="cat-emoji" placeholder="🥜">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Display Order</label>
+        <input type="number" class="form-input" id="cat-order" value="99" min="1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category Image</label>
+        <div class="img-upload-area" onclick="document.getElementById('cat-image').click()">
+          <input type="file" id="cat-image" accept="image/*">
+          <div class="img-upload-icon">🖼️</div>
+          <div class="img-upload-text">Upload category image</div>
+        </div>
+        <input type="hidden" id="cat-existing-img">
+        <img id="cat-img-preview" src="" style="display:none;width:80px;height:80px;object-fit:cover;border-radius:var(--radius-lg);margin-top:var(--space-2)">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('category-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCategory()">Save Category</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     COUPON MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="coupon-modal" onclick="if(event.target===this)closeModal('coupon-modal')">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <span class="modal-title">Create Coupon</span>
+      <button class="modal-close" onclick="closeModal('coupon-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Coupon Code <span class="required">*</span></label>
+        <div style="display:flex;gap:var(--space-2)">
+          <input type="text" class="form-input" id="coupon-code" placeholder="e.g. DIWALI20" style="text-transform:uppercase">
+          <button class="btn-sm" onclick="document.getElementById('coupon-code').value=generateId()">Auto</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Discount Type</label>
+          <select class="form-select" id="coupon-type">
+            <option value="percent">Percentage (%)</option>
+            <option value="flat">Flat Amount (₹)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Discount Value <span class="required">*</span></label>
+          <input type="number" class="form-input" id="coupon-value" placeholder="e.g. 10 or 50">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Min Order Amount (₹)</label>
+          <input type="number" class="form-input" id="coupon-min" placeholder="0 = no minimum">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Expires On</label>
+          <input type="date" class="form-input" id="coupon-expires">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('coupon-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCoupon()">Create Coupon</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     BANNER MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="banner-modal" onclick="if(event.target===this)closeModal('banner-modal')">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <span class="modal-title" id="banner-modal-title">Add Banner</span>
+      <button class="modal-close" onclick="closeModal('banner-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="banner-id">
+      <input type="hidden" id="banner-existing-img">
+      <div class="form-group">
+        <label class="form-label">Banner Title</label>
+        <input type="text" class="form-input" id="banner-title" placeholder="e.g. Premium *Cashews*">
+        <div class="form-hint">Wrap in *asterisks* for italic gold highlight</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Subtitle</label>
+        <input type="text" class="form-input" id="banner-subtitle" placeholder="Optional subtitle text">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Link URL</label>
+        <input type="text" class="form-input" id="banner-link" placeholder="products.html?cat=cashews">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Display Order</label>
+          <input type="number" class="form-input" id="banner-order" value="1">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Banner Image</label>
+        <div class="img-upload-area" onclick="document.getElementById('banner-image').click()">
+          <input type="file" id="banner-image" accept="image/*">
+          <div class="img-upload-icon">🖼️</div>
+          <div class="img-upload-text">Upload hero banner image<br><small>Recommended: 1200×600px</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('banner-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBanner()">Save Banner</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     ORDER DETAIL MODAL
+     ============================================================ -->
+<div class="modal-overlay" id="order-detail-modal" onclick="if(event.target===this)closeModal('order-detail-modal')">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <span class="modal-title">Order Details</span>
+      <div style="display:flex;gap:var(--space-2)">
+        <button class="btn-sm" onclick="printCurrentInvoice()">🖨️ Print Invoice</button>
+        <button class="modal-close" onclick="closeModal('order-detail-modal')">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="order-detail-content">Loading...</div>
+  </div>
+</div>
+
+<!-- JS -->
+<script src="js/firebase-config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/products.js"></script>
+<script src="js/orders.js"></script>
+<script src="js/admin.js"></script>
+
+<script>
+// ============================================================
+// ADMIN PAGE LOGIC
+// ============================================================
+
+let _currentOrderId = null;
+
+// Auth ready — check if admin
+async function onAuthReady(user) {
+  if (!user) {
+    showAdminLoginModal();
+    return;
+  }
+  if (user.email !== APP_CONFIG.adminEmail) {
+    document.getElementById('admin-login-modal').innerHTML = `
+      <div style="text-align:center;color:white;padding:var(--space-8)">
+        <h2>Access Denied</h2>
+        <p style="margin:var(--space-4) 0;opacity:0.7">This email is not authorized as admin.</p>
+        <button onclick="logoutUser()" class="btn btn-primary">Logout</button>
+        <br><a href="index.html" style="color:var(--gold-light);margin-top:var(--space-4);display:block">← Back to Store</a>
+      </div>`;
+    document.getElementById('admin-login-modal').style.display = 'flex';
+    return;
+  }
+
+  // Show admin layout
+  document.getElementById('admin-login-modal').style.display = 'none';
+  document.getElementById('admin-layout').style.display = 'flex';
+
+  // Set admin info
+  const name = user.displayName || user.email.split('@')[0];
+  document.getElementById('admin-user-name').textContent = name;
+  document.getElementById('admin-avatar').textContent = name[0].toUpperCase();
+
+  // Load initial data
+  await loadDashboard();
+  await loadPendingBadge();
+
+  // Show Firebase config
+  document.getElementById('firebase-config-display').innerHTML =
+    Object.entries(FIREBASE_CONFIG).map(([k,v]) =>
+      `<div><span style="color:#C8882A">${k}</span>: "<span style="color:#2D5016">${v}</span>"</div>`
+    ).join('');
+
+  // Load settings
+  loadStoreSettings();
+}
+
+// Admin Login
+async function adminLogin() {
+  const email    = document.getElementById('admin-email').value.trim();
+  const password = document.getElementById('admin-password').value;
+  if (!email || !password) { showToast('Please fill all fields', 'error'); return; }
+  const btn = document.getElementById('admin-login-btn');
+  showLoader(btn, 'Logging in...');
+  const result = await loginUser(email, password);
+  hideLoader(btn);
+  if (!result.success) showToast(result.error, 'error');
+}
+
+// Pending orders badge
+async function loadPendingBadge() {
+  try {
+    const snap = await _db.collection('orders').where('status','==','pending').get();
+    const count = snap.size;
+    const badge = document.getElementById('pending-badge');
+    if (badge) { badge.textContent = count; badge.style.display = count > 0 ? 'flex' : 'none'; }
+  } catch(e) {}
+}
+
+// Tab switching
+function switchAdminTab(tab) {
+  document.querySelectorAll('.admin-nav-item').forEach(i => i.classList.remove('active'));
+  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+  document.querySelector(`.admin-nav-item[data-tab="${tab}"]`)?.classList.add('active');
+  document.getElementById(`section-${tab}`)?.classList.add('active');
+
+  const titles = {
+    dashboard:'Dashboard', products:'Products', categories:'Categories',
+    inventory:'Inventory', orders:'Orders', customers:'Customers',
+    coupons:'Coupons', banners:'Banners & Homepage', reviews:'Reviews',
+    newsletter:'Newsletter', reports:'Reports', settings:'Settings'
+  };
+  document.getElementById('topbar-title').textContent = titles[tab] || tab;
+
+  // Load section data
+  const loaders = {
+    products:   () => { loadAdminProducts(); loadCategoryDatalist(); },
+    categories: loadAdminCategories,
+    inventory:  loadInventory,
+    orders:     () => loadAdminOrders(),
+    customers:  loadAdminCustomers,
+    coupons:    loadAdminCoupons,
+    banners:    () => { loadAdminBanners(); loadBannerSettings(); },
+    reviews:    () => loadReviews('pending', document.querySelector('.tab-btn')),
+    newsletter: loadNewsletter,
+    reports:    loadReports,
+    settings:   loadStoreSettings
+  };
+  loaders[tab]?.();
+
+  // Close sidebar on mobile
+  if (window.innerWidth <= 1024) closeAdminSidebar();
+}
+
+// Sidebar mobile
+function toggleAdminSidebar() {
+  document.getElementById('admin-sidebar').classList.toggle('open');
+}
+function closeAdminSidebar() {
+  document.getElementById('admin-sidebar').classList.remove('open');
+}
+
+// Filter orders by tab
+async function filterOrders(status, btn) {
+  document.querySelectorAll('#section-orders .tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  await loadAdminOrders(status);
+}
+
+// Image preview handler
+function handleImagePreview(input) {
+  const preview = document.getElementById('img-preview');
+  [...input.files].forEach(file => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const div = document.createElement('div');
+      div.className = 'img-prev-item';
+      div.innerHTML = `
+        <img src="${e.target.result}">
+        <button type="button" onclick="this.parentElement.remove()">✕</button>`;
+      preview.appendChild(div);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Category datalist for product form
+async function loadCategoryDatalist() {
+  try {
+    const cats = await fetchCategories();
+    const dl = document.getElementById('category-datalist');
+    if (dl) dl.innerHTML = cats.map(c => `<option value="${c.name}">`).join('');
+
+    const select = document.querySelector('#section-products select');
+    if (select) {
+      select.innerHTML = `<option value="">All Categories</option>` +
+        cats.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+    }
+  } catch(e) {}
+}
+
+function loadAdminProductsFiltered(cat) {
+  // Re-load with category filter
+  loadAdminProducts(cat);
+}
+
+// Inventory section
+async function loadInventory() {
+  const tbody = document.getElementById('inventory-body');
+  try {
+    const snap = await _db.collection('products').orderBy('stock').get();
+    const products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    tbody.innerHTML = products.map(p => {
+      const stock = p.stock || 0;
+      const status = stock === 0 ? '🔴 Out of Stock' : stock < 10 ? '🟡 Low Stock' : '🟢 In Stock';
+      return `<tr>
+        <td><strong>${p.name}</strong></td>
+        <td><input type="number" value="${stock}" min="0" style="width:80px;padding:6px 10px;border:1.5px solid var(--gray-200);border-radius:var(--radius-lg);font-family:var(--font-body)" id="inv-${p.id}"></td>
+        <td>${status}</td>
+        <td><button class="btn-sm" onclick="updateStock('${p.id}')">Update</button></td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="4" class="empty">No products</td></tr>';
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="4" class="empty">Error loading inventory</td></tr>'; }
+}
+
+async function updateStock(id) {
+  const val = parseInt(document.getElementById(`inv-${id}`)?.value) || 0;
+  await _db.collection('products').doc(id).update({ stock: val });
+  showToast('Stock updated!');
+}
+
+// Reviews
+async function loadReviews(status, btn) {
+  if (btn) {
+    document.querySelectorAll('#section-reviews .tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+  const tbody = document.getElementById('admin-reviews-body');
+  try {
+    const approved = status === 'approved';
+    const snap = await _db.collection('reviews').where('approved','==',approved).orderBy('createdAt','desc').get();
+    const reviews = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    tbody.innerHTML = reviews.map(r => `<tr>
+      <td>${r.productId}</td>
+      <td>${r.userName}</td>
+      <td>${'★'.repeat(r.rating)}</td>
+      <td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.comment}</td>
+      <td>${formatDate(r.createdAt)}</td>
+      <td style="display:flex;gap:4px">
+        ${!approved ? `<button class="btn-sm" onclick="approveReview('${r.id}')">✅ Approve</button>` : ''}
+        <button class="btn-sm btn-danger" onclick="deleteReview('${r.id}')">🗑️</button>
+      </td>
+    </tr>`).join('') || `<tr><td colspan="6" class="empty">No ${status} reviews</td></tr>`;
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="6" class="empty">Error loading reviews</td></tr>'; }
+}
+
+async function approveReview(id) {
+  await _db.collection('reviews').doc(id).update({ approved: true });
+  showToast('Review approved!');
+  loadReviews('pending', null);
+}
+
+async function deleteReview(id) {
+  if (!confirm('Delete this review?')) return;
+  await _db.collection('reviews').doc(id).delete();
+  showToast('Review deleted', 'info');
+  loadReviews(document.querySelector('#section-reviews .tab-btn.active')?.textContent.includes('Approved') ? 'approved' : 'pending', null);
+}
+
+// Newsletter
+async function loadNewsletter() {
+  const tbody = document.getElementById('admin-newsletter-body');
+  try {
+    const snap = await _db.collection('newsletter').orderBy('subscribedAt','desc').get();
+    const subs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    tbody.innerHTML = subs.map(s => `<tr>
+      <td>${s.email}</td>
+      <td>${formatDate(s.subscribedAt)}</td>
+      <td><button class="btn-sm btn-danger" onclick="removeSubscriber('${s.id}')">Remove</button></td>
+    </tr>`).join('') || '<tr><td colspan="3" class="empty">No subscribers yet</td></tr>';
+  } catch(e) { tbody.innerHTML = '<tr><td colspan="3" class="empty">Error</td></tr>'; }
+}
+
+async function removeSubscriber(id) {
+  if (!confirm('Remove subscriber?')) return;
+  await _db.collection('newsletter').doc(id).delete();
+  loadNewsletter();
+}
+
+// Reports
+async function loadReports() {
+  try {
+    const snap = await _db.collection('orders').get();
+    const orders = snap.docs.map(d => d.data()).filter(o => o.status !== 'cancelled');
+    const today = new Date(); today.setHours(0,0,0,0);
+    const thisMonth = new Date(); thisMonth.setDate(1); thisMonth.setHours(0,0,0,0);
+
+    const todayRev  = orders.filter(o => o.createdAt?.toDate() >= today).reduce((s,o) => s+(o.total||0), 0);
+    const monthRev  = orders.filter(o => o.createdAt?.toDate() >= thisMonth).reduce((s,o) => s+(o.total||0), 0);
+    const avgOrder  = orders.length > 0 ? orders.reduce((s,o) => s+(o.total||0), 0) / orders.length : 0;
+
+    setEl('report-today-rev', formatPrice(todayRev));
+    setEl('report-month-rev', formatPrice(monthRev));
+    setEl('report-avg-order', formatPrice(avgOrder));
+
+    // Top products
+    const productSales = {};
+    orders.forEach(o => o.items?.forEach(i => {
+      if (!productSales[i.name]) productSales[i.name] = { units: 0, revenue: 0 };
+      productSales[i.name].units   += i.qty || 0;
+      productSales[i.name].revenue += i.subtotal || 0;
+    }));
+    const sorted = Object.entries(productSales).sort((a,b) => b[1].revenue - a[1].revenue).slice(0,10);
+    const tbody = document.getElementById('top-products-body');
+    tbody.innerHTML = sorted.map(([name, data]) => `<tr>
+      <td><strong>${name}</strong></td>
+      <td>${data.units}</td>
+      <td>${formatPrice(data.revenue)}</td>
+    </tr>`).join('') || '<tr><td colspan="3" class="empty">No sales data yet</td></tr>';
+  } catch(e) {}
+}
+
+// Settings
+async function loadStoreSettings() {
+  try {
+    const doc = await _db.collection('settings').doc('general').get();
+    if (!doc.exists) return;
+    const s = doc.data();
+    if (s.storeName)        document.getElementById('setting-store-name').value = s.storeName;
+    if (s.phone)            document.getElementById('setting-phone').value = s.phone;
+    if (s.email)            document.getElementById('setting-email').value = s.email;
+    if (s.whatsapp)         document.getElementById('setting-whatsapp').value = s.whatsapp;
+    if (s.freeDelivery)     document.getElementById('setting-free-delivery').value = s.freeDelivery;
+    if (s.deliveryCharge)   document.getElementById('setting-delivery-charge').value = s.deliveryCharge;
+    if (s.address)          document.getElementById('setting-address').value = s.address;
+    if (s.announcementText) document.getElementById('announcement-text').value = s.announcementText;
+  } catch(e) {}
+}
+
+async function saveSettings() {
+  const data = {
+    storeName:        document.getElementById('setting-store-name').value,
+    phone:            document.getElementById('setting-phone').value,
+    email:            document.getElementById('setting-email').value,
+    whatsapp:         document.getElementById('setting-whatsapp').value,
+    freeDelivery:     parseInt(document.getElementById('setting-free-delivery').value),
+    deliveryCharge:   parseInt(document.getElementById('setting-delivery-charge').value),
+    address:          document.getElementById('setting-address').value,
+    updatedAt:        firebase.firestore.FieldValue.serverTimestamp()
+  };
+  await _db.collection('settings').doc('general').set(data, { merge: true });
+  showToast('Settings saved!');
+}
+
+async function saveAnnouncementText() {
+  const text = document.getElementById('announcement-text').value.trim();
+  await _db.collection('settings').doc('general').set({ announcementText: text }, { merge: true });
+  showToast('Announcement saved!');
+}
+
+async function loadBannerSettings() {
+  const doc = await _db.collection('settings').doc('general').get();
+  if (doc.exists && doc.data().announcementText) {
+    document.getElementById('announcement-text').value = doc.data().announcementText;
+  }
+}
+
+// Low stock
+async function loadLowStockWidget() {
+  try {
+    const snap = await _db.collection('products').where('stock','<=',10).where('active','==',true).get();
+    const el = document.getElementById('low-stock-list');
+    if (snap.empty) {
+      el.innerHTML = '<div style="color:var(--success);font-size:var(--text-sm)">✅ All products well stocked</div>'; return;
+    }
+    el.innerHTML = snap.docs.map(d => {
+      const p = d.data();
+      return `<div style="display:flex;justify-content:space-between;padding:var(--space-2) 0;border-bottom:1px solid var(--gray-100);font-size:var(--text-sm)">
+        <span>${p.name}</span>
+        <span style="color:${p.stock===0?'var(--error)':'var(--warning)'};font-weight:var(--fw-semibold)">${p.stock} left</span>
+      </div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+// CSV Exports
+function exportOrdersCSV() {
+  _db.collection('orders').get().then(snap => {
+    const rows = [['Order ID','Customer','Email','Phone','Total','Status','Date']];
+    snap.docs.forEach(d => {
+      const o = d.data();
+      rows.push([o.orderId, o.customerName, o.email, o.phone, o.total, o.status, formatDate(o.createdAt)]);
+    });
+    downloadCSV(rows, 'orders.csv');
+  });
+}
+
+function exportCustomersCSV() {
+  _db.collection('customers').get().then(snap => {
+    const rows = [['Name','Email','Phone','Total Orders','Total Spent','Joined']];
+    snap.docs.forEach(d => {
+      const c = d.data();
+      rows.push([c.name, c.email, c.phone, c.totalOrders, c.totalSpent, formatDate(c.createdAt)]);
+    });
+    downloadCSV(rows, 'customers.csv');
+  });
+}
+
+function exportNewsletterCSV() {
+  _db.collection('newsletter').get().then(snap => {
+    const rows = [['Email','Subscribed On']];
+    snap.docs.forEach(d => {
+      const s = d.data();
+      rows.push([s.email, formatDate(s.subscribedAt)]);
+    });
+    downloadCSV(rows, 'newsletter.csv');
+  });
+}
+
+function downloadCSV(rows, filename) {
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+// Print invoice
+function printCurrentInvoice() {
+  const content = document.getElementById('order-detail-content').innerHTML;
+  const win = window.open('', '_blank');
+  win.document.write(`
+    <html><head><title>Invoice</title>
+    <style>body{font-family:sans-serif;padding:20px} table{width:100%;border-collapse:collapse} td,th{padding:8px;border:1px solid #ddd}</style>
+    </head><body>${content}<script>window.print()<\/script></body></html>`);
+}
+
+// Category modal helper
+function openCategoryModal(id = null) {
+  document.getElementById('cat-id').value = id || '';
+  document.getElementById('cat-name').value = '';
+  document.getElementById('cat-emoji').value = '';
+  document.getElementById('cat-order').value = '99';
+  document.getElementById('cat-existing-img').value = '';
+  document.getElementById('cat-img-preview').style.display = 'none';
+  document.getElementById('category-modal-title').textContent = id ? 'Edit Category' : 'Add Category';
+  document.getElementById('category-modal').style.display = 'flex';
+}
+
+async function editCategory(id) {
+  const doc = await _db.collection('categories').doc(id).get();
+  if (!doc.exists) return;
+  const c = doc.data();
+  document.getElementById('cat-id').value    = id;
+  document.getElementById('cat-name').value  = c.name || '';
+  document.getElementById('cat-emoji').value = c.emoji || '';
+  document.getElementById('cat-order').value = c.order || 99;
+  document.getElementById('cat-existing-img').value = c.imageUrl || '';
+  if (c.imageUrl) {
+    const prev = document.getElementById('cat-img-preview');
+    prev.src = c.imageUrl; prev.style.display = 'block';
+  }
+  document.getElementById('category-modal-title').textContent = 'Edit Category';
+  document.getElementById('category-modal').style.display = 'flex';
+}
+
+function openCouponModal() { document.getElementById('coupon-modal').style.display = 'flex'; }
+function openBannerModal()  { document.getElementById('banner-modal').style.display = 'flex'; }
+</script>
+</body>
+</html>

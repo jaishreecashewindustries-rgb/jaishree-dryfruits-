@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout — Jai Shree Dry Fruits</title>
+  <link rel="icon" href="assets/favicon.png">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/mobile.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    .nav { background: rgba(255,248,240,0.97); border-bottom: 2px solid rgba(200,24,26,0.15); }
+    .btn-primary { background: var(--red); border-color: var(--red); }
+    .btn-primary:hover { background: var(--red-dark); }
+    .footer { background: var(--red-dark); }
+    .checkout-main { max-width: var(--container-xl); margin: 0 auto; padding: var(--space-8) var(--container-pad); }
+    .checkout-title { font-family: var(--font-display); font-size: var(--text-3xl); font-weight: var(--fw-bold); color: var(--red-dark); margin-bottom: var(--space-6); }
+    .checkout-grid { display: grid; grid-template-columns: 1fr 380px; gap: var(--space-8); align-items: start; }
+    .checkout-card { background: white; border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); margin-bottom: var(--space-5); }
+    .checkout-card-title { font-family: var(--font-display); font-size: var(--text-xl); font-weight: var(--fw-bold); color: var(--red-dark); margin-bottom: var(--space-5); padding-bottom: var(--space-3); border-bottom: 1px solid var(--gray-100); display: flex; align-items: center; gap: var(--space-3); }
+    .step-num { width: 28px; height: 28px; background: var(--red); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: var(--text-sm); font-weight: var(--fw-bold); flex-shrink: 0; }
+    .payment-method { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4); border: 2px solid var(--gray-200); border-radius: var(--radius-xl); cursor: pointer; margin-bottom: var(--space-3); transition: all var(--transition-fast); }
+    .payment-method:hover { border-color: var(--red-light); }
+    .payment-method.selected { border-color: var(--red); background: var(--red-pale); }
+    .payment-method input[type="radio"] { accent-color: var(--red); flex-shrink: 0; }
+    .pm-icon { font-size: 1.8rem; flex-shrink: 0; }
+    .pm-label { font-weight: var(--fw-semibold); color: var(--red-dark); font-size: var(--text-sm); }
+    .pm-sub { font-size: var(--text-xs); color: var(--text-muted); margin-top: 2px; }
+    .order-summary-sticky { background: white; border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); position: sticky; top: calc(var(--nav-height-desktop) + 20px); }
+    .os-title { font-family: var(--font-display); font-size: var(--text-xl); font-weight: var(--fw-bold); color: var(--red-dark); margin-bottom: var(--space-4); }
+    .os-item { display: flex; gap: var(--space-3); align-items: center; padding: var(--space-2) 0; border-bottom: 1px solid var(--gray-100); }
+    .os-item img { width: 48px; height: 48px; border-radius: var(--radius-lg); object-fit: cover; border: 1px solid var(--gray-200); flex-shrink: 0; }
+    .os-item-name { flex: 1; font-size: var(--text-sm); font-weight: var(--fw-medium); color: var(--red-dark); }
+    .os-item-qty { font-size: var(--text-xs); color: var(--text-muted); }
+    .os-item-price { font-size: var(--text-sm); font-weight: var(--fw-semibold); color: var(--red-dark); }
+    .place-order-btn { width: 100%; padding: 16px; background: var(--red); color: white; border: none; border-radius: var(--radius-full); font-size: var(--text-base); font-weight: var(--fw-bold); cursor: pointer; font-family: var(--font-body); margin-top: var(--space-4); transition: background var(--transition-fast); display: flex; align-items: center; justify-content: center; gap: var(--space-2); }
+    .place-order-btn:hover { background: var(--red-dark); }
+    .place-order-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .secure-badge { display: flex; align-items: center; justify-content: center; gap: var(--space-2); font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-3); }
+    .saved-address { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-4); border: 2px solid var(--gray-200); border-radius: var(--radius-xl); cursor: pointer; margin-bottom: var(--space-3); transition: all var(--transition-fast); }
+    .saved-address:hover { border-color: var(--red-light); }
+    .saved-address.selected { border-color: var(--red); background: var(--red-pale); }
+    @media (max-width: 768px) {
+      .checkout-grid { grid-template-columns: 1fr; }
+      .order-summary-sticky { position: static; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" style="text-decoration:none">
+      <img src="assets/logo.png" alt="Jai Shree Dry Fruits" style="height:52px;width:auto">
+    </a>
+    <div style="flex:1;text-align:center;font-size:var(--text-sm);color:var(--text-muted);display:flex;align-items:center;justify-content:center;gap:var(--space-2)">
+      🔒 Secure Checkout
+    </div>
+    <div class="nav-actions">
+      <a href="cart.html" class="nav-icon-btn" style="position:relative">
+        🛒<span class="cart-badge" style="display:none">0</span>
+      </a>
+    </div>
+  </div>
+</nav>
+</header>
+
+<main class="checkout-main">
+  <nav class="breadcrumb">
+    <a href="index.html">Home</a><span class="breadcrumb-sep">›</span>
+    <a href="cart.html">Cart</a><span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">Checkout</span>
+  </nav>
+
+  <h1 class="checkout-title">Checkout</h1>
+
+  <div class="checkout-grid">
+    <div>
+
+      <!-- Step 1: Contact Info -->
+      <div class="checkout-card">
+        <div class="checkout-card-title">
+          <div class="step-num">1</div> Contact Information
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Full Name <span class="required">*</span></label>
+            <input type="text" class="form-input" id="co-name" placeholder="Your full name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number <span class="required">*</span></label>
+            <input type="tel" class="form-input" id="co-phone" placeholder="10-digit mobile number">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email Address <span class="required">*</span></label>
+          <input type="email" class="form-input" id="co-email" placeholder="For order updates">
+        </div>
+      </div>
+
+      <!-- Step 2: Delivery Address -->
+      <div class="checkout-card">
+        <div class="checkout-card-title">
+          <div class="step-num">2</div> Delivery Address
+        </div>
+
+        <!-- Saved addresses -->
+        <div id="saved-addresses-section" style="display:none;margin-bottom:var(--space-4)">
+          <div style="font-size:var(--text-sm);font-weight:var(--fw-semibold);color:var(--red-dark);margin-bottom:var(--space-3)">Saved Addresses</div>
+          <div id="saved-addresses-list"></div>
+          <div style="text-align:center;margin:var(--space-3) 0">
+            <button onclick="toggleNewAddress()" style="background:none;border:none;color:var(--red);font-size:var(--text-sm);cursor:pointer;font-family:var(--font-body);font-weight:var(--fw-medium)">+ Use a new address</button>
+          </div>
+        </div>
+
+        <!-- New address form -->
+        <div id="new-address-form">
+          <div class="form-group">
+            <label class="form-label">Address Line <span class="required">*</span></label>
+            <input type="text" class="form-input" id="co-address" placeholder="House/Flat No., Street, Area">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">City <span class="required">*</span></label>
+              <input type="text" class="form-input" id="co-city" placeholder="City">
+            </div>
+            <div class="form-group">
+              <label class="form-label">State <span class="required">*</span></label>
+              <select class="form-select" id="co-state">
+                <option value="">Select State</option>
+                <option>Rajasthan</option><option>Delhi</option><option>Uttar Pradesh</option>
+                <option>Maharashtra</option><option>Gujarat</option><option>Karnataka</option>
+                <option>Tamil Nadu</option><option>West Bengal</option><option>Madhya Pradesh</option>
+                <option>Punjab</option><option>Haryana</option><option>Bihar</option>
+                <option>Telangana</option><option>Andhra Pradesh</option><option>Kerala</option>
+                <option>Odisha</option><option>Jharkhand</option><option>Assam</option>
+                <option>Himachal Pradesh</option><option>Uttarakhand</option><option>Goa</option>
+                <option>Jammu & Kashmir</option><option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">PIN Code <span class="required">*</span></label>
+              <input type="text" class="form-input" id="co-pincode" placeholder="6-digit PIN" maxlength="6" oninput="checkDeliveryPin(this.value)">
+              <div id="pin-check-result" class="form-hint"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Landmark (optional)</label>
+              <input type="text" class="form-input" id="co-landmark" placeholder="Near...">
+            </div>
+          </div>
+          <div class="form-group" style="display:flex;align-items:center;gap:var(--space-3)">
+            <input type="checkbox" id="save-address" style="accent-color:var(--red);width:16px;height:16px">
+            <label for="save-address" style="font-size:var(--text-sm);color:var(--text-muted);cursor:pointer">Save this address for future orders</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Payment -->
+      <div class="checkout-card">
+        <div class="checkout-card-title">
+          <div class="step-num">3</div> Payment Method
+        </div>
+
+        <div class="payment-method selected" id="pm-razorpay" onclick="selectPayment('razorpay')">
+          <input type="radio" name="payment" value="razorpay" checked>
+          <span class="pm-icon">💳</span>
+          <div>
+            <div class="pm-label">Pay Online</div>
+            <div class="pm-sub">UPI, Debit/Credit Card, Net Banking, Wallets — via Razorpay</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:var(--space-2);flex-shrink:0">
+            <span style="background:var(--green-light);color:var(--green);font-size:10px;font-weight:700;padding:2px 8px;border-radius:var(--radius-full)">RECOMMENDED</span>
+          </div>
+        </div>
+
+        <div class="payment-method" id="pm-cod" onclick="selectPayment('cod')">
+          <input type="radio" name="payment" value="cod">
+          <span class="pm-icon">💵</span>
+          <div>
+            <div class="pm-label">Cash on Delivery (COD)</div>
+            <div class="pm-sub">Pay when your order arrives. Available on orders below ₹5,000.</div>
+          </div>
+        </div>
+
+        <div id="razorpay-info" style="background:var(--green-light);border-radius:var(--radius-xl);padding:var(--space-3);font-size:var(--text-xs);color:var(--green-dark);margin-top:var(--space-3)">
+          🔒 Your payment is secured by Razorpay. All card details are encrypted and never stored on our servers.
+        </div>
+        <div id="cod-info" style="background:var(--gold-pale);border-radius:var(--radius-xl);padding:var(--space-3);font-size:var(--text-xs);color:var(--gold-dark);margin-top:var(--space-3);display:none">
+          ⚠️ Please keep exact change ready. Our delivery partner does not carry change.
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Order Summary -->
+    <div class="order-summary-sticky">
+      <div class="os-title">Order Summary</div>
+      <div id="os-items" style="margin-bottom:var(--space-4);max-height:280px;overflow-y:auto"></div>
+      <div id="os-totals"></div>
+      <button class="place-order-btn" id="place-order-btn" onclick="handlePlaceOrder()">
+        <span>🛡️</span> Place Order Securely
+      </button>
+      <div class="secure-badge">🔒 SSL Encrypted · 100% Secure</div>
+      <div style="margin-top:var(--space-4);text-align:center">
+        <div style="display:flex;justify-content:center;gap:var(--space-2);flex-wrap:wrap">
+          <span style="background:var(--gray-100);padding:3px 10px;border-radius:var(--radius-full);font-size:10px;color:var(--text-muted)">UPI</span>
+          <span style="background:var(--gray-100);padding:3px 10px;border-radius:var(--radius-full);font-size:10px;color:var(--text-muted)">Visa</span>
+          <span style="background:var(--gray-100);padding:3px 10px;border-radius:var(--radius-full);font-size:10px;color:var(--text-muted)">Mastercard</span>
+          <span style="background:var(--gray-100);padding:3px 10px;border-radius:var(--radius-full);font-size:10px;color:var(--text-muted)">Net Banking</span>
+          <span style="background:var(--gray-100);padding:3px 10px;border-radius:var(--radius-full);font-size:10px;color:var(--text-muted)">COD</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<a href="https://wa.me/917568577968" class="whatsapp-float" target="_blank">💬</a>
+
+<script src="js/firebase-config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/products.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/orders.js"></script>
+<script>
+let selectedPayment = 'razorpay';
+let appliedCoupon = null;
+
+async function onAuthReady(user) {
+  const cart = getCart();
+  if (cart.length === 0) { window.location.href = 'cart.html'; return; }
+
+  appliedCoupon = JSON.parse(sessionStorage.getItem('pn_coupon') || 'null');
+
+  // Pre-fill if logged in
+  if (user) {
+    document.getElementById('co-email').value = user.email || '';
+    document.getElementById('co-name').value  = user.displayName || '';
+    // Load saved addresses
+    loadSavedAddresses(user.uid);
+  }
+
+  renderOrderSummary();
+}
+
+function renderOrderSummary() {
+  const cart     = getCart();
+  const subtotal = getCartTotal();
+  const discount = appliedCoupon ? calcDiscount(subtotal, appliedCoupon) : 0;
+  const delivery  = (subtotal - discount) >= APP_CONFIG.freeDeliveryAbove ? 0 : APP_CONFIG.deliveryCharge;
+  const total     = subtotal - discount + delivery;
+
+  document.getElementById('os-items').innerHTML = cart.map(item => `
+    <div class="os-item">
+      <img src="${item.image||'assets/placeholder.png'}" alt="${item.name}" onerror="this.src='assets/placeholder.png'">
+      <div class="os-item-name">${item.name}<br><span class="os-item-qty">${item.variantLabel} × ${item.qty}</span></div>
+      <div class="os-item-price">${formatPrice(item.price * item.qty)}</div>
+    </div>`).join('');
+
+  document.getElementById('os-totals').innerHTML = `
+    <div class="summary-row"><span>Subtotal</span><span>${formatPrice(subtotal)}</span></div>
+    ${discount > 0 ? `<div class="summary-row" style="color:var(--success)"><span>Discount</span><span>−${formatPrice(discount)}</span></div>` : ''}
+    <div class="summary-row"><span>Delivery</span><span style="color:${delivery===0?'var(--success)':'inherit'}">${delivery===0?'FREE':formatPrice(delivery)}</span></div>
+    <div class="summary-row total" style="color:var(--red-dark)"><span>Total Payable</span><span>${formatPrice(total)}</span></div>`;
+
+  document.getElementById('place-order-btn').innerHTML = `<span>🛡️</span> Pay ${formatPrice(total)}`;
+}
+
+async function loadSavedAddresses(uid) {
+  try {
+    const doc = await _db.collection('customers').doc(uid).get();
+    const addresses = doc.data()?.savedAddresses || [];
+    if (addresses.length === 0) return;
+    const section = document.getElementById('saved-addresses-section');
+    const list    = document.getElementById('saved-addresses-list');
+    section.style.display = 'block';
+    list.innerHTML = addresses.map((addr, i) => `
+      <div class="saved-address ${i===0?'selected':''}" onclick="useSavedAddress(${i},this)">
+        <input type="radio" name="saved-addr" ${i===0?'checked':''} style="accent-color:var(--red)">
+        <div>
+          <div style="font-weight:var(--fw-medium);font-size:var(--text-sm);color:var(--red-dark)">${addr.name||'Address'}</div>
+          <div style="font-size:var(--text-xs);color:var(--text-muted)">${addr.line1}, ${addr.city}, ${addr.state} - ${addr.pincode}</div>
+        </div>
+      </div>`).join('');
+    // Use first address by default
+    useSavedAddress(0, list.querySelector('.saved-address'));
+    document.getElementById('new-address-form').style.display = 'none';
+  } catch(e) {}
+}
+
+function useSavedAddress(idx, el) {
+  document.querySelectorAll('.saved-address').forEach(a => a.classList.remove('selected'));
+  el?.classList.add('selected');
+  const doc = _db.collection('customers').doc(currentUser?.uid).get()
+    .then(d => {
+      const addr = d.data()?.savedAddresses?.[idx];
+      if (!addr) return;
+      document.getElementById('co-address').value  = addr.line1 || '';
+      document.getElementById('co-city').value     = addr.city || '';
+      document.getElementById('co-state').value    = addr.state || '';
+      document.getElementById('co-pincode').value  = addr.pincode || '';
+      document.getElementById('co-landmark').value = addr.landmark || '';
+      document.getElementById('new-address-form').style.display = 'block';
+    });
+}
+
+function toggleNewAddress() {
+  const form = document.getElementById('new-address-form');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
+
+function selectPayment(method) {
+  selectedPayment = method;
+  document.querySelectorAll('.payment-method').forEach(el => el.classList.remove('selected'));
+  document.querySelectorAll('input[name="payment"]').forEach(r => r.checked = false);
+  document.getElementById(`pm-${method}`).classList.add('selected');
+  document.querySelector(`#pm-${method} input`).checked = true;
+  document.getElementById('razorpay-info').style.display = method === 'razorpay' ? 'block' : 'none';
+  document.getElementById('cod-info').style.display = method === 'cod' ? 'block' : 'none';
+}
+
+async function checkDeliveryPin(pin) {
+  const el = document.getElementById('pin-check-result');
+  if (pin.length !== 6) { el.innerHTML = ''; return; }
+  el.innerHTML = '<span style="color:var(--text-muted)">Checking...</span>';
+  setTimeout(() => {
+    el.innerHTML = `<span class="pincode-ok">✅ Delivery available — 3-7 business days</span>`;
+  }, 600);
+}
+
+function validateCheckoutForm() {
+  const fields = {
+    'co-name':    'Full Name',
+    'co-phone':   'Phone Number',
+    'co-email':   'Email',
+    'co-address': 'Address',
+    'co-city':    'City',
+    'co-state':   'State',
+    'co-pincode': 'PIN Code'
+  };
+  for (const [id, label] of Object.entries(fields)) {
+    const val = document.getElementById(id)?.value.trim();
+    if (!val) { showToast(`${label} is required`, 'error'); document.getElementById(id)?.focus(); return null; }
+  }
+  const phone = document.getElementById('co-phone').value.trim();
+  if (!isValidPhone(phone)) { showToast('Enter valid 10-digit phone number', 'error'); return null; }
+  const email = document.getElementById('co-email').value.trim();
+  if (!isValidEmail(email)) { showToast('Enter valid email address', 'error'); return null; }
+  const pincode = document.getElementById('co-pincode').value.trim();
+  if (pincode.length !== 6 || isNaN(pincode)) { showToast('Enter valid 6-digit PIN code', 'error'); return null; }
+
+  return {
+    name:     document.getElementById('co-name').value.trim(),
+    phone,
+    email,
+    address:  document.getElementById('co-address').value.trim(),
+    city:     document.getElementById('co-city').value.trim(),
+    state:    document.getElementById('co-state').value,
+    pincode,
+    landmark: document.getElementById('co-landmark').value.trim()
+  };
+}
+
+async function handlePlaceOrder() {
+  const formData = validateCheckoutForm();
+  if (!formData) return;
+
+  const btn = document.getElementById('place-order-btn');
+  showLoader(btn, 'Processing...');
+
+  const cart     = getCart();
+  const subtotal = getCartTotal();
+  const discount = appliedCoupon ? calcDiscount(subtotal, appliedCoupon) : 0;
+  const delivery  = (subtotal - discount) >= APP_CONFIG.freeDeliveryAbove ? 0 : APP_CONFIG.deliveryCharge;
+  const total     = subtotal - discount + delivery;
+
+  try {
+    if (selectedPayment === 'razorpay') {
+      // Try Razorpay
+      if (APP_CONFIG.razorpayKey === 'YOUR_RAZORPAY_KEY') {
+        showToast('Razorpay not configured. Using COD for now.', 'info');
+        await completePlaceOrder(formData, 'cod', null);
+      } else {
+        const orderId = generateOrderId();
+        const payment = await initiateRazorpay(total, orderId, formData);
+        await completePlaceOrder(formData, 'razorpay', payment);
+      }
+    } else {
+      await completePlaceOrder(formData, 'cod', null);
+    }
+  } catch(e) {
+    if (e.message === 'Payment cancelled') showToast('Payment cancelled', 'info');
+    else showToast('Failed to place order. Please try again.', 'error');
+    hideLoader(btn);
+  }
+}
+
+async function completePlaceOrder(formData, paymentMode, paymentResponse) {
+  const orderId = await placeOrder(formData, paymentMode);
+  if (!orderId) { hideLoader(document.getElementById('place-order-btn')); return; }
+
+  // Save address if checkbox checked
+  if (document.getElementById('save-address')?.checked && currentUser) {
+    const addr = { line1: formData.address, city: formData.city, state: formData.state, pincode: formData.pincode, landmark: formData.landmark, name: formData.name };
+    await _db.collection('customers').doc(currentUser.uid).update({
+      savedAddresses: firebase.firestore.FieldValue.arrayUnion(addr)
+    }).catch(() => {});
+  }
+
+  // Redirect to success page
+  window.location.href = `orders.html?id=${orderId}&new=1`;
+}
+</script>
+</body>
+</html>

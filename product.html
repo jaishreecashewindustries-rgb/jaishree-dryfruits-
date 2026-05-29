@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product — Jai Shree Dry Fruits</title>
+  <meta name="description" content="Premium cashews and dry fruits. Direct from factory.">
+  <link rel="icon" href="assets/favicon.png">
+
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/mobile.css">
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+  <style>
+    .nav { background: rgba(255,248,240,0.97); border-bottom: 2px solid rgba(200,24,26,0.15); }
+    .btn-primary { background: var(--red); border-color: var(--red); }
+    .btn-primary:hover { background: var(--red-dark); border-color: var(--red-dark); }
+    .btn-outline { color: var(--red); border-color: var(--red); }
+    .btn-outline:hover { background: var(--red); color: white; }
+    .section-label { color: var(--red); }
+    .section-title { color: var(--red-dark); }
+    .footer { background: var(--red-dark); }
+    .add-to-cart-main { background: var(--red); }
+    .add-to-cart-main:hover { background: var(--red-dark); }
+    .buy-now-btn { color: var(--red); border-color: var(--red); }
+    .buy-now-btn:hover { background: var(--red); color: white; }
+    .variant-option.active { border-color: var(--red); background: var(--red-pale); color: var(--red); }
+    .gallery-thumb.active { border-color: var(--red); }
+    .prod-category { color: var(--red); }
+    .btn-add-cart { background: var(--red); }
+    .btn-add-cart:hover { background: var(--red-dark); }
+
+    /* Tabs */
+    .info-tabs { display: flex; border-bottom: 2px solid var(--gray-200); margin-bottom: var(--space-6); margin-top: var(--space-8); }
+    .info-tab { padding: 12px 24px; font-size: var(--text-sm); font-weight: var(--fw-medium); color: var(--text-muted); border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; font-family: var(--font-body); transition: all var(--transition-fast); }
+    .info-tab:hover { color: var(--red); }
+    .info-tab.active { color: var(--red); border-bottom-color: var(--red); font-weight: var(--fw-semibold); }
+    .info-panel { display: none; }
+    .info-panel.active { display: block; }
+
+    /* Nutrition table */
+    .nutrition-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+    .nutrition-table th { background: var(--red-pale); color: var(--red-dark); padding: 10px 16px; text-align: left; font-weight: var(--fw-semibold); border-bottom: 2px solid var(--gray-200); }
+    .nutrition-table td { padding: 10px 16px; border-bottom: 1px solid var(--gray-100); }
+    .nutrition-table tr:last-child td { border-bottom: none; }
+    .nutrition-table tr:nth-child(even) { background: var(--gray-50); }
+
+    /* Review form */
+    .review-form { background: var(--cream); border-radius: var(--radius-2xl); padding: var(--space-6); margin-bottom: var(--space-6); }
+    .review-card { background: white; border-radius: var(--radius-xl); padding: var(--space-5); margin-bottom: var(--space-4); box-shadow: var(--shadow-sm); }
+    .review-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-2); }
+    .reviewer-name { font-weight: var(--fw-semibold); color: var(--red-dark); }
+    .review-date { font-size: var(--text-xs); color: var(--text-muted); }
+    .review-text { font-size: var(--text-sm); color: var(--text-primary); line-height: var(--lh-relaxed); margin-top: var(--space-2); }
+
+    /* Sticky ATC on mobile */
+    .sticky-atc { display: none; position: fixed; bottom: 70px; left: 0; right: 0; background: white; padding: var(--space-3) var(--space-4); box-shadow: 0 -4px 20px rgba(0,0,0,0.1); z-index: 90; border-top: 1px solid var(--gray-200); }
+    .sticky-atc-inner { display: flex; gap: var(--space-3); align-items: center; max-width: var(--container-xl); margin: 0 auto; }
+    .sticky-atc-name { flex: 1; font-size: var(--text-sm); font-weight: var(--fw-semibold); color: var(--red-dark); }
+    .sticky-atc-price { font-size: var(--text-lg); font-weight: var(--fw-bold); color: var(--red-dark); }
+    @media (max-width: 768px) { .sticky-atc { display: block; } }
+
+    /* Related products */
+    .related-section { background: var(--cream); }
+
+    /* Feature pills */
+    .feature-pills { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-4) 0; }
+    .feature-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: var(--green-light); color: var(--green-dark); border-radius: var(--radius-full); font-size: var(--text-xs); font-weight: var(--fw-semibold); }
+
+    /* Stock indicator */
+    .stock-indicator { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); font-weight: var(--fw-medium); margin-bottom: var(--space-4); }
+    .stock-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+    .stock-dot.low { background: var(--warning); }
+    .stock-dot.out { background: var(--error); }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<header>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo-wrap" style="text-decoration:none">
+      <img src="assets/logo.png" alt="Jai Shree Dry Fruits" style="height:52px;width:auto">
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="nav-link">Home</a></li>
+      <li><a href="products.html" class="nav-link active">Shop</a></li>
+      <li><a href="products.html?cat=cashews" class="nav-link">Cashews</a></li>
+      <li><a href="products.html?cat=gifting" class="nav-link">Gifting</a></li>
+      <li><a href="about.html" class="nav-link">About</a></li>
+      <li><a href="contact.html" class="nav-link">Contact</a></li>
+    </ul>
+    <div class="nav-search">
+      <div class="search-wrap">
+        <input type="text" placeholder="Search products..." oninput="handleNavSearch(this.value)" autocomplete="off">
+        <div class="search-dropdown" id="search-dropdown"></div>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <button class="nav-icon-btn" id="nav-login" onclick="showLoginModal()">👤</button>
+      <a href="account.html" class="nav-icon-btn" id="nav-account" style="display:none">
+        <span id="nav-username" style="font-size:0.75rem;font-weight:600;color:var(--red-dark)">Hi!</span>
+      </a>
+      <button class="nav-icon-btn" id="nav-logout" onclick="logoutUser()" style="display:none">🚪</button>
+      <a href="cart.html" class="nav-icon-btn" style="position:relative">
+        🛒<span class="cart-badge" style="display:none">0</span>
+      </a>
+      <button class="nav-hamburger" onclick="openMobileMenu()"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+</header>
+
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobile-menu">
+  <div class="mobile-menu-overlay" onclick="closeMobileMenu()"></div>
+  <div class="mobile-menu-drawer">
+    <div class="mobile-menu-header">
+      <img src="assets/logo.png" alt="Jai Shree" style="height:44px;width:auto">
+      <button onclick="closeMobileMenu()" style="background:none;border:none;font-size:1.5rem;cursor:pointer">✕</button>
+    </div>
+    <div class="mobile-menu-links">
+      <a href="index.html" class="mobile-menu-link">🏠 Home</a>
+      <a href="products.html" class="mobile-menu-link">🛍️ All Products</a>
+      <a href="products.html?cat=cashews" class="mobile-menu-link">🥜 Cashews</a>
+      <a href="products.html?cat=gifting" class="mobile-menu-link">🎁 Gifting</a>
+      <div class="mobile-menu-divider"></div>
+      <a href="account.html" class="mobile-menu-link">👤 My Account</a>
+      <a href="cart.html" class="mobile-menu-link">🛒 Cart</a>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main style="padding: var(--space-8) var(--container-pad); max-width: var(--container-2xl); margin: 0 auto;">
+
+  <!-- BREADCRUMB -->
+  <nav class="breadcrumb" id="breadcrumb">
+    <a href="index.html">Home</a>
+    <span class="breadcrumb-sep">›</span>
+    <a href="products.html">Shop</a>
+    <span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current" id="breadcrumb-name">Loading...</span>
+  </nav>
+
+  <!-- PRODUCT DETAIL -->
+  <div class="product-detail-grid" id="product-detail-grid">
+
+    <!-- GALLERY -->
+    <div class="product-gallery">
+      <div class="gallery-main">
+        <img id="gallery-main-img" src="assets/placeholder.png" alt="Product">
+      </div>
+      <div class="gallery-thumbs" id="gallery-thumbs"></div>
+    </div>
+
+    <!-- INFO PANEL -->
+    <div class="product-info-panel" id="product-info-panel">
+
+      <div class="prod-category" id="prod-cat"></div>
+      <h1 class="product-info-name" id="prod-name">Loading...</h1>
+
+      <div class="product-info-rating">
+        <div id="prod-stars"></div>
+        <span class="rating-count" id="prod-review-count">(0 reviews)</span>
+        <a href="#reviews" style="font-size:var(--text-xs);color:var(--red);margin-left:var(--space-2)">Write a review</a>
+      </div>
+
+      <div class="product-price-section">
+        <span class="product-current-price" id="prod-price">₹0</span>
+        <span class="product-original-price" id="prod-original" style="display:none"></span>
+        <span class="product-discount-badge" id="prod-discount" style="display:none"></span>
+      </div>
+
+      <!-- Feature pills -->
+      <div class="feature-pills">
+        <span class="feature-pill">🌿 100% Natural</span>
+        <span class="feature-pill">✅ FSSAI Certified</span>
+        <span class="feature-pill">🏭 Factory Direct</span>
+        <span class="feature-pill" id="pill-grade" style="display:none"></span>
+      </div>
+
+      <!-- Stock -->
+      <div class="stock-indicator" id="stock-indicator">
+        <div class="stock-dot"></div>
+        <span>In Stock</span>
+      </div>
+
+      <!-- Variant Selection -->
+      <div class="variant-section">
+        <div class="variant-label-title">Size / Weight: <strong id="selected-variant-label"></strong></div>
+        <div class="variant-options" id="variant-options"></div>
+      </div>
+
+      <!-- Quantity -->
+      <div class="qty-section">
+        <div class="qty-box">
+          <button class="qty-btn" onclick="changeQty(-1)">−</button>
+          <span class="qty-val" id="qty-val">1</span>
+          <button class="qty-btn" onclick="changeQty(1)">+</button>
+        </div>
+        <span style="font-size:var(--text-sm);color:var(--text-muted)" id="qty-total-price"></span>
+      </div>
+
+      <!-- CTA Buttons -->
+      <div class="product-cta-row" style="margin-bottom:var(--space-4)">
+        <button class="add-to-cart-main" id="atc-btn" onclick="handleATC()">Add to Cart 🛒</button>
+        <button class="buy-now-btn" id="buy-btn" onclick="handleBuyNow()">Buy Now</button>
+      </div>
+
+      <!-- Wishlist -->
+      <button id="wishlist-btn" onclick="handleWishlistToggle()"
+        style="width:100%;padding:10px;border:1.5px solid var(--gray-200);border-radius:var(--radius-full);background:white;font-size:var(--text-sm);font-weight:var(--fw-medium);cursor:pointer;font-family:var(--font-body);color:var(--text-muted);transition:all var(--transition-fast);margin-bottom:var(--space-5)">
+        🤍 Add to Wishlist
+      </button>
+
+      <!-- Pincode Check -->
+      <div style="border:1.5px solid var(--gray-200);border-radius:var(--radius-xl);padding:var(--space-4);margin-bottom:var(--space-5)">
+        <div style="font-size:var(--text-sm);font-weight:var(--fw-semibold);color:var(--red-dark);margin-bottom:var(--space-3)">🚚 Check Delivery</div>
+        <div class="pincode-check">
+          <input type="text" class="form-input" id="pincode-input" placeholder="Enter PIN code" maxlength="6" style="flex:1">
+          <button class="btn btn-primary btn-sm" onclick="handlePincodeCheck()" style="background:var(--red);border-color:var(--red)">Check</button>
+        </div>
+        <div class="pincode-result" id="pincode-result"></div>
+      </div>
+
+      <!-- Product Meta -->
+      <div class="product-meta">
+        <div class="product-meta-item"><strong>SKU:</strong><span id="meta-sku">—</span></div>
+        <div class="product-meta-item"><strong>Category:</strong><span id="meta-cat">—</span></div>
+        <div class="product-meta-item"><strong>Shelf Life:</strong><span>6 months from packaging</span></div>
+        <div class="product-meta-item"><strong>Storage:</strong><span>Cool, dry place. Refrigerate after opening.</span></div>
+        <div class="product-meta-item"><strong>Source:</strong><span>Jai Shree Cashew Industries, Jaipur</span></div>
+      </div>
+
+      <!-- Share -->
+      <div style="display:flex;gap:var(--space-3);margin-top:var(--space-5);padding-top:var(--space-4);border-top:1px solid var(--gray-100)">
+        <span style="font-size:var(--text-sm);color:var(--text-muted);font-weight:var(--fw-medium)">Share:</span>
+        <a href="#" onclick="shareProduct('whatsapp')" style="font-size:1.2rem" title="Share on WhatsApp">💬</a>
+        <a href="#" onclick="shareProduct('facebook')" style="font-size:1.2rem" title="Share on Facebook">👍</a>
+        <a href="#" onclick="copyProductLink()" style="font-size:1.2rem" title="Copy link">🔗</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- INFO TABS -->
+  <div style="margin-top:var(--space-10)">
+    <div class="info-tabs">
+      <button class="info-tab active" onclick="switchInfoTab('description',this)">Description</button>
+      <button class="info-tab" onclick="switchInfoTab('nutrition',this)">Nutrition Facts</button>
+      <button class="info-tab" onclick="switchInfoTab('reviews',this)" id="reviews-tab-btn">Reviews <span id="review-count-badge" style="background:var(--red-pale);color:var(--red);padding:2px 8px;border-radius:var(--radius-full);font-size:11px;margin-left:4px">0</span></button>
+      <button class="info-tab" onclick="switchInfoTab('shipping',this)">Shipping & Returns</button>
+    </div>
+
+    <!-- Description -->
+    <div class="info-panel active" id="panel-description">
+      <div id="prod-description" style="font-size:var(--text-base);line-height:var(--lh-relaxed);color:var(--text-primary);max-width:800px">Loading...</div>
+    </div>
+
+    <!-- Nutrition -->
+    <div class="info-panel" id="panel-nutrition">
+      <p style="font-size:var(--text-sm);color:var(--text-muted);margin-bottom:var(--space-4)">Approximate values per 100g serving.</p>
+      <table class="nutrition-table" id="nutrition-table">
+        <thead><tr><th>Nutrient</th><th>Per 100g</th><th>% Daily Value</th></tr></thead>
+        <tbody id="nutrition-body">
+          <tr><td>Energy</td><td>553 kcal</td><td>28%</td></tr>
+          <tr><td>Protein</td><td>18g</td><td>36%</td></tr>
+          <tr><td>Total Fat</td><td>44g</td><td>63%</td></tr>
+          <tr><td>Saturated Fat</td><td>8g</td><td>40%</td></tr>
+          <tr><td>Carbohydrates</td><td>30g</td><td>10%</td></tr>
+          <tr><td>Dietary Fiber</td><td>3.3g</td><td>13%</td></tr>
+          <tr><td>Sugars</td><td>5.9g</td><td>—</td></tr>
+          <tr><td>Sodium</td><td>12mg</td><td>1%</td></tr>
+          <tr><td>Magnesium</td><td>292mg</td><td>73%</td></tr>
+          <tr><td>Iron</td><td>6.7mg</td><td>37%</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:var(--text-xs);color:var(--text-muted);margin-top:var(--space-3)">* Values are approximate. Actual may vary by batch and grade.</p>
+    </div>
+
+    <!-- Reviews -->
+    <div class="info-panel" id="panel-reviews" style="max-width:800px">
+
+      <!-- Rating Summary -->
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:var(--space-8);margin-bottom:var(--space-6);padding:var(--space-6);background:var(--cream);border-radius:var(--radius-2xl)">
+        <div style="text-align:center">
+          <div style="font-family:var(--font-display);font-size:4rem;font-weight:var(--fw-bold);color:var(--red-dark);line-height:1" id="avg-rating-big">0.0</div>
+          <div id="avg-stars-big" style="font-size:1.4rem;color:var(--gold);margin:var(--space-1) 0"></div>
+          <div style="font-size:var(--text-xs);color:var(--text-muted)" id="total-reviews-label">0 reviews</div>
+        </div>
+        <div id="rating-bars" style="display:flex;flex-direction:column;gap:var(--space-2);justify-content:center"></div>
+      </div>
+
+      <!-- Write Review -->
+      <div class="review-form" id="write-review-section">
+        <h4 style="font-family:var(--font-display);font-size:var(--text-xl);color:var(--red-dark);margin-bottom:var(--space-4)">Write a Review</h4>
+        <div class="form-group">
+          <label class="form-label">Your Rating <span class="required">*</span></label>
+          <div class="star-input" id="star-rating">
+            <input type="radio" id="s5" name="rating" value="5"><label for="s5" title="5 stars">★</label>
+            <input type="radio" id="s4" name="rating" value="4"><label for="s4" title="4 stars">★</label>
+            <input type="radio" id="s3" name="rating" value="3"><label for="s3" title="3 stars">★</label>
+            <input type="radio" id="s2" name="rating" value="2"><label for="s2" title="2 stars">★</label>
+            <input type="radio" id="s1" name="rating" value="1"><label for="s1" title="1 star">★</label>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Your Review <span class="required">*</span></label>
+          <textarea class="form-textarea" id="review-text" placeholder="Share your experience with this product..."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="handleSubmitReview()" style="background:var(--red);border-color:var(--red)">Submit Review</button>
+      </div>
+
+      <!-- Reviews List -->
+      <div id="reviews-list"><p style="color:var(--text-muted);font-size:var(--text-sm)">No reviews yet. Be the first!</p></div>
+    </div>
+
+    <!-- Shipping -->
+    <div class="info-panel" id="panel-shipping" style="max-width:700px">
+      <div style="display:grid;gap:var(--space-5)">
+        <div style="display:flex;gap:var(--space-4);align-items:flex-start;padding:var(--space-5);background:var(--cream);border-radius:var(--radius-xl)">
+          <span style="font-size:2rem">🚚</span>
+          <div>
+            <div style="font-weight:var(--fw-semibold);color:var(--red-dark);margin-bottom:var(--space-1)">Free Delivery</div>
+            <div style="font-size:var(--text-sm);color:var(--text-muted);line-height:var(--lh-relaxed)">Free delivery on orders above ₹499. Standard delivery in 3-7 business days across India. Express available at checkout.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:var(--space-4);align-items:flex-start;padding:var(--space-5);background:var(--cream);border-radius:var(--radius-xl)">
+          <span style="font-size:2rem">📦</span>
+          <div>
+            <div style="font-weight:var(--fw-semibold);color:var(--red-dark);margin-bottom:var(--space-1)">Packaging</div>
+            <div style="font-size:var(--text-sm);color:var(--text-muted);line-height:var(--lh-relaxed)">Products packed fresh in vacuum-sealed, food-grade packaging. Tamper-proof seals for safety.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:var(--space-4);align-items:flex-start;padding:var(--space-5);background:var(--cream);border-radius:var(--radius-xl)">
+          <span style="font-size:2rem">↩️</span>
+          <div>
+            <div style="font-weight:var(--fw-semibold);color:var(--red-dark);margin-bottom:var(--space-1)">7-Day Return Policy</div>
+            <div style="font-size:var(--text-sm);color:var(--text-muted);line-height:var(--lh-relaxed)">Not satisfied? Return within 7 days of delivery for a full refund. Applicable on unopened, original-condition products.</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:var(--space-4);align-items:flex-start;padding:var(--space-5);background:var(--cream);border-radius:var(--radius-xl)">
+          <span style="font-size:2rem">📞</span>
+          <div>
+            <div style="font-weight:var(--fw-semibold);color:var(--red-dark);margin-bottom:var(--space-1)">Customer Support</div>
+            <div style="font-size:var(--text-sm);color:var(--text-muted);line-height:var(--lh-relaxed)">Call us: 7568577968 / 9950062186<br>WhatsApp: <a href="https://wa.me/917568577968" style="color:var(--red)">+91 75685 77968</a><br>Mon–Sat, 10 AM – 6 PM</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- RELATED PRODUCTS -->
+<section class="related-section section">
+  <div class="section-label">You May Also Like</div>
+  <div class="section-title">Related Products</div>
+  <div class="products-grid" id="related-grid">
+    <div class="product-card" style="min-height:320px;background:linear-gradient(90deg,#ffe0e0 25%,#fff5f5 50%,#ffe0e0 75%);background-size:200% 100%;animation:shimmer 1.5s infinite"></div>
+    <div class="product-card" style="min-height:320px;background:linear-gradient(90deg,#ffe0e0 25%,#fff5f5 50%,#ffe0e0 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;animation-delay:.2s"></div>
+    <div class="product-card" style="min-height:320px;background:linear-gradient(90deg,#ffe0e0 25%,#fff5f5 50%,#ffe0e0 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;animation-delay:.4s"></div>
+    <div class="product-card" style="min-height:320px;background:linear-gradient(90deg,#ffe0e0 25%,#fff5f5 50%,#ffe0e0 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;animation-delay:.6s"></div>
+  </div>
+</section>
+
+<!-- STICKY ATC (Mobile) -->
+<div class="sticky-atc" id="sticky-atc">
+  <div class="sticky-atc-inner">
+    <img id="sticky-img" src="assets/placeholder.png" style="width:44px;height:44px;border-radius:var(--radius-lg);object-fit:cover">
+    <div class="sticky-atc-name" id="sticky-name">Product</div>
+    <div class="sticky-atc-price" id="sticky-price">₹0</div>
+    <button class="btn btn-primary btn-sm" onclick="handleATC()" style="background:var(--red);border-color:var(--red);white-space:nowrap">Add to Cart</button>
+  </div>
+</div>
+
+<!-- WHATSAPP -->
+<a href="https://wa.me/917568577968" class="whatsapp-float" target="_blank">💬</a>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="auth-modal" onclick="if(event.target===this)hideAuthModal()">
+  <div class="modal modal-sm auth-modal">
+    <div class="modal-header">
+      <span class="modal-title">Login to Continue</span>
+      <button class="modal-close" onclick="hideAuthModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+        <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+      </div>
+      <div class="auth-form active" id="auth-login">
+        <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="login-email" placeholder="your@email.com"></div>
+        <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="login-password" placeholder="Password"></div>
+        <button class="btn btn-primary btn-block" id="login-btn" onclick="handleLogin()">Login</button>
+      </div>
+      <div class="auth-form" id="auth-register">
+        <div class="form-group"><label class="form-label">Full Name</label><input type="text" class="form-input" id="reg-name" placeholder="Your name"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-input" id="reg-phone" placeholder="10-digit number"></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="reg-email" placeholder="your@email.com"></div>
+        <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="reg-password" placeholder="Min 6 characters"></div>
+        <button class="btn btn-primary btn-block" id="register-btn" onclick="handleRegister()">Create Account</button>
+      </div>
+      <div class="auth-form" id="auth-forgot"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MOBILE BOTTOM NAV -->
+<nav class="mobile-bottom-nav">
+  <div class="mobile-bottom-nav-inner">
+    <a href="index.html" class="mobile-nav-item"><span class="icon">🏠</span><span>Home</span></a>
+    <a href="products.html" class="mobile-nav-item active"><span class="icon">🛍️</span><span>Shop</span></a>
+    <a href="products.html?cat=cashews" class="mobile-nav-item"><span class="icon">🥜</span><span>Cashews</span></a>
+    <a href="account.html" class="mobile-nav-item"><span class="icon">👤</span><span>Account</span></a>
+    <a href="cart.html" class="mobile-nav-item"><span class="icon">🛒</span><span>Cart</span><span class="cart-badge" style="position:absolute;top:4px;right:12px;font-size:9px;display:none">0</span></a>
+  </div>
+</nav>
+
+<style>@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }</style>
+
+<script src="js/firebase-config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/products.js"></script>
+<script src="js/cart.js"></script>
+<script>
+let currentProduct = null;
+let selectedVariantIdx = 0;
+let currentQty = 1;
+
+async function onAuthReady(user) {
+  const id = getParam('id');
+  if (!id) { window.location.href = 'products.html'; return; }
+  await loadProduct(id);
+  updateWishlistBtn();
+}
+
+async function loadProduct(id) {
+  try {
+    currentProduct = await fetchProduct(id);
+    if (!currentProduct) { window.location.href = 'products.html'; return; }
+
+    document.title = currentProduct.name + ' — Jai Shree Dry Fruits';
+    document.getElementById('breadcrumb-name').textContent = currentProduct.name;
+
+    // Gallery
+    const imgs = currentProduct.images?.length ? currentProduct.images : ['assets/placeholder.png'];
+    document.getElementById('gallery-main-img').src = imgs[0];
+    const thumbs = document.getElementById('gallery-thumbs');
+    thumbs.innerHTML = imgs.map((img, i) => `
+      <div class="gallery-thumb ${i===0?'active':''}" onclick="switchImage('${img}',this)">
+        <img src="${img}" alt="Image ${i+1}" onerror="this.src='assets/placeholder.png'">
+      </div>`).join('');
+
+    // Name, category
+    document.getElementById('prod-cat').textContent = currentProduct.category || '';
+    document.getElementById('prod-name').textContent = currentProduct.name;
+    document.getElementById('meta-cat').textContent = currentProduct.category || '—';
+    document.getElementById('meta-sku').textContent = id.toUpperCase();
+
+    // Rating
+    const rating = currentProduct.avgRating || 0;
+    document.getElementById('prod-stars').innerHTML = renderStars(Math.round(rating));
+    document.getElementById('prod-review-count').textContent = `(${currentProduct.reviewCount || 0} reviews)`;
+    document.getElementById('avg-rating-big').textContent = rating.toFixed(1);
+    document.getElementById('avg-stars-big').innerHTML = renderStars(Math.round(rating));
+    document.getElementById('total-reviews-label').textContent = `${currentProduct.reviewCount || 0} reviews`;
+    document.getElementById('review-count-badge').textContent = currentProduct.reviewCount || 0;
+
+    // Variants
+    renderVariants();
+
+    // Description
+    document.getElementById('prod-description').innerHTML = currentProduct.description
+      ? `<p style="margin-bottom:var(--space-4)">${currentProduct.description.replace(/\n/g,'</p><p style="margin-bottom:var(--space-4)">')}</p>`
+      : '<p>Premium quality product from Jai Shree Cashew Industries. 100% natural, no preservatives.</p>';
+
+    // Stock
+    updateStockIndicator(currentProduct.stock);
+
+    // Badge/grade pill
+    if (currentProduct.badge) {
+      const pill = document.getElementById('pill-grade');
+      pill.textContent = currentProduct.badge;
+      pill.style.display = 'inline-flex';
+    }
+
+    // Sticky ATC
+    document.getElementById('sticky-name').textContent = currentProduct.name;
+    document.getElementById('sticky-img').src = imgs[0];
+
+    // Load reviews
+    await loadReviews(id);
+
+    // Load related
+    await loadRelated(currentProduct.category, id);
+
+  } catch(e) {
+    console.error('Load product error:', e);
+    showToast('Could not load product. Please try again.', 'error');
+  }
+}
+
+function renderVariants() {
+  const variants = currentProduct.variants || [];
+  const container = document.getElementById('variant-options');
+  container.innerHTML = variants.map((v, i) => `
+    <button class="variant-option ${i===0?'active':''}"
+      onclick="selectVariant(${i},this)">${v.label}</button>`).join('');
+  selectVariant(0, container.querySelector('.variant-option'));
+}
+
+function selectVariant(idx, btn) {
+  selectedVariantIdx = idx;
+  const variant = currentProduct.variants[idx];
+  document.querySelectorAll('.variant-option').forEach(b => b.classList.remove('active'));
+  btn?.classList.add('active');
+  document.getElementById('selected-variant-label').textContent = variant.label;
+  updatePriceDisplay();
+}
+
+function updatePriceDisplay() {
+  const variant = currentProduct.variants[selectedVariantIdx];
+  if (!variant) return;
+  const price = variant.price * currentQty;
+  document.getElementById('prod-price').textContent = formatPrice(variant.price);
+  document.getElementById('sticky-price').textContent = formatPrice(variant.price);
+  document.getElementById('qty-total-price').textContent = currentQty > 1 ? `Total: ${formatPrice(price)}` : '';
+
+  if (currentProduct.originalPrice) {
+    const origEl  = document.getElementById('prod-original');
+    const discEl  = document.getElementById('prod-discount');
+    const discount = Math.round((1 - variant.price / currentProduct.originalPrice) * 100);
+    origEl.textContent = formatPrice(currentProduct.originalPrice);
+    origEl.style.display = 'inline';
+    if (discount > 0) { discEl.textContent = `-${discount}%`; discEl.style.display = 'inline-flex'; }
+  }
+}
+
+function changeQty(delta) {
+  currentQty = Math.max(1, Math.min(10, currentQty + delta));
+  document.getElementById('qty-val').textContent = currentQty;
+  updatePriceDisplay();
+}
+
+function updateStockIndicator(stock) {
+  const el = document.getElementById('stock-indicator');
+  const dot = el.querySelector('.stock-dot');
+  const label = el.querySelector('span');
+  if (!stock || stock === 0) {
+    dot.className = 'stock-dot out';
+    label.textContent = 'Out of Stock';
+    document.getElementById('atc-btn').disabled = true;
+    document.getElementById('buy-btn').disabled = true;
+  } else if (stock < 10) {
+    dot.className = 'stock-dot low';
+    label.textContent = `Only ${stock} left in stock`;
+  } else {
+    dot.className = 'stock-dot';
+    label.textContent = 'In Stock';
+  }
+}
+
+function switchImage(src, thumbEl) {
+  document.getElementById('gallery-main-img').src = src;
+  document.querySelectorAll('.gallery-thumb').forEach(t => t.classList.remove('active'));
+  thumbEl?.classList.add('active');
+}
+
+function switchInfoTab(tab, btn) {
+  document.querySelectorAll('.info-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.info-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector(`.info-tab[onclick*="${tab}"]`)?.classList.add('active');
+  document.getElementById(`panel-${tab}`)?.classList.add('active');
+}
+
+function handleATC() {
+  if (!currentProduct) return;
+  addToCart(currentProduct, selectedVariantIdx);
+  for (let i = 0; i < currentQty - 1; i++) {
+    const cart = getCart();
+    const key = currentProduct.id + '_' + selectedVariantIdx;
+    const item = cart.find(i => i.key === key);
+    if (item) item.qty++;
+    saveCart(cart);
+  }
+  updateCartBadge();
+}
+
+function handleBuyNow() {
+  handleATC();
+  window.location.href = 'cart.html';
+}
+
+function handleWishlistToggle() {
+  if (!currentProduct) return;
+  const added = toggleWishlist(currentProduct.id);
+  updateWishlistBtn(added);
+}
+
+function updateWishlistBtn(added) {
+  const wishlisted = added !== undefined ? added : isWishlisted(currentProduct?.id);
+  const btn = document.getElementById('wishlist-btn');
+  if (!btn) return;
+  btn.innerHTML = wishlisted ? '❤️ Saved to Wishlist' : '🤍 Add to Wishlist';
+  btn.style.color = wishlisted ? 'var(--error)' : 'var(--text-muted)';
+  btn.style.borderColor = wishlisted ? 'var(--error)' : 'var(--gray-200)';
+}
+
+async function handlePincodeCheck() {
+  const pin = document.getElementById('pincode-input').value.trim();
+  const result = document.getElementById('pincode-result');
+  if (pin.length !== 6 || isNaN(pin)) {
+    result.innerHTML = '<span class="pincode-fail">Enter valid 6-digit PIN code</span>'; return;
+  }
+  result.innerHTML = '<span style="color:var(--text-muted)">Checking...</span>';
+  try {
+    const data = await checkPincode(pin);
+    if (data) {
+      result.innerHTML = `<span class="pincode-ok">✅ Delivery available — ${data.deliveryDays || '3-5'} business days</span>`;
+    } else {
+      // Default: most pincodes deliver
+      result.innerHTML = `<span class="pincode-ok">✅ Delivery available — 3-7 business days</span>`;
+    }
+  } catch(e) {
+    result.innerHTML = '<span class="pincode-ok">✅ Delivery available — 3-7 business days</span>';
+  }
+}
+
+async function loadReviews(productId) {
+  try {
+    const reviews = await fetchReviews(productId);
+    const list = document.getElementById('reviews-list');
+    const countBadge = document.getElementById('review-count-badge');
+    countBadge.textContent = reviews.length;
+
+    // Rating bars
+    const counts = [0,0,0,0,0];
+    reviews.forEach(r => { if (r.rating >= 1 && r.rating <= 5) counts[r.rating-1]++; });
+    const total = reviews.length || 1;
+    document.getElementById('rating-bars').innerHTML = [5,4,3,2,1].map(star => `
+      <div style="display:flex;align-items:center;gap:var(--space-3);font-size:var(--text-sm)">
+        <span style="min-width:20px;color:var(--text-muted)">${star}★</span>
+        <div style="flex:1;height:8px;background:var(--gray-200);border-radius:var(--radius-full);overflow:hidden">
+          <div style="width:${(counts[star-1]/total)*100}%;height:100%;background:var(--gold);border-radius:var(--radius-full)"></div>
+        </div>
+        <span style="min-width:24px;color:var(--text-muted)">${counts[star-1]}</span>
+      </div>`).join('');
+
+    if (reviews.length === 0) {
+      list.innerHTML = '<p style="color:var(--text-muted);font-size:var(--text-sm)">No reviews yet. Be the first to review this product!</p>';
+      return;
+    }
+    list.innerHTML = reviews.map(r => `
+      <div class="review-card">
+        <div class="review-header">
+          <div>
+            <div class="reviewer-name">${r.userName}</div>
+            <div style="color:var(--gold);font-size:0.9rem">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+          </div>
+          <div class="review-date">${formatDate(r.createdAt)}</div>
+        </div>
+        <div class="review-text">${r.comment}</div>
+      </div>`).join('');
+  } catch(e) {}
+}
+
+async function handleSubmitReview() {
+  if (!currentUser) { showLoginModal(); return; }
+  const rating  = document.querySelector('input[name="rating"]:checked')?.value;
+  const comment = document.getElementById('review-text').value.trim();
+  if (!rating)   { showToast('Please select a rating', 'error'); return; }
+  if (!comment)  { showToast('Please write a review', 'error'); return; }
+  await submitReview(currentProduct.id, rating, comment);
+}
+
+async function loadRelated(category, excludeId) {
+  try {
+    const products = await fetchProducts({ category });
+    const filtered = products.filter(p => p.id !== excludeId).slice(0, 4);
+    const grid = document.getElementById('related-grid');
+    if (filtered.length === 0) {
+      document.querySelector('.related-section').style.display = 'none'; return;
+    }
+    grid.innerHTML = filtered.map(p => renderProductCard(p)).join('');
+    initScrollAnimations();
+  } catch(e) {}
+}
+
+function shareProduct(platform) {
+  const url  = window.location.href;
+  const text = `Check out ${currentProduct?.name} on Jai Shree Dry Fruits!`;
+  if (platform === 'whatsapp') window.open(`https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+  if (platform === 'facebook') window.open(`https://facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+}
+
+function copyProductLink() {
+  copyToClipboard(window.location.href);
+  showToast('Product link copied!');
+}
+
+// Auth handlers
+async function handleLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!email||!password) { showToast('Fill all fields','error'); return; }
+  const btn = document.getElementById('login-btn');
+  showLoader(btn,'Logging in...');
+  const result = await loginUser(email, password);
+  hideLoader(btn);
+  if (result.success) hideAuthModal(); else showToast(result.error,'error');
+}
+
+async function handleRegister() {
+  const name=document.getElementById('reg-name').value.trim(), phone=document.getElementById('reg-phone').value.trim(),
+        email=document.getElementById('reg-email').value.trim(), password=document.getElementById('reg-password').value;
+  if (!name||!email||!password||!phone) { showToast('Fill all fields','error'); return; }
+  const btn=document.getElementById('register-btn');
+  showLoader(btn,'Creating...');
+  const result=await registerUser(name,email,password,phone);
+  hideLoader(btn);
+  if (result.success) hideAuthModal(); else showToast(result.error,'error');
+}
+
+// Nav search
+const handleNavSearch = debounce(async (query) => {
+  const dd = document.getElementById('search-dropdown');
+  if (!query||query.length<2) { dd.classList.remove('open'); return; }
+  const results = await searchProducts(query);
+  dd.innerHTML = results.length===0
+    ? `<div style="padding:var(--space-4);text-align:center;color:var(--text-muted);font-size:var(--text-sm)">No results</div>`
+    : results.slice(0,6).map(p=>`<div class="search-result-item" onclick="openProductPage('${p.id}')"><img src="${p.images?.[0]||'assets/placeholder.png'}" onerror="this.src='assets/placeholder.png'"><div><div class="search-result-name">${p.name}</div><div class="search-result-price">${formatPrice(p.variants?.[0]?.price||0)}</div></div></div>`).join('');
+  dd.classList.add('open');
+}, 300);
+
+document.addEventListener('click', e => { if (!e.target.closest('.search-wrap')) document.querySelectorAll('.search-dropdown').forEach(d=>d.classList.remove('open')); });
+
+function openMobileMenu()  { document.getElementById('mobile-menu').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeMobileMenu() { document.getElementById('mobile-menu').classList.remove('open'); document.body.style.overflow=''; }
+
+function initScrollAnimations() {
+  const obs = new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:0.1});
+  document.querySelectorAll('.fade-up').forEach(el=>obs.observe(el));
+}
+
+// Show sticky ATC when main ATC scrolls out
+const observer = new IntersectionObserver(entries => {
+  document.getElementById('sticky-atc').style.display = entries[0].isIntersecting ? 'none' : 'block';
+}, { threshold: 0 });
+window.addEventListener('load', () => {
+  const atcBtn = document.getElementById('atc-btn');
+  if (atcBtn) observer.observe(atcBtn);
+});
+</script>
+</body>
+</html>

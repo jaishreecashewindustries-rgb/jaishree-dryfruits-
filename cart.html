@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cart — Jai Shree Dry Fruits</title>
+  <link rel="icon" href="assets/favicon.png">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/mobile.css">
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+  <style>
+    .nav { background: rgba(255,248,240,0.97); border-bottom: 2px solid rgba(200,24,26,0.15); }
+    .btn-primary { background: var(--red); border-color: var(--red); }
+    .btn-primary:hover { background: var(--red-dark); }
+    .btn-outline { color: var(--red); border-color: var(--red); }
+    .btn-outline:hover { background: var(--red); color: white; }
+    .footer { background: var(--red-dark); }
+    .cart-page { max-width: var(--container-xl); margin: 0 auto; padding: var(--space-8) var(--container-pad); }
+    .cart-layout { display: grid; grid-template-columns: 1fr 380px; gap: var(--space-8); align-items: start; }
+    .cart-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-6); }
+    .cart-title { font-family: var(--font-display); font-size: var(--text-3xl); font-weight: var(--fw-bold); color: var(--red-dark); }
+    .cart-count { font-size: var(--text-sm); color: var(--text-muted); }
+    .cart-items-section { background: white; border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); }
+    .cart-summary-card { background: white; border-radius: var(--radius-2xl); padding: var(--space-6); box-shadow: var(--shadow-sm); position: sticky; top: calc(var(--nav-height-desktop) + 20px); }
+    .cart-summary-title { font-family: var(--font-display); font-size: var(--text-xl); font-weight: var(--fw-bold); color: var(--red-dark); margin-bottom: var(--space-5); padding-bottom: var(--space-4); border-bottom: 1px solid var(--gray-100); }
+    .coupon-box { display: flex; gap: var(--space-2); margin: var(--space-4) 0; }
+    .coupon-box input { flex: 1; }
+    .coupon-box button { background: var(--red); color: white; border: none; padding: 12px 18px; border-radius: var(--radius-lg); font-family: var(--font-body); font-size: var(--text-sm); font-weight: var(--fw-semibold); cursor: pointer; white-space: nowrap; }
+    .btn-checkout-main { width: 100%; padding: 16px; background: var(--red); color: white; border: none; border-radius: var(--radius-full); font-size: var(--text-base); font-weight: var(--fw-bold); cursor: pointer; font-family: var(--font-body); margin-top: var(--space-4); transition: background var(--transition-fast); letter-spacing: 0.5px; }
+    .btn-checkout-main:hover { background: var(--red-dark); }
+    .btn-continue-shopping { display: block; text-align: center; margin-top: var(--space-3); font-size: var(--text-sm); color: var(--text-muted); text-decoration: none; }
+    .btn-continue-shopping:hover { color: var(--red); }
+    .payment-icons { display: flex; gap: var(--space-3); justify-content: center; margin-top: var(--space-4); flex-wrap: wrap; }
+    .payment-icon-pill { background: var(--gray-100); padding: 4px 12px; border-radius: var(--radius-full); font-size: var(--text-xs); color: var(--text-muted); font-weight: var(--fw-medium); }
+    .trust-mini { display: flex; gap: var(--space-4); justify-content: center; margin-top: var(--space-4); flex-wrap: wrap; }
+    .trust-mini-item { display: flex; align-items: center; gap: 6px; font-size: var(--text-xs); color: var(--text-muted); }
+    @media (max-width: 768px) {
+      .cart-layout { grid-template-columns: 1fr; }
+      .cart-summary-card { position: static; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="index.html" style="text-decoration:none">
+      <img src="assets/logo.png" alt="Jai Shree Dry Fruits" style="height:52px;width:auto">
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="nav-link">Home</a></li>
+      <li><a href="products.html" class="nav-link">Shop</a></li>
+      <li><a href="products.html?cat=cashews" class="nav-link">Cashews</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="nav-icon-btn" id="nav-login" onclick="showLoginModal()">👤</button>
+      <a href="account.html" class="nav-icon-btn" id="nav-account" style="display:none">
+        <span id="nav-username" style="font-size:0.75rem;font-weight:600;color:var(--red-dark)">Hi!</span>
+      </a>
+      <button class="nav-icon-btn" id="nav-logout" onclick="logoutUser()" style="display:none">🚪</button>
+      <a href="cart.html" class="nav-icon-btn" style="position:relative">
+        🛒<span class="cart-badge" style="display:none">0</span>
+      </a>
+      <button class="nav-hamburger" onclick="openMobileMenu()"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</nav>
+</header>
+
+<div class="mobile-menu" id="mobile-menu">
+  <div class="mobile-menu-overlay" onclick="closeMobileMenu()"></div>
+  <div class="mobile-menu-drawer">
+    <div class="mobile-menu-header">
+      <img src="assets/logo.png" alt="Jai Shree" style="height:44px;width:auto">
+      <button onclick="closeMobileMenu()" style="background:none;border:none;font-size:1.5rem;cursor:pointer">✕</button>
+    </div>
+    <div class="mobile-menu-links">
+      <a href="index.html" class="mobile-menu-link">🏠 Home</a>
+      <a href="products.html" class="mobile-menu-link">🛍️ Shop</a>
+      <a href="account.html" class="mobile-menu-link">👤 My Account</a>
+    </div>
+  </div>
+</div>
+
+<main class="cart-page">
+  <nav class="breadcrumb">
+    <a href="index.html">Home</a><span class="breadcrumb-sep">›</span>
+    <span class="breadcrumb-current">Shopping Cart</span>
+  </nav>
+
+  <div class="cart-header">
+    <h1 class="cart-title">Your Cart</h1>
+    <span class="cart-count" id="cart-count"></span>
+  </div>
+
+  <div class="cart-layout">
+    <!-- Cart Items -->
+    <div class="cart-items-section" id="cart-items-section">
+      <div id="cart-items-container">
+        <div style="text-align:center;padding:var(--space-8);color:var(--text-muted)">Loading cart...</div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="cart-summary-card" id="cart-summary-card">
+      <div class="cart-summary-title">Order Summary</div>
+      <div id="cart-summary-content">Loading...</div>
+    </div>
+  </div>
+
+  <!-- Suggested products -->
+  <div style="margin-top:var(--space-12)">
+    <div class="section-label" style="color:var(--red)">You May Also Like</div>
+    <div class="section-title" style="color:var(--red-dark)">Add More to Your Cart</div>
+    <div class="products-grid" id="suggested-grid"></div>
+  </div>
+</main>
+
+<a href="https://wa.me/917568577968" class="whatsapp-float" target="_blank">💬</a>
+
+<nav class="mobile-bottom-nav">
+  <div class="mobile-bottom-nav-inner">
+    <a href="index.html" class="mobile-nav-item"><span class="icon">🏠</span><span>Home</span></a>
+    <a href="products.html" class="mobile-nav-item"><span class="icon">🛍️</span><span>Shop</span></a>
+    <a href="products.html?cat=cashews" class="mobile-nav-item"><span class="icon">🥜</span><span>Cashews</span></a>
+    <a href="account.html" class="mobile-nav-item"><span class="icon">👤</span><span>Account</span></a>
+    <a href="cart.html" class="mobile-nav-item active"><span class="icon">🛒</span><span>Cart</span></a>
+  </div>
+</nav>
+
+<div class="modal-overlay" id="auth-modal" onclick="if(event.target===this)hideAuthModal()">
+  <div class="modal modal-sm auth-modal">
+    <div class="modal-header"><span class="modal-title">Login</span><button class="modal-close" onclick="hideAuthModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="switchAuthTab('login')">Login</button>
+        <button class="auth-tab" onclick="switchAuthTab('register')">Register</button>
+      </div>
+      <div class="auth-form active" id="auth-login">
+        <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="login-email" placeholder="your@email.com"></div>
+        <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="login-password"></div>
+        <button class="btn btn-primary btn-block" id="login-btn" onclick="handleLogin()">Login</button>
+      </div>
+      <div class="auth-form" id="auth-register">
+        <div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" id="reg-name"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input type="tel" class="form-input" id="reg-phone"></div>
+        <div class="form-group"><label class="form-label">Email</label><input type="email" class="form-input" id="reg-email"></div>
+        <div class="form-group"><label class="form-label">Password</label><input type="password" class="form-input" id="reg-password"></div>
+        <button class="btn btn-primary btn-block" id="register-btn" onclick="handleRegister()">Create Account</button>
+      </div>
+      <div class="auth-form" id="auth-forgot"></div>
+    </div>
+  </div>
+</div>
+
+<script src="js/firebase-config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/products.js"></script>
+<script src="js/cart.js"></script>
+<script>
+let appliedCoupon = null;
+
+async function onAuthReady(user) {
+  renderFullCart();
+  loadSuggested();
+}
+
+function renderFullCart() {
+  const cart = getCart();
+  const countEl = document.getElementById('cart-count');
+  const total = cart.reduce((s,i)=>s+i.qty,0);
+  countEl.textContent = total > 0 ? `${total} item${total>1?'s':''}` : '';
+
+  const container = document.getElementById('cart-items-container');
+
+  if (cart.length === 0) {
+    document.getElementById('cart-items-section').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🛒</div>
+        <h3 style="color:var(--red-dark)">Your cart is empty</h3>
+        <p>Looks like you haven't added any products yet.</p>
+        <a href="products.html" class="btn btn-primary" style="background:var(--red);border-color:var(--red)">Continue Shopping</a>
+      </div>`;
+    document.getElementById('cart-summary-card').style.display = 'none';
+    return;
+  }
+
+  container.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-4);padding-bottom:var(--space-3);border-bottom:1px solid var(--gray-100)">
+      <span style="font-size:var(--text-sm);font-weight:var(--fw-semibold);color:var(--red-dark)">${total} item${total>1?'s':''} in your cart</span>
+      <button onclick="clearCart()" style="background:none;border:none;font-size:var(--text-xs);color:var(--text-muted);cursor:pointer;text-decoration:underline">Clear all</button>
+    </div>
+    ${cart.map(item => `
+      <div class="cart-item" id="item-${item.key}">
+        <img src="${item.image||'assets/placeholder.png'}" alt="${item.name}" onclick="window.location.href='product.html?id=${item.productId}'" style="cursor:pointer" onerror="this.src='assets/placeholder.png'">
+        <div class="cart-item-info">
+          <div class="cart-item-name" onclick="window.location.href='product.html?id=${item.productId}'" style="cursor:pointer;color:var(--red-dark)">${item.name}</div>
+          <div class="cart-item-variant">${item.variantLabel}</div>
+          <div class="cart-item-price">${formatPrice(item.price)} each</div>
+        </div>
+        <div class="cart-item-qty">
+          <button onclick="updateCartQty('${item.key}',-1)">−</button>
+          <span>${item.qty}</span>
+          <button onclick="updateCartQty('${item.key}',1)">+</button>
+        </div>
+        <div class="cart-item-total">${formatPrice(item.price * item.qty)}</div>
+        <button class="cart-item-remove" onclick="removeItem('${item.key}')" title="Remove">🗑️</button>
+      </div>`).join('')}`;
+
+  renderSummary();
+}
+
+function renderSummary() {
+  const cart = getCart();
+  const subtotal = getCartTotal();
+  const discount = appliedCoupon ? calcDiscount(subtotal, appliedCoupon) : 0;
+  const delivery  = (subtotal - discount) >= APP_CONFIG.freeDeliveryAbove ? 0 : APP_CONFIG.deliveryCharge;
+  const total     = subtotal - discount + delivery;
+  const freeLeft  = APP_CONFIG.freeDeliveryAbove - (subtotal - discount);
+
+  document.getElementById('cart-summary-content').innerHTML = `
+    ${freeLeft > 0
+      ? `<div class="free-delivery-bar">
+          <div class="free-delivery-progress"><div class="free-delivery-fill" style="width:${Math.min(100,((subtotal-discount)/APP_CONFIG.freeDeliveryAbove)*100)}%"></div></div>
+          <small style="color:var(--text-muted)">Add <strong>${formatPrice(freeLeft)}</strong> more for FREE delivery 🚚</small>
+         </div>`
+      : `<div class="free-delivery-achieved">🎉 You've unlocked FREE delivery!</div>`}
+
+    <div class="summary-row"><span>Subtotal (${cart.reduce((s,i)=>s+i.qty,0)} items)</span><span>${formatPrice(subtotal)}</span></div>
+    ${discount > 0 ? `<div class="summary-row" style="color:var(--success)"><span>Discount (${appliedCoupon.code})</span><span>−${formatPrice(discount)}</span></div>` : ''}
+    <div class="summary-row"><span>Delivery Charges</span><span style="color:${delivery===0?'var(--success)':'inherit'}">${delivery === 0 ? 'FREE' : formatPrice(delivery)}</span></div>
+    <div class="summary-row total" style="color:var(--red-dark)"><span>Total</span><span>${formatPrice(total)}</span></div>
+
+    <div class="coupon-box">
+      <input type="text" class="form-input" id="coupon-input" placeholder="Coupon code" value="${appliedCoupon?.code||''}">
+      <button onclick="handleCoupon()" style="background:var(--red)">${appliedCoupon ? 'Remove' : 'Apply'}</button>
+    </div>
+
+    <button class="btn-checkout-main" onclick="window.location.href='checkout.html'">
+      Proceed to Checkout →
+    </button>
+    <a href="products.html" class="btn-continue-shopping">← Continue Shopping</a>
+
+    <div class="trust-mini" style="margin-top:var(--space-5)">
+      <div class="trust-mini-item">🔒 Secure Checkout</div>
+      <div class="trust-mini-item">↩️ 7-Day Returns</div>
+      <div class="trust-mini-item">🚚 Fast Delivery</div>
+    </div>
+
+    <div class="payment-icons">
+      <span class="payment-icon-pill">UPI</span>
+      <span class="payment-icon-pill">Cards</span>
+      <span class="payment-icon-pill">Net Banking</span>
+      <span class="payment-icon-pill">COD</span>
+    </div>`;
+}
+
+function updateCartQty(key, delta) {
+  const cart = getCart();
+  const item = cart.find(i => i.key === key);
+  if (!item) return;
+  const newQty = item.qty + delta;
+  if (newQty < 1) { removeItem(key); return; }
+  item.qty = Math.min(10, newQty);
+  saveCart(cart);
+  renderFullCart();
+}
+
+function removeItem(key) {
+  const el = document.getElementById(`item-${key}`);
+  if (el) { el.style.opacity='0'; el.style.transform='translateX(20px)'; el.style.transition='all 0.3s'; }
+  setTimeout(() => {
+    const cart = getCart().filter(i => i.key !== key);
+    saveCart(cart);
+    renderFullCart();
+    showToast('Item removed', 'info');
+  }, 300);
+}
+
+function clearCart() {
+  if (!confirm('Remove all items from cart?')) return;
+  saveCart([]);
+  renderFullCart();
+}
+
+async function handleCoupon() {
+  if (appliedCoupon) { appliedCoupon = null; renderSummary(); showToast('Coupon removed','info'); return; }
+  const code = document.getElementById('coupon-input')?.value.trim().toUpperCase();
+  if (!code) { showToast('Enter a coupon code','error'); return; }
+  try {
+    const snap = await _db.collection('coupons').where('code','==',code).where('active','==',true).get();
+    if (snap.empty) { showToast('Invalid or expired coupon','error'); return; }
+    const coupon = { id: snap.docs[0].id, ...snap.docs[0].data() };
+    const subtotal = getCartTotal();
+    if (coupon.minOrder && subtotal < coupon.minOrder) { showToast(`Min order ${formatPrice(coupon.minOrder)} required`,'error'); return; }
+    if (coupon.expiresAt && coupon.expiresAt.toDate() < new Date()) { showToast('Coupon expired','error'); return; }
+    appliedCoupon = coupon;
+    renderSummary();
+    showToast(`Coupon applied! You save ${formatPrice(calcDiscount(subtotal,coupon))} 🎉`);
+  } catch(e) { showToast('Could not apply coupon. Try again.','error'); }
+}
+
+async function loadSuggested() {
+  try {
+    const products = await fetchProducts({ sort: 'newest' });
+    const cartIds = getCart().map(i => i.productId);
+    const filtered = products.filter(p => !cartIds.includes(p.id)).slice(0, 4);
+    document.getElementById('suggested-grid').innerHTML = filtered.map(p => renderProductCard(p)).join('');
+  } catch(e) {}
+}
+
+async function handleLogin() {
+  const email=document.getElementById('login-email').value.trim(), password=document.getElementById('login-password').value;
+  if (!email||!password) { showToast('Fill all fields','error'); return; }
+  const btn=document.getElementById('login-btn'); showLoader(btn,'Logging in...');
+  const result=await loginUser(email,password); hideLoader(btn);
+  if (result.success) hideAuthModal(); else showToast(result.error,'error');
+}
+
+async function handleRegister() {
+  const name=document.getElementById('reg-name').value.trim(), phone=document.getElementById('reg-phone').value.trim(),
+        email=document.getElementById('reg-email').value.trim(), password=document.getElementById('reg-password').value;
+  if (!name||!email||!password||!phone) { showToast('Fill all fields','error'); return; }
+  const btn=document.getElementById('register-btn'); showLoader(btn,'Creating...');
+  const result=await registerUser(name,email,password,phone); hideLoader(btn);
+  if (result.success) hideAuthModal(); else showToast(result.error,'error');
+}
+
+function openMobileMenu()  { document.getElementById('mobile-menu').classList.add('open'); document.body.style.overflow='hidden'; }
+function closeMobileMenu() { document.getElementById('mobile-menu').classList.remove('open'); document.body.style.overflow=''; }
+
+// Save coupon to session for checkout
+window.addEventListener('beforeunload', () => {
+  if (appliedCoupon) sessionStorage.setItem('pn_coupon', JSON.stringify(appliedCoupon));
+});
+</script>
+</body>
+</html>
