@@ -1,21 +1,13 @@
-// ============================================================
-// JAI SHREE DRY FRUITS — Firebase Configuration
-// Update karo apna config yahan
-// Firebase Console → Project Settings → Your Apps → Web App
-// ============================================================
-
 const FIREBASE_CONFIG = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyB99uqHkQkG87qN89mFr65pW2vG8Q3GuN4",
+  authDomain: "jaishreedryfruits-973dd.firebaseapp.com",
+  projectId: "jaishreedryfruits-973dd",
+  storageBucket: "jaishreedryfruits-973dd.firebasestorage.app",
+  messagingSenderId: "341935442574",
+  appId: "1:341935442574:web:9b46c9578302e20db357df",
+  measurementId: "G-FQ4730WZ17"
 };
 
-// ============================================================
-// App Constants
-// ============================================================
 const APP_CONFIG = {
   adminEmail:        "admin@jaishreecashew.com",
   razorpayKey:       "YOUR_RAZORPAY_KEY",
