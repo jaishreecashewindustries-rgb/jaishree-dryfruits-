@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "jaishree-v9",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/jiteshpansari/Downloads/jaishree-v9 && npm start"],
+      "port": 3000
+    }
+  ]
+}

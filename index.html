@@ -1,0 +1,1930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Jai Shree Dry Fruits — Premium Cashews, Almonds, Pistachios, Walnuts, Dates. Freshly packed, zero preservatives. Pan India delivery.">
+<meta property="og:title" content="Jai Shree Dry Fruits — Naturally Better.">
+<meta property="og:description" content="Premium dry fruits freshly packed and delivered across India. W180/W240/W320 Cashews, Almonds, Walnuts, Pistachios, Dates, Seeds.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#1A3C5E">
+<link rel="icon" href="assets/favicon.png">
+<title>Jai Shree Dry Fruits — Premium Dry Fruits. Naturally Better.</title>
+<link rel="stylesheet" href="css/variables.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;1,700&family=DM+Mono:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/components.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/mobile.css">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js" async></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js" async></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js" async></script>
+<style>
+/* ================================================================
+   JAI SHREE DRY FRUITS — Homepage v6.0
+   Nutraj-level design quality | All fixes applied
+   ================================================================ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-primary);font-size:var(--text-base);color:var(--color-text-primary);background:var(--color-bg);line-height:var(--lh-normal);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{text-decoration:none;color:inherit}
+button{font-family:var(--font-primary)}
+img{max-width:100%;display:block}
+.container{max-width:var(--max-width);margin:0 auto;padding:0 32px}
+
+/* ── SCROLL FADE-IN ANIMATION (Nutraj-style entrance) ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes srIn{from{opacity:0.4;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.sr-visible{animation:srIn 0.45s ease forwards}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+@keyframes pulseRing{0%{box-shadow:0 0 0 0 rgba(26,60,94,0.25)}70%{box-shadow:0 0 0 10px rgba(26,60,94,0)}100%{box-shadow:0 0 0 0 rgba(26,60,94,0)}}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.fade-up{opacity:0;animation:fadeUp 0.55s ease forwards}
+.fade-up.delay-1{animation-delay:0.1s}
+.fade-up.delay-2{animation-delay:0.2s}
+.fade-up.delay-3{animation-delay:0.3s}
+
+/* ── ANNOUNCEMENT BAR ── */
+.ann-bar{position:relative;background:var(--color-primary);color:#fff;height:40px;overflow:hidden;font-size:12.5px;font-weight:500;display:flex;align-items:center;z-index:101;letter-spacing:0.01em}
+.ann-bar.dismissed{display:none}
+.ann-ticker{display:flex;align-items:center;white-space:nowrap;animation:ticker 45s linear infinite;padding-left:100%}
+.ann-bar:hover .ann-ticker{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.ann-ticker{animation:none;padding-left:1.5rem}}
+.ann-ticker span{padding:0 24px}
+.ann-dot{color:rgba(255,255,255,0.4);padding:0 4px!important;font-size:9px;vertical-align:middle}
+.ann-close{position:absolute;right:16px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.15);border:none;color:rgba(255,255,255,0.8);cursor:pointer;font-size:13px;line-height:1;padding:4px 8px;border-radius:4px;transition:background 0.15s}
+.ann-close:hover{background:rgba(255,255,255,0.28)}
+
+/* ── UTILITY BAR (Nutraj-style) ── */
+.util-bar{background:#F8F7F4;border-bottom:1px solid var(--color-border);height:38px;display:flex;align-items:center;font-size:12px}
+.util-in{max-width:var(--max-width);margin:0 auto;padding:0 32px;display:flex;align-items:center;justify-content:space-between;width:100%}
+.util-links{display:flex;align-items:center}
+.util-lnk{color:var(--color-text-secondary);text-decoration:none;padding:0 14px;border-right:1px solid var(--color-border);white-space:nowrap;font-weight:500;font-size:12px;transition:color 0.15s}
+.util-lnk:first-child{padding-left:0}
+.util-lnk:last-child{border-right:none}
+.util-lnk:hover{color:var(--color-primary)}
+.util-right{display:flex;align-items:center;gap:20px}
+.util-right a{color:var(--color-text-secondary);text-decoration:none;font-weight:600;font-size:12px;transition:color 0.15s;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.util-right a:hover{color:var(--color-primary)}
+@media(max-width:1024px){.util-bar{display:none}}
+
+/* ── HEADER — Nutraj-quality sticky, 68px, shadow scroll ── */
+.site-header{position:sticky;top:0;z-index:100;background:#fff;border-bottom:1px solid var(--color-border);height:68px;transition:box-shadow 0.3s,border-color 0.3s}
+.site-header.scrolled{box-shadow:0 4px 24px rgba(0,0,0,0.07);border-bottom-color:transparent}
+.hdr{display:flex;align-items:center;height:68px;max-width:var(--max-width);margin:0 auto;padding:0 32px;gap:24px}
+
+/* Logo — bigger, more authority */
+.hdr-logo{flex-shrink:0;display:flex;align-items:center;gap:12px;text-decoration:none}
+.hdr-logo img{height:52px;width:auto;object-fit:contain}
+.hdr-logo-svg{display:none;flex-direction:column;line-height:1.1;gap:2px}
+.hdr-logo-name{font-weight:800;font-size:17px;color:var(--color-primary);letter-spacing:-0.02em}
+.hdr-logo-tag{font-weight:600;font-size:10px;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.12em}
+
+/* Search — pill, full center, Nutraj-quality */
+.hdr-search{flex:1;max-width:480px;margin:0 auto;position:relative}
+.hdr-search input{width:100%;height:42px;border-radius:999px;background:#F2F2EE;border:1.5px solid transparent;padding:0 18px 0 44px;font-family:var(--font-primary);font-size:14px;color:var(--color-text-primary);outline:none;transition:all 0.2s;letter-spacing:0.01em}
+.hdr-search input:focus{border-color:var(--color-primary);background:#fff;box-shadow:0 0 0 3px rgba(26,60,94,0.08)}
+.hdr-search input::placeholder{color:#aaa;font-size:13.5px}
+.srch-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#bbb;pointer-events:none;font-size:16px;line-height:1}
+.srch-dd{position:absolute;top:calc(100% + 8px);left:0;right:0;background:#fff;border:1px solid var(--color-border);border-radius:16px;box-shadow:0 12px 40px rgba(0,0,0,0.10);z-index:300;display:none;overflow:hidden;animation:fadeIn 0.15s ease}
+.srch-dd.open{display:block}
+.srch-sec{padding:10px 16px 6px;font-size:10px;font-weight:800;color:#bbb;text-transform:uppercase;letter-spacing:0.1em}
+.srch-item{display:flex;align-items:center;gap:12px;padding:10px 16px;cursor:pointer;font-size:14px;transition:background 0.1s}
+.srch-item:hover{background:#FAFAF8}
+.srch-thumb{width:38px;height:38px;border-radius:8px;background:#F5F0E8;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.srch-no-result{padding:28px 16px;text-align:center;font-size:13px;color:#bbb}
+
+/* Nav links — tighter, more refined */
+.hdr-nav{display:flex;align-items:center;gap:0;list-style:none;flex-shrink:0}
+.hdr-nav a{font-size:14px;font-weight:500;color:var(--color-text-secondary);padding:8px 14px;border-radius:8px;transition:all 0.15s;white-space:nowrap;letter-spacing:0.01em}
+.hdr-nav a:hover,.hdr-nav a.active{color:var(--color-primary);background:rgba(26,60,94,0.06);font-weight:600}
+
+/* Header actions */
+.hdr-acts{display:flex;align-items:center;gap:2px;flex-shrink:0}
+.hdr-btn{width:42px;height:42px;border-radius:10px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--color-text-secondary);position:relative;transition:all 0.15s;text-decoration:none}
+.hdr-btn:hover{background:#F2F2EE;color:var(--color-primary)}
+.cart-bdg{position:absolute;top:4px;right:4px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:var(--color-primary);color:#fff;font-size:9.5px;font-weight:800;display:none;align-items:center;justify-content:center;line-height:1;letter-spacing:0}
+.cart-bdg.on{display:flex}
+
+/* Hamburger — animated 3-bar */
+.hamburger{width:42px;height:42px;border:none;background:none;cursor:pointer;display:none;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:10px;border-radius:10px;transition:background 0.15s}
+.hamburger:hover{background:#F2F2EE}
+.hamburger span{display:block;width:18px;height:1.8px;background:var(--color-text-primary);border-radius:2px;transition:all 0.25s cubic-bezier(0.4,0,0.2,1);transform-origin:center}
+.hamburger.open span:nth-child(1){transform:translateY(6.8px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.hamburger.open span:nth-child(3){transform:translateY(-6.8px) rotate(-45deg)}
+
+/* ── MOBILE SEARCH BAR ── */
+.mob-srch-bar{display:none;background:#fff;padding:10px 16px;border-bottom:1px solid var(--color-border)}
+.mob-srch-bar .srch-wrap{position:relative}
+.mob-srch-bar .srch-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:15px;color:#bbb;pointer-events:none}
+.mob-srch-bar input{width:100%;height:42px;border-radius:999px;background:#F2F2EE;border:1.5px solid transparent;padding:0 16px 0 40px;font-family:var(--font-primary);font-size:14px;outline:none;transition:all 0.2s;color:var(--color-text-primary)}
+.mob-srch-bar input:focus{border-color:var(--color-primary);background:#fff}
+.mob-srch-bar input::placeholder{color:#aaa;font-size:13.5px}
+
+/* ── CATEGORY NAV — Nutraj-quality pill tabs ── */
+.cat-nav{background:#fff;border-bottom:1px solid var(--color-border)}
+.cat-nav-in{max-width:var(--max-width);margin:0 auto;padding:0 32px;display:flex;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;position:relative}
+.cat-nav-in::-webkit-scrollbar{display:none}
+.cat-lnk{display:flex;align-items:center;gap:5px;padding:0 16px;height:46px;font-size:13.5px;font-weight:500;color:var(--color-text-secondary);white-space:nowrap;border-bottom:2.5px solid transparent;text-decoration:none;transition:color 0.15s,border-color 0.15s;flex-shrink:0;letter-spacing:0.01em}
+.cat-lnk:hover{color:var(--color-primary)}
+.cat-lnk.active{color:var(--color-primary);border-bottom-color:var(--color-primary);font-weight:700}
+/* Scroll fade gradient on right edge */
+.cat-nav::after{content:'';position:absolute;right:0;top:0;width:48px;height:100%;background:linear-gradient(to left,#fff,transparent);pointer-events:none;opacity:0;transition:opacity 0.2s}
+.cat-nav.scrollable::after{opacity:1}
+
+/* ── MOBILE MENU DRAWER ── */
+.mob-ov{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;opacity:0;pointer-events:none;transition:opacity 0.28s}
+.mob-ov.open{opacity:1;pointer-events:all}
+.mob-drawer{position:fixed;top:0;left:0;width:min(300px,85vw);height:100%;background:#fff;z-index:201;transform:translateX(-100%);transition:transform 300ms cubic-bezier(0.25,0.46,0.45,0.94);display:flex;flex-direction:column;overflow-y:auto;box-shadow:8px 0 40px rgba(0,0,0,0.12)}
+.mob-drawer.open{transform:translateX(0)}
+.mob-hdr{display:flex;align-items:center;justify-content:space-between;padding:20px;border-bottom:1px solid var(--color-border);background:#FAFAF8}
+.mob-hdr-brand{display:flex;align-items:center;gap:10px}
+.mob-hdr-brand img{height:36px;width:auto}
+.mob-hdr-brand-name{font-weight:800;font-size:15px;color:var(--color-primary)}
+.mob-close{width:34px;height:34px;border:1px solid var(--color-border);background:#fff;border-radius:99px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--color-text-secondary);transition:all 0.15s}
+.mob-close:hover{background:var(--color-primary);color:#fff;border-color:var(--color-primary)}
+.mob-links{padding:8px 0;flex:1}
+.mob-lnk{display:flex;align-items:center;gap:14px;padding:0 20px;height:54px;text-decoration:none;font-size:15px;font-weight:500;color:var(--color-text-primary);transition:all 0.12s;border-left:3px solid transparent}
+.mob-lnk:hover,.mob-lnk.active{background:#F5F4F0;color:var(--color-primary);border-left-color:var(--color-primary)}
+.mob-lnk-ico{font-size:19px;width:24px;text-align:center;flex-shrink:0}
+.mob-div{height:1px;background:var(--color-border);margin:8px 20px}
+.mob-foot{padding:20px;border-top:1px solid var(--color-border);display:flex;flex-direction:column;gap:12px;background:#FAFAF8}
+.mob-phone{font-size:13px;color:var(--color-text-secondary);text-align:center;font-weight:500}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:var(--font-primary);font-weight:700;border-radius:12px;border:2px solid transparent;cursor:pointer;text-decoration:none;transition:all 0.2s cubic-bezier(0.4,0,0.2,1);white-space:nowrap;line-height:1;letter-spacing:0.01em}
+.btn:active{transform:scale(0.97)}
+.btn-primary{background:var(--color-primary);color:#fff;border-color:var(--color-primary)}
+.btn-primary:hover{background:#0F2A45;border-color:#0F2A45;box-shadow:0 6px 20px rgba(26,60,94,0.3)}
+.btn-secondary{background:transparent;color:var(--color-primary);border-color:var(--color-primary)}
+.btn-secondary:hover{background:var(--color-primary);color:#fff;box-shadow:0 4px 16px rgba(26,60,94,0.2)}
+.btn-lg{height:56px;padding:0 36px;font-size:16px}
+.btn-md{height:48px;padding:0 28px;font-size:14px}
+.btn-sm{height:36px;padding:0 20px;font-size:13px}
+.btn-block{width:100%;justify-content:center}
+
+/* ── HERO — Nutraj-quality, generous breathing room ── */
+.hero{background:#fff;padding:72px 0 80px;overflow:hidden}
+.hero-in{max-width:var(--max-width);margin:0 auto;padding:0 32px;display:grid;grid-template-columns:52% 48%;gap:56px;align-items:center}
+
+/* Hero text side — FIX: better type scale, breathing */
+.hero-lbl{display:inline-flex;align-items:center;gap:10px;font-size:11px;font-weight:800;color:var(--color-primary);letter-spacing:0.18em;text-transform:uppercase;margin-bottom:24px}
+.hero-lbl::before{content:'';width:32px;height:2px;background:var(--color-primary);flex-shrink:0;border-radius:2px}
+.hero-h1{font-family:var(--font-display);font-size:clamp(40px,3.8vw,60px);font-weight:700;color:var(--color-primary);line-height:1.05;margin-bottom:24px;letter-spacing:-0.025em}
+.hero-h1 em{font-style:italic;color:var(--color-primary)}
+.hero-sub{font-size:18px;color:var(--color-text-secondary);line-height:1.7;margin-bottom:36px;max-width:420px;font-weight:400}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:36px;align-items:center}
+.hero-trust{display:none}
+.hero-ti{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--color-text-secondary);padding-right:20px;margin-right:20px;border-right:1px solid var(--color-border)}
+.hero-ti:last-child{border-right:none;padding-right:0;margin-right:0}
+.hero-ti-ico{font-size:15px;flex-shrink:0}
+
+/* Hero visual side — FIX: bigger, more elegant */
+.hero-visual{display:flex;justify-content:center;align-items:center}
+.hero-img{width:100%;max-width:480px;aspect-ratio:1/1;border-radius:28px;background:linear-gradient(145deg,#F5EFE3,#EAE0CC);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:8rem;box-shadow:0 24px 60px rgba(26,60,94,0.14),0 6px 20px rgba(26,60,94,0.07);position:relative}
+.hero-img::before{content:'';position:absolute;inset:0;background:linear-gradient(145deg,rgba(255,255,255,0.2),transparent);pointer-events:none;border-radius:inherit}
+.hero-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.6s ease}
+.hero-img:hover img{transform:scale(1.03)}
+
+/* ── TRUST STRIP — Nutraj-quality with dividers ── */
+.trust-strip{background:var(--color-primary);padding:0;border-bottom:1px solid rgba(255,255,255,0.1);margin-top:0}
+.trust-in{max-width:var(--max-width);margin:0 auto;padding:0 32px;display:flex;align-items:center;justify-content:center}
+.trust-item{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.9);white-space:nowrap;padding:16px 32px;border-right:1px solid rgba(255,255,255,0.12);flex:1;justify-content:center}
+.trust-item:last-child{border-right:none}
+.trust-ico{font-size:17px;flex-shrink:0}
+
+/* ── SECTION SHARED — FIX: proper scale ── */
+.sec-pad{padding:80px 0}
+.sec-hdr{text-align:center;margin-bottom:56px}
+.sec-lbl{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:800;color:var(--color-primary);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:12px}
+.sec-lbl::before{content:'';width:20px;height:2px;background:var(--color-primary);border-radius:2px}
+.sec-title{font-size:clamp(30px,2.8vw,42px);font-weight:800;color:var(--color-text-primary);line-height:1.1;margin-bottom:14px;letter-spacing:-0.025em}
+.sec-sub{font-size:17px;color:var(--color-text-secondary);max-width:520px;margin:0 auto;line-height:1.7;font-weight:400}
+
+/* ── CIRCLE CATEGORIES — FIX: larger, proper gap, hover ring ── */
+.circle-cats{background:#fff;padding:48px 0 40px;border-bottom:1px solid var(--color-border)}
+.cc-wrap{max-width:var(--max-width);margin:0 auto;padding:0 32px;display:flex;align-items:flex-start;justify-content:center;gap:48px}
+.cc-item{display:flex;flex-direction:column;align-items:center;gap:14px;cursor:pointer;text-decoration:none;min-width:0}
+.cc-circle{width:120px;height:120px;border-radius:99px;background:linear-gradient(145deg,#F5EFE3,#EAE0CC);border:2.5px solid transparent;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:52px;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1),border-color 0.25s,box-shadow 0.25s;flex-shrink:0;box-shadow:0 4px 16px rgba(0,0,0,0.06)}
+.cc-item:hover .cc-circle{transform:translateY(-6px) scale(1.04);border-color:var(--color-primary);box-shadow:0 12px 32px rgba(26,60,94,0.2)}
+.cc-item.active .cc-circle{border-color:var(--color-primary);box-shadow:0 0 0 4px rgba(26,60,94,0.12);animation:pulseRing 1.2s ease-out}
+.cc-circle img{width:100%;height:100%;object-fit:cover}
+.cc-lbl{font-size:13px;font-weight:600;color:var(--color-text-secondary);text-align:center;line-height:1.3;letter-spacing:0.01em;transition:color 0.2s}
+.cc-item:hover .cc-lbl,.cc-item.active .cc-lbl{color:var(--color-primary)}
+
+/* ── FILTER BAR — FIX: better pill sizing ── */
+.filter-bar{background:#FAFAF8;border-bottom:1px solid var(--color-border);padding:16px 0}
+.filter-in{max-width:var(--max-width);margin:0 auto;padding:0 32px;display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:nowrap}
+.ftag{height:40px;padding:0 24px;border-radius:99px;border:1.5px solid var(--color-border);background:#fff;font-family:var(--font-primary);font-size:13.5px;font-weight:500;color:var(--color-text-secondary);cursor:pointer;white-space:nowrap;transition:all 0.18s cubic-bezier(0.4,0,0.2,1);letter-spacing:0.01em}
+.ftag:hover{border-color:var(--color-primary);color:var(--color-primary);background:rgba(26,60,94,0.04)}
+.ftag.active{background:var(--color-primary);color:#fff;border-color:var(--color-primary);box-shadow:0 4px 12px rgba(26,60,94,0.25)}
+
+/* ── BEST SELLERS — FIX: richer section bg, better spacing ── */
+.best-sell{background:var(--color-bg);padding:72px 0 88px}
+.best-hdr{max-width:var(--max-width);margin:0 auto 40px;padding:0 32px;display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
+.prod-grid{max-width:var(--max-width);margin:0 auto;padding:0 32px;display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+
+/* ── PRODUCT CARD — FIX: Nutraj-level quality, all 5 layers ── */
+.pcard{background:#fff;border:1px solid var(--color-border);border-radius:20px;overflow:hidden;display:flex;flex-direction:column;transition:transform 0.28s cubic-bezier(0.34,1.2,0.64,1),box-shadow 0.28s ease;position:relative;cursor:pointer}
+.pcard:hover{transform:translateY(-6px);box-shadow:0 16px 40px rgba(0,0,0,0.10),0 4px 12px rgba(0,0,0,0.05)}
+
+/* L1 — Image zone */
+.pcard-img{position:relative;width:100%;aspect-ratio:4/4.2;background:#F8F5EE;overflow:hidden}
+.pcard-img img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.4s ease}
+.pcard:hover .pcard-img img{transform:scale(1.05)}
+.pcard-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(145deg,#F5EFE3,#EAE0CC)}
+.stock-bdg{position:absolute;top:12px;left:12px;background:var(--color-primary);color:#fff;font-size:10px;font-weight:800;padding:4px 11px;border-radius:99px;display:none;letter-spacing:0.04em}
+.stock-bdg.on{display:block}
+.prod-badge-tag{position:absolute;top:10px;left:10px;background:#E74C3C;color:#fff;font-size:10.5px;font-weight:800;padding:4px 11px;border-radius:99px;letter-spacing:0.03em;text-transform:uppercase;z-index:2}
+.wish-btn{position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:99px;background:#fff;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:all 0.2s;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
+.wish-btn:hover{transform:scale(1.12);box-shadow:0 4px 16px rgba(0,0,0,0.14)}
+.wish-btn.wishlisted{color:#e74c3c}
+.qv-btn{position:absolute;bottom:0;left:0;right:0;background:rgba(26,60,94,0.94);color:#fff;border:none;cursor:pointer;font-family:var(--font-primary);font-size:13px;font-weight:700;height:44px;opacity:0;transition:opacity 0.22s;display:flex;align-items:center;justify-content:center;gap:6px;letter-spacing:0.02em}
+.pcard:hover .qv-btn{opacity:1}
+
+/* L2 — Title + grade + stars */
+.pcard-body{padding:16px 16px 0;flex:1;display:flex;flex-direction:column;gap:7px}
+.pcard-title{font-size:14px;font-weight:700;color:var(--color-text-primary);line-height:1.3;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;letter-spacing:-0.01em}
+.grade-bdg{display:inline-flex;align-items:center;background:rgba(26,60,94,0.1);color:var(--color-primary);font-size:10px;font-weight:800;padding:3px 9px;border-radius:99px;margin-left:7px;vertical-align:middle;white-space:nowrap;letter-spacing:0.04em}
+.p-stars{display:flex;align-items:center;gap:1px}
+.pstar{color:#F59E0B;font-size:13px}
+.prc{font-size:11px;color:#bbb;margin-left:5px;font-weight:500}
+
+/* L3 — Weight selector */
+.w-sel{width:100%;height:34px;border:1px solid var(--color-border);border-radius:8px;padding:0 12px;font-family:var(--font-primary);font-size:12.5px;color:var(--color-text-primary);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 10px center;-webkit-appearance:none;cursor:pointer;transition:border-color 0.15s;font-weight:500}
+.w-sel:focus{outline:none;border-color:var(--color-primary)}
+
+/* L4 — Price row */
+.price-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px}
+.p-sell{font-family:var(--font-mono);font-size:19px;font-weight:700;color:var(--color-text-primary);letter-spacing:-0.01em}
+.p-mrp{font-family:var(--font-mono);font-size:12px;color:#ccc;text-decoration:line-through;margin-left:6px;font-weight:400}
+.save-bdg{background:#E74C3C;color:#fff;font-size:11px;font-weight:800;padding:4px 11px;border-radius:99px;white-space:nowrap;letter-spacing:0.02em}
+
+/* L5 — ATC footer */
+.pcard-foot{padding:12px 16px 16px}
+.btn-atc{height:46px;width:100%;font-size:14px;font-weight:800;background:var(--color-primary);color:#fff;border:none;border-radius:12px;cursor:pointer;font-family:var(--font-primary);transition:background 0.18s,box-shadow 0.18s,transform 0.15s;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:0.02em}
+.btn-atc:hover{background:#0F2A45;box-shadow:0 6px 20px rgba(26,60,94,0.3)}
+.btn-atc:active{transform:scale(0.98)}
+.btn-atc.oos{background:#D0D0D0;cursor:not-allowed;box-shadow:none}
+
+/* Skeleton loader */
+.skel-card{background:#fff;border:1px solid var(--color-border);border-radius:20px;overflow:hidden}
+.skel-img{aspect-ratio:4/4.2;background:linear-gradient(90deg,#F5F5F3 25%,#EDEDE9 50%,#F5F5F3 75%);background-size:200% 100%;animation:skel 1.4s infinite}
+.skel-ln{height:12px;border-radius:6px;background:linear-gradient(90deg,#F5F5F3 25%,#EDEDE9 50%,#F5F5F3 75%);background-size:200% 100%;animation:skel 1.4s infinite;margin:12px 16px 0}
+.skel-ln.sh{width:55%;margin-top:6px}
+.skel-btn{height:46px;background:linear-gradient(90deg,#F5F5F3 25%,#EDEDE9 50%,#F5F5F3 75%);background-size:200% 100%;animation:skel 1.4s infinite;margin:12px 16px 16px;border-radius:12px}
+
+/* ── SCARCITY BADGE ── */
+.scarcity-bdg{display:inline-flex;align-items:center;gap:4px;background:#FFF3E0;color:#BF360C;font-size:11px;font-weight:800;padding:4px 10px;border-radius:99px;border:1px solid rgba(191,54,12,0.18);letter-spacing:0.02em}
+.btn-atc{height:44px;width:100%;font-size:14px;font-weight:700;background:var(--color-primary);color:#fff;border:none;border-radius:12px;cursor:pointer;font-family:var(--font-primary);transition:background 0.15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-atc:hover{background:#2A5278}
+.btn-atc.oos{background:#ccc;cursor:not-allowed}
+/* Skeleton */
+.skel-card{background:#fff;border:1px solid var(--color-border);border-radius:16px;overflow:hidden}
+@keyframes skel{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel-img{aspect-ratio:1/1;background:linear-gradient(90deg,#F5F5F5 25%,#EBEBEB 50%,#F5F5F5 75%);background-size:200% 100%;animation:skel 1.5s infinite}
+.skel-ln{height:12px;border-radius:6px;background:linear-gradient(90deg,#F5F5F5 25%,#EBEBEB 50%,#F5F5F5 75%);background-size:200% 100%;animation:skel 1.5s infinite;margin:10px 12px}
+.skel-ln.sh{width:55%}
+.skel-btn{height:44px;background:linear-gradient(90deg,#F5F5F5 25%,#EBEBEB 50%,#F5F5F5 75%);background-size:200% 100%;animation:skel 1.5s infinite;margin:0 12px 12px;border-radius:12px}
+
+/* ── HEALTH CURATION — richer cards ── */
+.health-sec{background:var(--color-bg);padding:64px 0}
+.health-grid{max-width:var(--max-width);margin:0 auto;padding:0 32px;display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.hcard{border:1px solid var(--color-border);border-radius:20px;padding:32px;transition:box-shadow 0.25s,transform 0.25s;background:#fff;position:relative;overflow:hidden}
+.hcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--color-primary),rgba(26,60,94,0.3));transform:scaleX(0);transform-origin:left;transition:transform 0.3s ease}
+.hcard:hover::before{transform:scaleX(1)}
+.hcard:hover{box-shadow:0 8px 32px rgba(0,0,0,0.08);transform:translateY(-3px)}
+.hcard-ico{font-size:48px;margin-bottom:20px;display:block}
+.hcard-title{font-size:17px;font-weight:700;color:var(--color-text-primary);margin-bottom:10px;letter-spacing:-0.01em}
+.hcard-desc{font-size:14px;color:var(--color-text-secondary);line-height:1.7;margin-bottom:20px}
+.hcard-lnk{font-size:14px;font-weight:700;color:var(--color-primary);display:inline-flex;align-items:center;gap:6px;transition:gap 0.15s}
+.hcard-lnk:hover{gap:10px}
+
+/* ── WHY JAI SHREE — navy bg, refined cards ── */
+.why-sec{background:var(--color-primary);padding:72px 0 80px}
+.why-sec .sec-lbl{color:rgba(255,255,255,0.55)}
+.why-sec .sec-lbl::before{background:rgba(255,255,255,0.4)}
+.why-sec .sec-title{color:#fff}
+.why-grid{max-width:var(--max-width);margin:36px auto 0;padding:0 32px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;visibility:visible}
+.wcard{background:rgba(255,255,255,0.14);border:1px solid rgba(255,255,255,0.22);border-radius:18px;padding:28px;transition:background 0.25s,transform 0.25s;visibility:visible}
+.wcard:hover{background:rgba(255,255,255,0.16);transform:translateY(-3px)}
+.wcard-ico{font-size:32px;margin-bottom:16px;display:block}
+.wcard-title{font-size:15px;font-weight:800;color:#fff;margin-bottom:10px;letter-spacing:-0.01em}
+.wcard-copy{font-size:13.5px;color:rgba(255,255,255,0.82);line-height:1.6}
+
+/* ── REVIEWS — Nutraj-quality ── */
+.rev-sec{background:var(--color-bg);padding:96px 0}
+.rev-hdr{display:flex;align-items:flex-end;justify-content:space-between;max-width:var(--max-width);margin:0 auto 48px;padding:0 32px;gap:16px}
+.rev-sort{height:38px;padding:0 16px;border:1.5px solid var(--color-border);border-radius:10px;font-family:var(--font-primary);font-size:13px;color:var(--color-text-primary);background:#fff;cursor:pointer;outline:none;font-weight:500;transition:border-color 0.15s}
+.rev-sort:focus{border-color:var(--color-primary)}
+.rev-grid{max-width:var(--max-width);margin:0 auto;padding:0 32px;display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.rcard{background:#fff;border:1px solid var(--color-border);border-radius:20px;padding:28px;transition:box-shadow 0.25s,transform 0.25s;border-left:4px solid var(--color-primary)}
+.rcard:hover{box-shadow:0 8px 24px rgba(0,0,0,0.07);transform:translateY(-2px)}
+.r-stars{display:flex;gap:2px;margin-bottom:14px}
+.rstar{color:#F59E0B;font-size:16px}
+.r-text{font-size:14px;color:var(--color-text-primary);line-height:1.7;margin-bottom:20px;font-style:italic}
+.r-author{display:flex;align-items:center;gap:13px}
+.r-avatar{width:44px;height:44px;border-radius:99px;background:rgba(26,60,94,0.08);display:flex;align-items:center;justify-content:center;font-size:20px;border:2px solid rgba(26,60,94,0.1);flex-shrink:0;overflow:hidden}
+.r-avatar img{width:100%;height:100%;object-fit:cover}
+.r-name{font-weight:700;color:var(--color-primary);font-size:14px}
+.r-city{font-size:12px;color:#bbb;margin-top:1px}
+.verified{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;color:#1E7E34;margin-top:4px;letter-spacing:0.02em}
+
+/* ── COMBO BANNER ── */
+.combo{background:var(--color-primary);padding:56px 0}
+.combo-in{max-width:var(--max-width);margin:0 auto;padding:0 32px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:40px}
+.combo-save{display:inline-flex;align-items:center;background:#27AE60;color:#fff;font-size:12px;font-weight:800;padding:5px 16px;border-radius:99px;margin-bottom:14px;letter-spacing:0.04em}
+.combo-h2{font-family:var(--font-display);font-size:clamp(24px,2.8vw,36px);font-weight:700;color:#fff;line-height:1.15;margin-bottom:12px;letter-spacing:-0.01em}
+.combo-sub{font-size:16px;color:rgba(255,255,255,0.72);margin-bottom:14px;line-height:1.6}
+.combo-price{font-family:var(--font-mono);font-size:30px;font-weight:700;color:#fff;letter-spacing:-0.02em}
+.combo-mrp{font-family:var(--font-mono);font-size:17px;color:rgba(255,255,255,0.4);text-decoration:line-through;margin-left:10px;font-weight:400}
+.btn-combo{background:#fff;color:var(--color-primary);border:none;border-radius:14px;height:56px;padding:0 36px;font-family:var(--font-primary);font-size:15px;font-weight:800;cursor:pointer;white-space:nowrap;transition:all 0.18s;flex-shrink:0;letter-spacing:0.02em}
+.btn-combo:hover{box-shadow:0 8px 28px rgba(255,255,255,0.25);transform:translateY(-1px)}
+
+/* ── FAQ ── */
+.faq-sec{background:#fff;padding:96px 0}
+.faq-list{max-width:680px;margin:0 auto;padding:0 32px}
+.faq-item{border-bottom:1px solid var(--color-border)}
+.faq-q{width:100%;display:flex;align-items:center;justify-content:space-between;padding:0;min-height:62px;background:none;border:none;cursor:pointer;text-align:left;font-family:var(--font-primary);font-size:15px;font-weight:600;color:var(--color-text-primary);gap:20px;letter-spacing:0.01em;transition:color 0.15s}
+.faq-q:hover{color:var(--color-primary)}
+.faq-ico{flex-shrink:0;font-size:22px;color:var(--color-primary);transition:transform 320ms cubic-bezier(0.4,0,0.2,1);width:24px;text-align:center;font-style:normal;font-weight:300;line-height:1}
+.faq-item.open .faq-ico{transform:rotate(45deg)}
+.faq-ans{max-height:0;overflow:hidden;transition:max-height 360ms cubic-bezier(0.4,0,0.2,1)}
+.faq-item.open .faq-ans{max-height:500px}
+.faq-ans-in{padding:4px 0 24px;font-size:15px;color:var(--color-text-secondary);line-height:1.75}
+
+/* ── GIFTING / PROMO DUAL BANNERS ── */
+.promo-banners{padding:0 0 48px;background:var(--color-bg)}
+.promo-banners-in{max-width:var(--max-width);margin:0 auto;padding:0 32px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.pbanner{border-radius:24px;padding:40px 44px;display:flex;flex-direction:column;min-height:220px;position:relative;overflow:hidden;cursor:pointer;transition:transform 0.28s cubic-bezier(0.34,1.2,0.64,1),box-shadow 0.28s ease}
+.pbanner:hover{transform:translateY(-5px);box-shadow:0 20px 48px rgba(0,0,0,0.18)}
+.pbanner-gift{background:linear-gradient(135deg,#1A3C5E 0%,#2E6BA8 100%)}
+.pbanner-bulk{background:linear-gradient(135deg,#141414 0%,#2E2E2E 100%)}
+.pbanner-tag{display:inline-flex;align-items:center;background:rgba(255,255,255,0.18);color:#fff;font-size:11px;font-weight:800;padding:5px 14px;border-radius:99px;margin-bottom:14px;letter-spacing:0.08em;width:fit-content}
+.pbanner-h{font-family:var(--font-display);font-size:clamp(20px,2.2vw,28px);font-weight:700;color:#fff;line-height:1.2;margin-bottom:10px}
+.pbanner-sub{font-size:13.5px;color:rgba(255,255,255,0.68);line-height:1.55;margin-bottom:24px}
+.pbanner-cta{display:inline-flex;align-items:center;gap:7px;background:#fff;color:var(--color-primary);font-size:14px;font-weight:800;padding:12px 24px;border-radius:12px;border:none;cursor:pointer;font-family:var(--font-primary);transition:all 0.18s;width:fit-content;letter-spacing:0.02em}
+.pbanner-cta:hover{box-shadow:0 6px 20px rgba(255,255,255,0.2)}
+.pbanner-ico{position:absolute;bottom:-8px;right:24px;font-size:90px;opacity:0.14;pointer-events:none;line-height:1;transform:rotate(-10deg)}
+
+/* ── DEALS SECTION ── */
+.deals-sec{background:#fff;padding:48px 0 64px}
+.deals-hdr{max-width:var(--max-width);margin:0 auto 40px;padding:0 32px;display:flex;align-items:flex-end;justify-content:space-between;gap:16px}
+.deal-badge{display:inline-flex;align-items:center;gap:6px;background:linear-gradient(90deg,#E74C3C,#C0392B);color:#fff;font-size:11px;font-weight:800;padding:6px 16px;border-radius:99px;margin-bottom:10px;letter-spacing:0.04em}
+.deals-grid{max-width:var(--max-width);margin:0 auto;padding:0 32px;display:grid;grid-template-columns:repeat(4,1fr);gap:24px}
+
+/* ── NEWSLETTER ── */
+.nl-sec{background:var(--color-primary);padding:80px 0}
+.nl-in{max-width:540px;margin:0 auto;padding:0 32px;text-align:center}
+.nl-ico{font-size:44px;margin-bottom:18px;display:block}
+.nl-h{font-family:var(--font-display);font-size:clamp(24px,3vw,36px);font-weight:700;color:#fff;margin-bottom:12px;letter-spacing:-0.01em}
+.nl-sub{font-size:16px;color:rgba(255,255,255,0.7);margin-bottom:32px;line-height:1.65;font-weight:400}
+.nl-form{display:flex;gap:10px;max-width:440px;margin:0 auto}
+.nl-inp{flex:1;height:52px;border-radius:12px;border:1.5px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);padding:0 18px;font-family:var(--font-primary);font-size:14px;color:#fff;outline:none;transition:border-color 0.18s;letter-spacing:0.01em}
+.nl-inp::placeholder{color:rgba(255,255,255,0.5)}
+.nl-inp:focus{border-color:rgba(255,255,255,0.6);background:rgba(255,255,255,0.16)}
+.nl-btn{height:52px;padding:0 28px;border-radius:12px;border:none;background:#fff;color:var(--color-primary);font-family:var(--font-primary);font-size:14px;font-weight:800;cursor:pointer;white-space:nowrap;transition:all 0.18s;flex-shrink:0;letter-spacing:0.02em}
+.nl-btn:hover{box-shadow:0 6px 20px rgba(255,255,255,0.2);transform:translateY(-1px)}
+.nl-legal{margin-top:16px;font-size:11px;color:rgba(255,255,255,0.4)}
+.nl-success{display:none;color:#fff;font-size:16px;font-weight:600;padding:16px 0}
+
+/* ── BRAND STORY ── */
+.brand-story{background:#fff;padding:72px 0}
+.brand-story-in{max-width:660px;margin:0 auto;padding:0 32px;text-align:center}
+.brand-story-txt{font-size:16.5px;color:var(--color-text-secondary);line-height:1.8;font-weight:400;max-width:640px;margin:0 auto}
+
+/* ── RECENTLY VIEWED ── */
+.rv-sec{background:#fff;padding:48px 0;border-top:1px solid var(--color-border);display:none}
+.rv-sec.has-items{display:block}
+.rv-scroll{max-width:var(--max-width);margin:20px auto 0;padding:0 32px;display:flex;gap:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}
+.rv-scroll::-webkit-scrollbar{display:none}
+.rv-card{flex-shrink:0;width:140px;cursor:pointer;transition:transform 0.2s}
+.rv-card:hover{transform:translateY(-3px)}
+.rv-card-img{width:140px;height:140px;border-radius:14px;background:linear-gradient(145deg,#F5EFE3,#EAE0CC);display:flex;align-items:center;justify-content:center;font-size:52px;overflow:hidden;margin-bottom:10px;border:1px solid var(--color-border)}
+.rv-card-img img{width:100%;height:100%;object-fit:cover}
+.rv-card-name{font-size:12px;font-weight:700;color:var(--color-text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rv-card-price{font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--color-primary);margin-top:3px}
+
+/* ── FOOTER — FIX: proper spacing ── */
+.site-footer{background:#111}
+.foot-main{max-width:var(--max-width);margin:0 auto;padding:72px 32px 56px;display:grid;grid-template-columns:2.2fr 1fr 1fr 1.2fr;gap:56px}
+.foot-logo{height:54px;width:auto;display:block;margin-bottom:22px}
+.foot-brand-fallback{font-weight:800;font-size:18px;color:#fff;margin-bottom:22px;display:none;letter-spacing:-0.01em}
+.foot-desc{font-size:13.5px;color:#C8C8C8;line-height:1.75;margin-bottom:18px}
+.foot-addr{font-size:12px;color:rgba(255,255,255,0.45);line-height:1.75;margin-bottom:22px}
+.foot-social{display:flex;gap:10px;flex-wrap:wrap}
+.foot-soc{width:40px;height:40px;border-radius:10px;border:1px solid rgba(255,255,255,0.15);background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:#C8C8C8;text-decoration:none;transition:all 0.18s}
+.foot-soc:hover{border-color:rgba(255,255,255,0.4);color:#fff;background:rgba(255,255,255,0.08)}
+.foot-col-h{font-weight:800;font-size:11px;color:#fff;margin-bottom:20px;text-transform:uppercase;letter-spacing:0.12em}
+.foot-lnks{display:flex;flex-direction:column;gap:13px}
+.foot-lnk{font-size:13.5px;color:#C8C8C8;text-decoration:none;transition:color 0.15s;line-height:1.2}
+.foot-lnk:hover{color:#fff}
+.foot-div{height:1px;background:rgba(255,255,255,0.08);max-width:var(--max-width);margin:0 auto}
+.foot-legal{max-width:var(--max-width);margin:0 auto;padding:22px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.foot-legal-txt{font-size:12px;color:rgba(255,255,255,0.38);line-height:1.5}
+.foot-legal-lnks{display:flex;align-items:center;gap:20px}
+.foot-legal-lnk{font-size:12px;color:rgba(255,255,255,0.38);text-decoration:none;transition:color 0.15s}
+.foot-legal-lnk:hover{color:rgba(255,255,255,0.75)}
+
+/* ── CART DRAWER ── */
+.cart-ov{position:fixed;inset:0;background:rgba(0,0,0,0.48);z-index:200;opacity:0;pointer-events:none;transition:opacity 0.28s}
+.cart-ov.open{opacity:1;pointer-events:all}
+.cart-dr{position:fixed;top:0;right:0;width:400px;max-width:100vw;height:100%;background:#fff;z-index:201;transform:translateX(100%);transition:transform 320ms cubic-bezier(0.25,0.46,0.45,0.94);display:flex;flex-direction:column}
+.cart-dr.open{transform:translateX(0)}
+.cart-hdr{background:#111;padding:22px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.cart-title-txt{font-size:15px;font-weight:800;color:#fff;letter-spacing:0.02em}
+.cart-cnt{font-size:12px;color:rgba(255,255,255,0.5);margin-left:8px;font-weight:500}
+.cart-cls{width:32px;height:32px;border:1px solid rgba(255,255,255,0.25);border-radius:99px;background:none;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background 0.15s}
+.cart-cls:hover{background:rgba(255,255,255,0.12)}
+.ship-bar{padding:14px 24px;border-bottom:1px solid var(--color-border);background:#FAFAF8;flex-shrink:0}
+.ship-lbl{font-size:12.5px;color:var(--color-text-secondary);margin-bottom:9px;font-weight:500}
+.ship-lbl strong{color:#1E7E34}
+.ship-prog{height:5px;background:var(--color-border);border-radius:99px;overflow:hidden}
+.ship-fill{height:100%;background:#1E7E34;border-radius:99px;transition:width 0.45s cubic-bezier(0.4,0,0.2,1)}
+.cart-scroll{flex:1;overflow-y:auto;padding:0}
+.cart-empty-state{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 24px;text-align:center;gap:12px}
+.cart-empty-ico{font-size:56px;opacity:0.28}
+.cart-empty-h{font-size:16px;font-weight:700;color:var(--color-text-primary)}
+.cart-empty-p{font-size:14px;color:#bbb}
+.cart-item{display:flex;gap:14px;padding:18px 24px;border-bottom:1px solid var(--color-border)}
+.ci-thumb{width:72px;height:72px;border-radius:12px;background:linear-gradient(145deg,#F5EFE3,#EAE0CC);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;overflow:hidden;border:1px solid var(--color-border)}
+.ci-thumb img{width:100%;height:100%;object-fit:cover}
+.ci-info{flex:1;min-width:0}
+.ci-name{font-size:14px;font-weight:700;color:var(--color-text-primary);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-0.01em}
+.ci-var{font-size:12px;color:#bbb;margin-bottom:9px;font-weight:500}
+.ci-price{font-family:var(--font-mono);font-size:15px;font-weight:700;color:var(--color-text-primary)}
+.qty-step{display:flex;align-items:center;gap:8px;margin-top:7px}
+.qty-btn{width:28px;height:28px;border:1.5px solid var(--color-border);border-radius:8px;background:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all 0.12s;color:var(--color-text-primary)}
+.qty-btn:hover{border-color:var(--color-primary);color:var(--color-primary)}
+.qty-n{font-size:14px;font-weight:700;min-width:22px;text-align:center}
+.ci-rm{background:none;border:none;cursor:pointer;color:#ccc;font-size:18px;padding:4px;align-self:flex-start;transition:color 0.12s;margin-left:4px}
+.ci-rm:hover{color:#e74c3c}
+.cart-foot{padding:20px 24px;border-top:1px solid var(--color-border);flex-shrink:0}
+.cart-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.cart-total-lbl{font-size:15px;font-weight:600;color:var(--color-text-primary)}
+.cart-total-val{font-family:var(--font-mono);font-size:24px;font-weight:700;color:var(--color-text-primary);letter-spacing:-0.01em}
+
+/* ── AUTH MODAL ── */
+.auth-ov{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:300;display:none;align-items:center;justify-content:center;padding:20px}
+.auth-ov.open{display:flex}
+.auth-modal{background:#fff;border-radius:22px;width:420px;max-width:100%;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.24);transform:scale(0.94);opacity:0;transition:transform 0.26s cubic-bezier(0.34,1.56,0.64,1),opacity 0.22s ease}
+.auth-ov.open .auth-modal{transform:scale(1);opacity:1}
+.auth-hdr{background:#111;padding:22px 24px;display:flex;align-items:center;justify-content:space-between}
+.auth-hdr-title{font-size:15px;font-weight:800;color:#fff;letter-spacing:0.02em}
+.auth-cls{background:none;border:1px solid rgba(255,255,255,0.25);border-radius:99px;width:32px;height:32px;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background 0.15s}
+.auth-cls:hover{background:rgba(255,255,255,0.12)}
+.auth-tabs{display:flex;border-bottom:1px solid var(--color-border)}
+.atab{flex:1;height:46px;background:none;border:none;border-bottom:2.5px solid transparent;cursor:pointer;font-family:var(--font-primary);font-size:14px;font-weight:500;color:#bbb;transition:all 0.15s;letter-spacing:0.01em}
+.atab.active{color:var(--color-primary);border-bottom-color:var(--color-primary);font-weight:800}
+.auth-body{padding:26px}
+.tab-pnl{display:none}
+.tab-pnl.active{display:block}
+.fg{margin-bottom:18px}
+.flbl{display:block;font-size:13px;font-weight:700;color:var(--color-text-primary);margin-bottom:8px;letter-spacing:0.01em}
+.finp{width:100%;height:48px;border:1.5px solid var(--color-border);border-radius:11px;padding:0 16px;font-family:var(--font-primary);font-size:14px;color:var(--color-text-primary);background:#fff;outline:none;transition:all 0.18s}
+.finp:focus{border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(26,60,94,0.08)}
+.f-err{font-size:13px;color:#C0392B;margin-bottom:12px;display:none;font-weight:500}
+.f-msg{font-size:13px;margin-bottom:12px;display:none;font-weight:500}
+
+/* ── QUICK VIEW MODAL ── */
+.qv-ov{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:300;display:none;align-items:center;justify-content:center;padding:20px}
+.qv-ov.open{display:flex}
+.qv-modal{background:#fff;border-radius:22px;width:820px;max-width:100%;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.22);display:grid;grid-template-columns:1fr 1fr;max-height:90vh;overflow-y:auto}
+.qv-img{background:linear-gradient(145deg,#F5EFE3,#EAE0CC);display:flex;align-items:center;justify-content:center;font-size:100px;min-height:360px}
+.qv-img img{width:100%;height:100%;object-fit:cover}
+.qv-content{padding:36px}
+.qv-close{position:absolute;top:16px;right:16px;width:38px;height:38px;border-radius:99px;background:rgba(0,0,0,0.07);border:none;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:background 0.15s}
+.qv-close:hover{background:rgba(0,0,0,0.12)}
+
+/* ── MOBILE BOTTOM NAV ── */
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:64px;background:#fff;border-top:1px solid var(--color-border);z-index:100;align-items:stretch;box-shadow:0 -4px 24px rgba(0,0,0,0.07)}
+.mob-ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-decoration:none;color:#bbb;font-size:10px;font-weight:600;cursor:pointer;border:none;background:none;padding:0;font-family:var(--font-primary);transition:color 0.15s;position:relative;letter-spacing:0.03em}
+.mob-ni::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:0;height:3px;background:var(--color-primary);border-radius:0 0 3px 3px;transition:width 0.22s ease}
+.mob-ni.active,.mob-ni:hover{color:var(--color-primary)}
+.mob-ni.active::before{width:24px}
+.mob-ni-ico{font-size:22px;line-height:1}
+
+/* ── STICKY ATC BAR ── */
+.sticky-atc{display:none;position:fixed;bottom:64px;left:0;right:0;height:64px;background:#fff;border-top:1px solid var(--color-border);z-index:99;align-items:center;padding:0 16px;gap:14px;box-shadow:0 -4px 20px rgba(0,0,0,0.09)}
+.sticky-atc-info{flex:1;min-width:0}
+.sticky-atc-name{font-size:13px;font-weight:700;color:var(--color-text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sticky-atc-price{font-family:var(--font-mono);font-size:15px;font-weight:700;color:var(--color-text-primary)}
+
+/* ── BACK TO TOP ── */
+.btt{position:fixed;bottom:84px;left:20px;width:44px;height:44px;border-radius:99px;background:var(--color-primary);color:#fff;border:none;cursor:pointer;font-size:19px;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.3s,transform 0.3s;z-index:99;box-shadow:0 6px 20px rgba(26,60,94,0.35)}
+.btt.visible{opacity:1;pointer-events:all;transform:translateY(0)}
+.btt:hover{background:#0F2A45;transform:translateY(-2px)}
+
+/* ── WHATSAPP FLOAT ── */
+.wa-float{position:fixed;bottom:80px;right:16px;width:54px;height:54px;border-radius:99px;background:#25D366;color:#fff;display:flex;align-items:center;justify-content:center;font-size:27px;box-shadow:0 6px 20px rgba(37,211,102,0.45);text-decoration:none;z-index:99;transition:transform 0.18s,box-shadow 0.18s}
+.wa-float:hover{transform:scale(1.08);box-shadow:0 8px 28px rgba(37,211,102,0.55)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%) translateY(24px);background:#1A1A1A;color:#fff;padding:13px 28px;border-radius:99px;font-size:14px;font-weight:600;z-index:400;opacity:0;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);pointer-events:none;white-space:nowrap;letter-spacing:0.01em}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── BREADCRUMB ── */
+.breadcrumb{display:none;align-items:center;gap:6px;font-size:12px;color:#bbb;padding:10px 0}
+.breadcrumb a{color:#bbb;text-decoration:none;transition:color 0.15s}
+.breadcrumb a:hover{color:var(--color-primary)}
+
+/* ══════════════════════════════════════
+   RESPONSIVE — TABLET 1024px
+══════════════════════════════════════ */
+@media(max-width:1024px){
+  .hdr-nav{display:none}
+  #login-btn{display:none!important}
+  .hamburger{display:flex}
+  .hdr-search{max-width:360px}
+  .prod-grid{grid-template-columns:repeat(3,1fr);gap:20px}
+  .deals-grid{grid-template-columns:repeat(2,1fr)}
+  .foot-main{grid-template-columns:1fr 1fr;gap:40px;padding:56px 32px 40px}
+  .health-grid{grid-template-columns:repeat(2,1fr)}
+  .rev-grid{grid-template-columns:repeat(2,1fr)}
+  .why-grid{grid-template-columns:repeat(2,1fr)}
+  .hero{padding:56px 0 64px}
+  .hero-in{gap:40px}
+}
+
+/* ══════════════════════════════════════
+   RESPONSIVE — MOBILE 767px
+══════════════════════════════════════ */
+@media(max-width:767px){
+  .mob-nav{display:flex}
+  .wa-float{bottom:76px;right:14px}
+  .btt{bottom:76px;left:14px}
+  .mob-srch-bar{display:block}
+  body{padding-bottom:64px}
+  .hdr{padding:0 16px;gap:6px;height:60px;display:grid;grid-template-columns:42px 1fr auto;align-items:center}
+  .site-header{height:64px}
+  .hdr-search{display:none}
+  .hamburger{display:flex;order:0;grid-column:1}
+  .hdr-logo{order:0;justify-self:center}
+  .hdr-logo img{height:44px}
+  .hdr-acts{order:1;gap:2px}
+  .hdr-nav{display:none}
+  #login-btn{display:none!important}
+  .ann-bar{font-size:12px}
+  .cat-nav-in{padding:0 16px}
+  .cat-lnk{padding:0 14px;height:44px;font-size:13px}
+  .hero{padding:40px 0 48px}
+  .hero-in{grid-template-columns:1fr;gap:0;padding:0 20px}
+  .hero-visual{display:none}
+  .hero-lbl{font-size:10px;margin-bottom:16px}
+  .hero-h1{font-size:clamp(36px,10vw,52px);margin-bottom:18px}
+  .hero-sub{font-size:15px;margin-bottom:24px;max-width:none;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .hero-cta{flex-direction:column;gap:10px;margin-bottom:32px}
+  .hero-cta .btn{width:100%;justify-content:center;height:52px}
+  /* hero-trust removed */
+  .trust-strip{padding:0}
+  .trust-in{padding:0;justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+  .trust-in::-webkit-scrollbar{display:none}
+  .trust-item{padding:14px 20px;flex-shrink:0;justify-content:flex-start;border-right:1px solid rgba(255,255,255,0.1);flex:0 0 auto}
+  .trust-item:last-child{border-right:none}
+  .circle-cats{padding:28px 0 24px}
+  .cc-wrap{padding:0 20px;gap:20px;justify-content:flex-start;overflow-x:auto;scrollbar-width:none}
+  .cc-wrap::-webkit-scrollbar{display:none}
+  .cc-circle{width:80px;height:80px;font-size:34px}
+  .cc-item{min-width:80px;gap:10px}
+  .cc-lbl{font-size:11.5px}
+  .filter-bar{padding:12px 0}
+  .filter-in{padding:0 20px;justify-content:flex-start;overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none;gap:8px}
+  .filter-in::-webkit-scrollbar{display:none}
+  .ftag{height:36px;padding:0 18px;font-size:13px;flex-shrink:0}
+  .best-sell{padding:40px 0 56px}
+  .best-hdr{padding:0 20px;flex-direction:column;align-items:flex-start;gap:12px;margin-bottom:24px}
+  .prod-grid{grid-template-columns:repeat(2,1fr);gap:14px;padding:0 20px}
+  .pcard-body{padding:12px 12px 0}
+  .pcard-title{font-size:13px}
+  .pcard-foot{padding:10px 12px 12px}
+  .btn-atc{height:44px;font-size:13px}
+  .p-sell{font-size:17px}
+  .price-row{flex-wrap:wrap;gap:4px}
+  .deals-sec{padding:40px 0 56px}
+  .deals-hdr{padding:0 20px;flex-direction:column;align-items:flex-start;gap:10px;margin-bottom:24px}
+  .deals-grid{grid-template-columns:repeat(2,1fr);gap:14px;padding:0 20px}
+  .promo-banners{padding:0 0 40px}
+  .promo-banners-in{grid-template-columns:1fr;padding:0 20px;gap:16px}
+  .pbanner{padding:28px;min-height:180px}
+  .pbanner-ico{font-size:64px}
+  .health-sec{padding:52px 0}
+  .health-grid{grid-template-columns:1fr;padding:0 20px;gap:16px}
+  .hcard{padding:24px}
+  .why-sec{padding:52px 0}
+  .why-grid{grid-template-columns:repeat(2,1fr);padding:0 20px;gap:14px;margin-top:28px}
+  .wcard{padding:20px}
+  .wcard-title{font-size:14px}
+  .rev-sec{padding:52px 0}
+  .rev-hdr{padding:0 20px;flex-direction:column;align-items:flex-start;gap:14px;margin-bottom:28px}
+  .rev-grid{grid-template-columns:1fr;padding:0 20px;gap:16px}
+  .rcard{padding:22px}
+  .combo{padding:40px 0}
+  .combo-in{grid-template-columns:1fr;padding:0 20px;text-align:center;gap:24px}
+  .combo-h2{font-size:clamp(22px,6vw,28px)}
+  .btn-combo{margin:0 auto;display:flex;align-items:center;justify-content:center}
+  .faq-sec{padding:52px 0}
+  .faq-list{padding:0 20px}
+  .faq-q{font-size:14.5px;min-height:58px}
+  .faq-ans-in{font-size:14px}
+  .brand-story{padding:52px 0}
+  .brand-story-in{padding:0 20px}
+  .brand-story-txt{font-size:16px}
+  .nl-sec{padding:52px 0}
+  .nl-in{padding:0 20px}
+  .nl-form{flex-direction:column}
+  .nl-inp,.nl-btn{width:100%;height:52px}
+  .nl-h{font-size:clamp(22px,6vw,28px)}
+  .sec-pad{padding:52px 0}
+  .sec-hdr{margin-bottom:32px;padding:0 20px}
+  .sec-title{font-size:clamp(24px,7vw,30px)}
+  .sec-sub{font-size:15px}
+  .rv-sec{padding:32px 0}
+  .rv-scroll{padding:0 20px}
+  .rv-card{width:128px}
+  .rv-card-img{width:128px;height:128px}
+  .foot-main{grid-template-columns:1fr;gap:36px;padding:48px 20px 36px}
+  .foot-legal{padding:18px 20px;flex-direction:column;text-align:center;gap:10px}
+  .foot-legal-lnks{justify-content:center;flex-wrap:wrap;gap:16px}
+  .foot-div{margin:0}
+  .foot-logo{height:48px}
+  .foot-social{gap:8px}
+  .btt{bottom:84px;width:40px;height:40px;font-size:17px}
+  .wa-float{bottom:84px;width:50px;height:50px;font-size:25px}
+  .toast{bottom:84px;font-size:13px;padding:12px 22px}
+  .mob-srch-bar{padding:10px 20px}
+}
+
+/* P3-A Category-specific card image backgrounds */
+.pcard[data-cat="Premium Nuts"] .pcard-placeholder,.pcard[data-cat="cashews"] .pcard-placeholder{background:linear-gradient(145deg,#FBF0DC,#F2E0BC)}
+.pcard[data-cat="Exotic Dates"] .pcard-placeholder,.pcard[data-cat="dates"] .pcard-placeholder{background:linear-gradient(145deg,#F5E8D0,#E8CFB0)}
+.pcard[data-cat="Superfood Seeds"] .pcard-placeholder,.pcard[data-cat="seeds"] .pcard-placeholder{background:linear-gradient(145deg,#EFF5E8,#DCF0D0)}
+.pcard[data-cat="Berries & Raisins"] .pcard-placeholder,.pcard[data-cat="berries"] .pcard-placeholder{background:linear-gradient(145deg,#F5E8F0,#EACCE8)}
+.pcard[data-cat="raisins"] .pcard-placeholder{background:linear-gradient(145deg,#F0E8F5,#E0CCEB)}
+
+</style>
+</head>
+<body>
+
+<!-- ANNOUNCEMENT BAR AA.1 — Navy 40s ticker, pause hover, localStorage 24hr dismiss -->
+<div class="ann-bar" id="ann-bar">
+  <div class="ann-ticker">
+    <span>Free delivery on orders above ₹499</span><span class="ann-dot">•</span>
+    <span>Premium Grade · Freshly Packed · Pan India Delivery</span><span class="ann-dot">•</span>
+    <span>Zero Preservatives — 100% Natural Dry Fruits</span><span class="ann-dot">•</span>
+    <span>📞 7568577968 | 9950062186</span><span class="ann-dot">•</span>
+    <span>Cashews · Almonds · Pistachios · Walnuts · Dates · Seeds</span><span class="ann-dot">•</span>
+    <span>Free delivery on orders above ₹499</span><span class="ann-dot">•</span>
+    <span>Premium Grade · Freshly Packed · Pan India Delivery</span><span class="ann-dot">•</span>
+    <span>Zero Preservatives — 100% Natural Dry Fruits</span><span class="ann-dot">•</span>
+    <span>📞 7568577968 | 9950062186</span><span class="ann-dot">•</span>
+    <span>Cashews · Almonds · Pistachios · Walnuts · Dates · Seeds</span><span class="ann-dot">•</span>
+  </div>
+  <button class="ann-close" id="ann-close" aria-label="Close announcement">✕</button>
+</div>
+
+<!-- UTILITY BAR — Trust links + Quick access (Nutraj pattern) -->
+<div class="util-bar" id="util-bar">
+  <div class="util-in">
+    <div class="util-links">
+      <a href="account.html" class="util-lnk">Track Order</a>
+      <a href="products.html?bulk=1" class="util-lnk">📦 Bulk Orders</a>
+      <a href="pages/corporate.html" class="util-lnk">Corporate Gifting</a>
+      <a href="pages/contact.html" class="util-lnk">Contact Us</a>
+    </div>
+    <div class="util-right">
+      <a href="tel:7568577968">📞 7568577968</a>
+      <a href="https://wa.me/917568577968" target="_blank" rel="noopener">💬 WhatsApp</a>
+    </div>
+  </div>
+</div>
+
+<!-- SITE HEADER F.1/G.1 — 64px LOCKED, sticky -->
+<header class="site-header" id="site-header">
+  <div class="hdr">
+    <!-- LOGO -->
+    <a href="index.html" class="hdr-logo" aria-label="Jai Shree Dry Fruits">
+      <img src="assets/logo.png" alt="Jai Shree Dry Fruits"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="hdr-logo-svg" style="display:none">
+        <span class="hdr-logo-name">JAI SHREE</span>
+        <span class="hdr-logo-tag">Dry Fruits</span>
+      </div>
+    </a>
+
+    <!-- SEARCH — center S.3, AI.1 -->
+    <div class="hdr-search" id="hdr-search">
+      <span class="srch-ico">🔍</span>
+      <input type="text" id="srch-inp"
+        placeholder="Search kaju, badam, pista, akhrot..."
+        autocomplete="off" spellcheck="false"
+        oninput="handleSearch(this.value)"
+        onfocus="showDD()" onblur="setTimeout(hideDD,220)"
+        aria-label="Search products" aria-autocomplete="list" role="combobox">
+      <div class="srch-dd" id="srch-dd" role="listbox"></div>
+    </div>
+
+    <!-- DESKTOP NAV -->
+    <nav aria-label="Main navigation">
+      <ul class="hdr-nav" role="list">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="products.html">Shop All</a></li>
+        <li><a href="products.html?cat=cashews">Cashews</a></li>
+        <li><a href="products.html?cat=almonds">Almonds</a></li>
+        <li><a href="products.html?bulk=1">Bulk</a></li>
+      </ul>
+    </nav>
+
+    <!-- ACTIONS — account left of cart, hamburger rightmost -->
+    <div class="hdr-acts">
+      <button class="hdr-btn" id="login-btn" onclick="openAuth('login')" title="My Account" aria-label="Account">👤</button>
+      <button class="hdr-btn" id="cart-btn" onclick="openCart()" title="Cart" aria-label="Cart" style="position:relative">
+        🛒<span class="cart-bdg" id="cart-bdg">0</span>
+      </button>
+      <button class="hamburger" id="hamburger" onclick="openMob()" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- MOBILE SEARCH BAR — below header on mobile only -->
+<div class="mob-srch-bar" id="mob-srch-bar">
+  <div class="srch-wrap">
+    <span class="srch-ico">🔍</span>
+    <input type="text" id="mob-srch-inp"
+      placeholder="Search kaju, badam, pista, akhrot..."
+      autocomplete="off"
+      oninput="handleSearch(this.value,true)"
+      aria-label="Search">
+  </div>
+</div>
+
+<!-- CATEGORY NAV G.1 -->
+<nav class="cat-nav" aria-label="Product categories">
+  <div class="cat-nav-in">
+    <a href="products.html" class="cat-lnk active">All Products</a>
+    <a href="products.html?cat=cashews" class="cat-lnk">🥜 Cashews</a>
+    <a href="products.html?cat=almonds" class="cat-lnk">🌰 Almonds</a>
+    <a href="products.html?cat=pistachios" class="cat-lnk">💚 Pistachios</a>
+    <a href="products.html?cat=walnuts" class="cat-lnk">🌰 Walnuts</a>
+    <a href="products.html?cat=dates" class="cat-lnk">🌴 Dates</a>
+    <a href="products.html?cat=seeds" class="cat-lnk">🌱 Seeds</a>
+    <a href="products.html?cat=berries" class="cat-lnk">🍇 Berries & Raisins</a>
+    <a href="products.html?bulk=1" class="cat-lnk">📦 Bulk Orders</a>
+  </div>
+</nav>
+
+<!-- MOBILE MENU DRAWER — slides from LEFT, 300ms cubic-bezier -->
+<div class="mob-ov" id="mob-ov" onclick="closeMob()"></div>
+<div class="mob-drawer" id="mob-drawer" role="dialog" aria-modal="true" aria-label="Navigation menu">
+  <div class="mob-hdr">
+    <div class="mob-hdr-brand">
+      <img src="assets/logo.png" alt="Jai Shree" onerror="this.style.display='none'">
+      <span class="mob-hdr-brand-name">JAI SHREE</span>
+    </div>
+    <button class="mob-close" onclick="closeMob()" aria-label="Close menu">✕</button>
+  </div>
+  <div class="mob-links" role="list">
+    <a href="index.html" class="mob-lnk active" role="listitem"><span class="mob-lnk-ico">🏠</span><span>Home</span></a>
+    <a href="products.html" class="mob-lnk"><span class="mob-lnk-ico">🛍️</span><span>All Products</span></a>
+    <a href="products.html?cat=cashews" class="mob-lnk"><span class="mob-lnk-ico">🥜</span><span>Cashews (W180 / W240 / W320)</span></a>
+    <a href="products.html?cat=almonds" class="mob-lnk"><span class="mob-lnk-ico">🌰</span><span>Almonds</span></a>
+    <a href="products.html?cat=pistachios" class="mob-lnk"><span class="mob-lnk-ico">💚</span><span>Pistachios</span></a>
+    <a href="products.html?cat=walnuts" class="mob-lnk"><span class="mob-lnk-ico">🥌</span><span>Walnuts</span></a>
+    <a href="products.html?cat=dates" class="mob-lnk"><span class="mob-lnk-ico">🌴</span><span>Dates</span></a>
+    <a href="products.html?cat=seeds" class="mob-lnk"><span class="mob-lnk-ico">🌱</span><span>Seeds</span></a>
+    <div class="mob-div"></div>
+    <a href="products.html?bulk=1" class="mob-lnk"><span class="mob-lnk-ico">📦</span><span>Bulk Orders</span></a>
+    <a href="pages/corporate.html" class="mob-lnk"><span class="mob-lnk-ico">🎁</span><span>Corporate Gifting</span></a>
+    <a href="account.html" class="mob-lnk"><span class="mob-lnk-ico">👤</span><span>My Account</span></a>
+    <a href="cart.html" class="mob-lnk"><span class="mob-lnk-ico">🛒</span><span>Cart</span></a>
+    <div class="mob-div"></div>
+    <a href="pages/about.html" class="mob-lnk"><span class="mob-lnk-ico">ℹ️</span><span>About Us</span></a>
+    <a href="pages/contact.html" class="mob-lnk"><span class="mob-lnk-ico">📞</span><span>Contact</span></a>
+  </div>
+  <div class="mob-foot">
+    <div class="mob-phone">📞 7568577968 &nbsp;|&nbsp; 9950062186</div>
+    <a href="https://wa.me/917568577968" class="btn btn-primary btn-block btn-md">💬 WhatsApp Us</a>
+    <button class="btn btn-secondary btn-block btn-md" onclick="openAuth('login');closeMob()">Login / Register</button>
+  </div>
+</div>
+
+<!-- HERO G.2 — WHITE BG LOCKED, Playfair headline, product-benefit copy, 4 badges NO factory/FSSAI -->
+<section class="hero" id="hero" aria-label="Hero banner">
+  <div class="hero-in">
+    <div>
+      <div class="hero-lbl">Premium Dry Fruits</div>
+      <h1 class="hero-h1">Premium Dry Fruits. <em>Naturally Better.</em></h1>
+      <p class="hero-sub">Cashews, Almonds, Pistachios, Walnuts, Dates &amp; more — freshly packed and delivered across India.</p>
+      <div class="hero-cta">
+        <a href="products.html" class="btn btn-primary btn-lg">Shop Now</a>
+        <a href="products.html?sale=1" class="btn btn-secondary btn-md">Explore Deals</a>
+      </div>
+
+    </div>
+    <div class="hero-visual">
+      <div class="hero-img" id="hero-img-wrap">
+        <img src="assets/hero-dryfruit.jpg" alt="Premium Dry Fruits Collection"
+          onerror="this.style.display='none';document.getElementById('hero-img-svg').style.display='flex'">
+        <!-- Inline SVG fallback: premium bowl illustration -->
+        <div id="hero-img-svg" style="display:none;width:100%;height:100%;align-items:center;justify-content:center;background:linear-gradient(145deg,#F5EFE3,#EAE0CC);position:absolute;inset:0">
+          <svg viewBox="0 0 420 420" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;max-width:380px;max-height:380px">
+            <!-- Bowl shadow -->
+            <ellipse cx="210" cy="370" rx="130" ry="18" fill="rgba(0,0,0,0.10)"/>
+            <!-- Bowl body -->
+            <path d="M80 220 Q80 360 210 360 Q340 360 340 220 Z" fill="#D4B896"/>
+            <path d="M80 220 Q80 350 210 350 Q340 350 340 220 Z" fill="#C9A97E"/>
+            <!-- Bowl rim -->
+            <ellipse cx="210" cy="220" rx="130" ry="28" fill="#E8C99A"/>
+            <ellipse cx="210" cy="216" rx="126" ry="24" fill="#F5DEB3"/>
+            <!-- Cashew 1 (large, front) -->
+            <path d="M165 195 Q148 170 158 150 Q172 128 190 140 Q210 152 205 175 Q198 195 180 200 Z" fill="#F0C060" stroke="#D4A030" stroke-width="1.5"/>
+            <path d="M168 192 Q155 172 163 155 Q174 138 188 148 Q204 158 200 178 Q195 192 180 196 Z" fill="#F5D070"/>
+            <!-- Cashew 2 (right) -->
+            <path d="M235 188 Q218 163 228 143 Q242 121 260 133 Q280 145 275 168 Q268 188 250 193 Z" fill="#F0C060" stroke="#D4A030" stroke-width="1.5" transform="rotate(-25 255 165)"/>
+            <!-- Almond (left) -->
+            <ellipse cx="160" cy="175" rx="14" ry="22" fill="#C8956C" stroke="#A0724A" stroke-width="1.5" transform="rotate(20 160 175)"/>
+            <ellipse cx="160" cy="175" rx="10" ry="18" fill="#DBA882" transform="rotate(20 160 175)"/>
+            <line x1="160" y1="157" x2="160" y2="193" stroke="#A0724A" stroke-width="1" transform="rotate(20 160 175)"/>
+            <!-- Walnut (back center) -->
+            <ellipse cx="215" cy="158" rx="18" ry="15" fill="#8B6040"/>
+            <ellipse cx="215" cy="158" rx="16" ry="13" fill="#A0744E"/>
+            <path d="M200 156 Q215 148 230 156 M200 162 Q215 154 230 162" stroke="#6B4828" stroke-width="1.5" fill="none"/>
+            <!-- Pistachio (right back) -->
+            <ellipse cx="268" cy="162" rx="12" ry="16" fill="#8FA653" stroke="#6B8038" stroke-width="1.5" transform="rotate(-10 268 162)"/>
+            <ellipse cx="268" cy="162" rx="9" ry="12" fill="#B8C875" transform="rotate(-10 268 162)"/>
+            <!-- Raisin cluster -->
+            <circle cx="188" cy="215" r="7" fill="#6B3A4A"/>
+            <circle cx="200" cy="212" r="6" fill="#7A4558"/>
+            <circle cx="193" cy="205" r="5" fill="#6B3A4A"/>
+            <!-- Date (amber) -->
+            <ellipse cx="240" cy="210" rx="10" ry="14" fill="#8B5E1A" transform="rotate(15 240 210)"/>
+            <ellipse cx="240" cy="210" rx="7" ry="11" fill="#B07A28" transform="rotate(15 240 210)"/>
+            <!-- Shine on bowl rim -->
+            <path d="M120 210 Q135 200 160 204" stroke="rgba(255,255,255,0.6)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST STRIP F.2 — SINGLE INSTANCE ONLY, NAVY BG — 6 product-benefit items -->
+<div class="trust-strip" role="list" aria-label="Trust signals">
+  <div class="trust-in">
+    <div class="trust-item" role="listitem"><span class="trust-ico">⭐</span><span>Premium Grade</span></div>
+    <div class="trust-item" role="listitem"><span class="trust-ico">📦</span><span>Freshly Packed</span></div>
+    <div class="trust-item" role="listitem"><span class="trust-ico">✓</span><span>Quality Assured</span></div>
+    <div class="trust-item" role="listitem"><span class="trust-ico">🚚</span><span>Pan India Delivery</span></div>
+    <div class="trust-item" role="listitem"><span class="trust-ico">🌿</span><span>Zero Preservatives</span></div>
+    <div class="trust-item" role="listitem"><span class="trust-ico">↩</span><span>7-Day Returns</span></div>
+  </div>
+</div>
+
+<!-- CIRCLE CATEGORIES AH.1 — 4 LOCKED pillars -->
+<div class="circle-cats" id="circle-cats">
+  <div class="cc-wrap">
+    <a href="products.html?cat=nuts" class="cc-item" data-f="Premium Nuts" onclick="activateFilter('Premium Nuts',this)">
+      <div class="cc-circle"><img src="assets/cat-nuts.jpg" alt="" onerror="this.style.display='none';this.parentElement.style.fontSize='120px';this.parentElement.style.display='flex';this.parentElement.style.alignItems='center';this.parentElement.style.justifyContent='center';this.parentElement.textContent='🥜'"></div>
+      <span class="cc-lbl">Premium Nuts</span>
+    </a>
+    <a href="products.html?cat=seeds" class="cc-item" data-f="Superfood Seeds" onclick="activateFilter('Superfood Seeds',this)">
+      <div class="cc-circle"><img src="assets/cat-seeds.jpg" alt="" onerror="this.style.display='none';this.parentElement.innerHTML='🌱'"></div>
+      <span class="cc-lbl">Superfood Seeds</span>
+    </a>
+    <a href="products.html?cat=dates" class="cc-item" data-f="Exotic Dates" onclick="activateFilter('Exotic Dates',this)">
+      <div class="cc-circle"><img src="assets/cat-dates.jpg" alt="" onerror="this.style.display='none';this.parentElement.innerHTML='🌴'"></div>
+      <span class="cc-lbl">Exotic Dates</span>
+    </a>
+    <a href="products.html?cat=berries" class="cc-item" data-f="Berries &amp; Raisins" onclick="activateFilter('Berries & Raisins',this)">
+      <div class="cc-circle"><img src="assets/cat-berries.jpg" alt="" onerror="this.style.display='none';this.parentElement.innerHTML='🍇'"></div>
+      <span class="cc-lbl">Berries &amp; Raisins</span>
+    </a>
+  </div>
+</div>
+
+<!-- FILTER BAR AH.3 — 5 LOCKED tags, desktop centered, mobile scroll -->
+<div class="filter-bar">
+  <div class="filter-in" id="filter-in">
+    <button class="ftag active" data-f="All" onclick="filterClick('All',this)">All</button>
+    <button class="ftag" data-f="Premium Nuts" onclick="filterClick('Premium Nuts',this)">Premium Nuts</button>
+    <button class="ftag" data-f="Superfood Seeds" onclick="filterClick('Superfood Seeds',this)">Superfood Seeds</button>
+    <button class="ftag" data-f="Exotic Dates" onclick="filterClick('Exotic Dates',this)">Exotic Dates</button>
+    <button class="ftag" data-f="Berries &amp; Raisins" onclick="filterClick('Berries & Raisins',this)">Berries &amp; Raisins</button>
+  </div>
+</div>
+
+<!-- BEST SELLERS AH.2/H.3 — 4-col desktop, 2-col mobile, skeleton, empty+error states -->
+<section class="best-sell" id="best-sell" aria-label="Best Sellers">
+  <div class="best-hdr">
+    <div>
+      <div class="sec-lbl">Our Collection</div>
+      <h2 class="sec-title" style="margin-bottom:0">Best Sellers</h2>
+    </div>
+    <a href="products.html" class="btn btn-secondary btn-sm">View All →</a>
+  </div>
+  <div class="prod-grid" id="prod-grid">
+    <!-- Skeletons shown while loading -->
+    <div class="skel-card"><div class="skel-img"></div><div class="skel-ln"></div><div class="skel-ln sh"></div><div class="skel-ln sh"></div><div class="skel-btn"></div></div>
+    <div class="skel-card"><div class="skel-img"></div><div class="skel-ln"></div><div class="skel-ln sh"></div><div class="skel-ln sh"></div><div class="skel-btn"></div></div>
+    <div class="skel-card"><div class="skel-img"></div><div class="skel-ln"></div><div class="skel-ln sh"></div><div class="skel-ln sh"></div><div class="skel-btn"></div></div>
+    <div class="skel-card"><div class="skel-img"></div><div class="skel-ln"></div><div class="skel-ln sh"></div><div class="skel-ln sh"></div><div class="skel-btn"></div></div>
+  </div>
+  <div id="prod-empty" style="display:none;text-align:center;padding:64px 32px">
+    <div style="font-size:52px;margin-bottom:16px;opacity:.35">🛒</div>
+    <div style="font-size:17px;font-weight:700;margin-bottom:8px">No products in this category yet</div>
+    <div style="font-size:14px;color:#999;margin-bottom:24px">Check back soon — we're adding new products.</div>
+    <a href="products.html" class="btn btn-primary btn-md">Browse All Products</a>
+  </div>
+  <div id="prod-error" style="display:none;text-align:center;padding:64px 32px">
+    <div style="font-size:52px;margin-bottom:16px">⚠️</div>
+    <div style="font-size:17px;font-weight:700;margin-bottom:8px">Unable to load products</div>
+    <div style="font-size:14px;color:#999;margin-bottom:24px">Please check your connection and try again.</div>
+    <button class="btn btn-primary btn-md" onclick="loadProds()">Try Again</button>
+  </div>
+</section>
+
+<!-- PROMO DUAL BANNERS — Gifting + Bulk (Nutraj mid-page banner pattern) -->
+<div class="promo-banners">
+  <div class="promo-banners-in">
+    <!-- Gifting Banner -->
+    <div class="pbanner pbanner-gift" onclick="location.href='pages/corporate.html'" role="button" tabindex="0" aria-label="Shop Corporate Gifting">
+      <div>
+        <div class="pbanner-tag">🎁 Premium Gifting</div>
+        <div class="pbanner-h">Corporate & Festive Gift Packs</div>
+        <div class="pbanner-sub">Beautifully packed dry fruits for Diwali, weddings, corporate gifting — bulk discounts available.</div>
+        <button class="pbanner-cta" onclick="event.stopPropagation();location.href='pages/corporate.html'">Explore Gifting →</button>
+      </div>
+      <span class="pbanner-ico">🎁</span>
+    </div>
+    <!-- Bulk Banner -->
+    <div class="pbanner pbanner-bulk" onclick="location.href='products.html?bulk=1'" role="button" tabindex="0" aria-label="Shop Bulk Orders">
+      <div>
+        <div class="pbanner-tag">📦 Wholesale</div>
+        <div class="pbanner-h">Bulk Orders for Businesses</div>
+        <div class="pbanner-sub">Special pricing for orders above 5kg. For traders, hotels, sweet shops & corporate pantries. GST invoice available.</div>
+        <button class="pbanner-cta" onclick="event.stopPropagation();location.href='products.html?bulk=1'">Get Bulk Pricing →</button>
+      </div>
+      <span class="pbanner-ico">📦</span>
+    </div>
+  </div>
+</div>
+
+<!-- DEALS SECTION — Super Saver (Nutraj Bundle pattern) -->
+<section class="deals-sec" aria-label="Super Saver Deals" id="deals-sec">
+  <div class="deals-hdr">
+    <div>
+      <div class="deal-badge">🔥 Limited Time</div>
+      <div class="sec-lbl" style="display:block;margin-bottom:6px">Super Saver Deals</div>
+      <h2 class="sec-title" style="margin-bottom:0">Best Value Combos</h2>
+    </div>
+    <a href="products.html?deals=1" class="btn btn-secondary btn-sm">All Deals →</a>
+  </div>
+  <div class="deals-grid" id="deals-grid">
+    <!-- Rendered by JS -->
+    <div class="skel-card"><div class="skel-img"></div><div class="skel-ln"></div><div class="skel-ln sh"></div><div class="skel-btn"></div></div>
+    <div class="skel-card"><div class="skel-img"></div><div class="skel-ln"></div><div class="skel-ln sh"></div><div class="skel-btn"></div></div>
+    <div class="skel-card"><div class="skel-img"></div><div class="skel-ln"></div><div class="skel-ln sh"></div><div class="skel-btn"></div></div>
+    <div class="skel-card"><div class="skel-img"></div><div class="skel-ln"></div><div class="skel-ln sh"></div><div class="skel-btn"></div></div>
+  </div>
+</section>
+
+<!-- RECENTLY VIEWED X.2 -->
+<section class="rv-sec" id="rv-sec" aria-label="Recently Viewed">
+  <div style="max-width:var(--max-width);margin:0 auto;padding:0 32px">
+    <div class="sec-lbl">Continue Browsing</div>
+    <h2 class="sec-title" style="margin-bottom:0;font-size:22px">Recently Viewed</h2>
+  </div>
+  <div class="rv-scroll" id="rv-scroll"></div>
+</section>
+
+<!-- HEALTH CURATION AH.4 — after Best Sellers, before Why Jai Shree -->
+<section class="health-sec sec-pad" aria-label="Shop by Health Goal">
+  <div class="sec-hdr container">
+    <div class="sec-lbl">Curated For You</div>
+    <h2 class="sec-title">Shop by Health Goal</h2>
+    <p class="sec-sub">We've curated the right products for what your body needs</p>
+  </div>
+  <div class="health-grid">
+    <div class="hcard">
+      <span class="hcard-ico">🥗</span>
+      <div class="hcard-title">Weight Management</div>
+      <div class="hcard-desc">High fibre. Low carb. Right portions. Pumpkin seeds, flax seeds, almonds — smart snacking for your goals.</div>
+      <a href="products.html?goal=weight" class="hcard-lnk">Shop Now →</a>
+    </div>
+    <div class="hcard">
+      <span class="hcard-ico">❤️</span>
+      <div class="hcard-title">Heart Health</div>
+      <div class="hcard-desc">Omega-3 rich. Naturally good for your heart. Walnuts, almonds, cranberries — nature's best heart care.</div>
+      <a href="products.html?goal=heart" class="hcard-lnk">Shop Now →</a>
+    </div>
+    <div class="hcard">
+      <span class="hcard-ico">⚡</span>
+      <div class="hcard-title">Energy &amp; Fitness</div>
+      <div class="hcard-desc">Natural sugar. Sustained energy. Zero guilt. Medjool dates, figs, cashews W240 — power your day.</div>
+      <a href="products.html?goal=energy" class="hcard-lnk">Shop Now →</a>
+    </div>
+  </div>
+</section>
+
+<!-- WHY JAI SHREE F.6 — NAVY BG #1A3C5E LOCKED, 6 cards, NO Factory Direct / FSSAI -->
+<section class="why-sec" aria-label="Why Choose Jai Shree">
+  <div class="sec-hdr container">
+    <div class="sec-lbl">Our Promise</div>
+    <h2 class="sec-title">Why Jai Shree</h2>
+  </div>
+  <div class="why-grid">
+    <div class="wcard"><span class="wcard-ico">⭐</span><div class="wcard-title">25+ Years Experience</div><div class="wcard-copy">Over 25 years of excellence in premium dry fruits, now delivered directly to your doorstep.</div></div>
+    <div class="wcard"><span class="wcard-ico">🛡️</span><div class="wcard-title">Premium Grade Selection</div><div class="wcard-copy">Handpicked cashews, almonds, pistachios, and walnuts. Every batch rigorously checked.</div></div>
+    <div class="wcard"><span class="wcard-ico">📦</span><div class="wcard-title">Freshly Packed</div><div class="wcard-copy">Packed fresh on every single order. No stale warehouse storage, just pure taste.</div></div>
+    <div class="wcard"><span class="wcard-ico">🚚</span><div class="wcard-title">Pan India Delivery</div><div class="wcard-copy">Shipped from Jaipur to your city in 3–7 days. Fully tracked at every step.</div></div>
+    <div class="wcard"><span class="wcard-ico">🌿</span><div class="wcard-title">Zero Preservatives</div><div class="wcard-copy">100% natural dry fruits. No chemicals, no additives, no artificial flavors.</div></div>
+    <div class="wcard"><span class="wcard-ico">↩️</span><div class="wcard-title">7-Day Easy Returns</div><div class="wcard-copy">Not satisfied with freshness? Contact us within 7 days for a hassle-free return.</div></div>
+  </div>
+</section>
+
+<!-- REVIEWS H.5 — NAVY stars (NOT gold), name bold navy + "City, India", verified green -->
+<section class="rev-sec" aria-label="Customer Reviews">
+  <div class="rev-hdr">
+    <div>
+      <div class="sec-lbl">Customer Love</div>
+      <h2 class="sec-title" style="margin-bottom:0">What Customers Say</h2>
+    </div>
+    <select class="rev-sort" id="rev-sort" onchange="sortReviews(this.value)" aria-label="Sort reviews">
+      <option value="newest">Newest First</option>
+      <option value="highest">Highest Rating</option>
+      <option value="lowest">Lowest Rating</option>
+    </select>
+  </div>
+  <div class="rev-grid" id="rev-grid">
+    <div class="rcard">
+      <div class="r-stars"><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span></div>
+      <p class="r-text">"Best cashews I've ever had! Bahut fresh aur tasty. Jai Shree ka naam suna tha, ab khud taste kiya — bilkul sahi hai. Definitely ordering again!"</p>
+      <div class="r-author"><div class="r-avatar">👩</div><div><div class="r-name">Priya Sharma</div><div class="r-city">Jaipur, India</div><div class="verified">✓ Verified Buyer</div></div></div>
+    </div>
+    <div class="rcard">
+      <div class="r-stars"><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span></div>
+      <p class="r-text">"W180 cashews are premium quality — big size, fresh taste. Fair price for the quality. Packaging excellent. Will order again!"</p>
+      <div class="r-author"><div class="r-avatar">👨</div><div><div class="r-name">Rahul Gupta</div><div class="r-city">Delhi, India</div><div class="verified">✓ Verified Buyer</div></div></div>
+    </div>
+    <div class="rcard">
+      <div class="r-stars"><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span><span class="rstar">★</span></div>
+      <p class="r-text">"Ordered a variety pack — almonds, walnuts, cashews. All super fresh and well-packed. Delivered in 3 days to Mumbai. Highly recommend!"</p>
+      <div class="r-author"><div class="r-avatar">👩</div><div><div class="r-name">Sunita Agarwal</div><div class="r-city">Mumbai, India</div><div class="verified">✓ Verified Buyer</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- COMBO BANNER AH.5 — Navy bg, Playfair headline, white CTA, genuine save badge -->
+<section class="combo" aria-label="Best Seller Combo Pack">
+  <div class="combo-in">
+    <div>
+      <div class="combo-save">Save 20%</div>
+      <h2 class="combo-h2">Daily Essentials Combo Pack</h2>
+      <p class="combo-sub">Almond + Cashew + Walnut — the perfect daily nutrition trio</p>
+      <div style="display:flex;align-items:baseline;gap:8px">
+        <span class="combo-price">₹599</span>
+        <span class="combo-mrp">₹749</span>
+      </div>
+    </div>
+    <button class="btn-combo" onclick="location.href='products.html?combo=essentials'">Shop Combo →</button>
+  </div>
+</section>
+
+<!-- FAQ H.6 — + rotates 45deg, max-height 0→500px 300ms, 58px min-height -->
+<section class="faq-sec sec-pad" aria-label="FAQ">
+  <div class="sec-hdr container">
+    <div class="sec-lbl">Got Questions?</div>
+    <h2 class="sec-title">Frequently Asked Questions</h2>
+  </div>
+  <div class="faq-list">
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFAQ(this)" aria-expanded="false">
+        <span>What makes Jai Shree dry fruits different?</span>
+        <span class="faq-ico" aria-hidden="true">+</span>
+      </button>
+      <div class="faq-ans" role="region"><div class="faq-ans-in">We've been in the dry fruits business for 25+ years. Every batch is handpicked and packed fresh to order — no warehouse storage. Premium grade products with zero preservatives, delivered directly to your doorstep.</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFAQ(this)" aria-expanded="false">
+        <span>What is the difference between W180, W240, W320 cashews?</span>
+        <span class="faq-ico" aria-hidden="true">+</span>
+      </button>
+      <div class="faq-ans" role="region"><div class="faq-ans-in">The number indicates cashews per pound. W180 = ~180 nuts (Extra Large, premium gifting). W240 = ~240 nuts (Large, best for snacking). W320 = ~320 nuts (Medium, ideal for cooking and mithai). Smaller number = bigger cashew = higher price.</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFAQ(this)" aria-expanded="false">
+        <span>How long do the dry fruits stay fresh?</span>
+        <span class="faq-ico" aria-hidden="true">+</span>
+      </button>
+      <div class="faq-ans" role="region"><div class="faq-ans-in">All products come in sealed, airtight packaging with 6 months shelf life from packing date. Store in a cool, dry place. Refrigerate after opening for maximum freshness. No preservatives added.</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFAQ(this)" aria-expanded="false">
+        <span>How long does delivery take?</span>
+        <span class="faq-ico" aria-hidden="true">+</span>
+      </button>
+      <div class="faq-ans" role="region"><div class="faq-ans-in">We ship from Jaipur within 24 hours. Standard delivery 3–7 business days across India. Free shipping on orders above ₹499. Tracking link via WhatsApp/email once shipped.</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFAQ(this)" aria-expanded="false">
+        <span>What is your return policy?</span>
+        <span class="faq-ico" aria-hidden="true">+</span>
+      </button>
+      <div class="faq-ans" role="region"><div class="faq-ans-in">7-day easy return policy. Not satisfied with freshness or quality? Contact within 7 days of delivery. We'll arrange pickup or issue full refund — no questions asked. Call 7568577968 or WhatsApp.</div></div>
+    </div>
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFAQ(this)" aria-expanded="false">
+        <span>Do you offer bulk or wholesale orders?</span>
+        <span class="faq-ico" aria-hidden="true">+</span>
+      </button>
+      <div class="faq-ans" role="region"><div class="faq-ans-in">Yes! Special pricing for orders above 5kg. Contact 7568577968 or visit our Bulk Orders page. GST invoice provided (GSTIN: 08ADJPP5115H1ZH).</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- BRAND STORY C.5 — last before footer, max 4 sentences, customer-benefit ending -->
+<section class="brand-story sec-pad" aria-label="Our Story">
+  <div class="brand-story-in">
+    <div class="sec-lbl" style="display:block;margin-bottom:10px">Our Story</div>
+    <h2 class="sec-title" style="margin-bottom:20px">25 Years of Premium Selection</h2>
+    <p class="brand-story-txt">Jai Shree Dry Fruits has spent over 25 years building a trusted name in premium quality dry fruits, with deep roots in Jaipur's trading heritage. We source the finest cashews, almonds, pistachios, walnuts, and more — carefully selected, freshly packed, and delivered to you with no middlemen. Every product you receive has been chosen with the same care we'd give our own family — because that's exactly who our customers are. Your satisfaction is our legacy.</p>
+  </div>
+</section>
+
+<!-- NEWSLETTER — Pre-footer lead capture (Nutraj pattern) -->
+<section class="nl-sec" aria-label="Newsletter signup">
+  <div class="nl-in">
+    <div class="nl-ico">📬</div>
+    <h2 class="nl-h">Get Exclusive Deals in Your Inbox</h2>
+    <p class="nl-sub">Subscribe for seasonal offers, health tips, and early access to new products. No spam — ever.</p>
+    <div class="nl-form" id="nl-form">
+      <input class="nl-inp" type="email" id="nl-email" placeholder="Your email address" autocomplete="email" aria-label="Email for newsletter">
+      <button class="nl-btn" onclick="nlSubmit()">Subscribe →</button>
+    </div>
+    <div class="nl-success" id="nl-success">🎉 Thank you! Check your inbox for a welcome offer.</div>
+    <div class="nl-legal">By subscribing you agree to our Privacy Policy. Unsubscribe anytime.</div>
+  </div>
+</section>
+
+<!-- FOOTER E.1 HIGH-CONTRAST LOCK — #111 bg, colored logo, #E5E5E5 links -->
+<footer class="site-footer" aria-label="Site Footer">
+  <div class="foot-main">
+    <div>
+      <img src="assets/logo.png" class="foot-logo" alt="Jai Shree Dry Fruits"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <div class="foot-brand-fallback">JAI SHREE DRY FRUITS</div>
+      <p class="foot-desc">Jai Shree Cashew Industries — 25+ years of premium dry fruits. Freshly packed, zero preservatives, delivered across India.</p>
+      <p class="foot-addr">📍 41 Barah Ji Ki Gali, Gangauri Bazar,<br>Jaipur — 302001, Rajasthan<br>GST: 08ADJPP5115H1ZH<br>FSSAI: 12420015000757</p>
+      <div class="foot-social">
+        <a href="https://wa.me/917568577968" class="foot-soc" title="WhatsApp">💬</a>
+        <a href="#" class="foot-soc" title="Instagram">📷</a>
+        <a href="#" class="foot-soc" title="Facebook">👍</a>
+      </div>
+    </div>
+    <div>
+      <h4 class="foot-col-h">Products</h4>
+      <div class="foot-lnks">
+        <a href="products.html?cat=cashews" class="foot-lnk">Cashews W180/W240/W320</a>
+        <a href="products.html?cat=almonds" class="foot-lnk">California Almonds</a>
+        <a href="products.html?cat=pistachios" class="foot-lnk">Roasted Pistachios</a>
+        <a href="products.html?cat=walnuts" class="foot-lnk">Premium Walnuts</a>
+        <a href="products.html?cat=dates" class="foot-lnk">Medjool &amp; Ajwa Dates</a>
+        <a href="products.html?cat=seeds" class="foot-lnk">Power Seeds &amp; Mixes</a>
+        <a href="products.html?cat=berries" class="foot-lnk">Berries &amp; Raisins</a>
+      </div>
+    </div>
+    <div>
+      <h4 class="foot-col-h">Company</h4>
+      <div class="foot-lnks">
+        <a href="pages/about.html" class="foot-lnk">About Us</a>
+        <a href="pages/contact.html" class="foot-lnk">Contact Us</a>
+        <a href="products.html?bulk=1" class="foot-lnk">Bulk Orders</a>
+        <a href="pages/blog.html" class="foot-lnk">Health Blog</a>
+        <a href="pages/corporate.html" class="foot-lnk">Corporate Gifting</a>
+      </div>
+    </div>
+    <div>
+      <h4 class="foot-col-h">Support</h4>
+      <div class="foot-lnks">
+        <a href="pages/shipping-policy.html" class="foot-lnk">Shipping Policy</a>
+        <a href="pages/return-policy.html" class="foot-lnk">Return Policy</a>
+        <a href="pages/privacy-policy.html" class="foot-lnk">Privacy Policy</a>
+        <a href="pages/terms.html" class="foot-lnk">Terms &amp; Conditions</a>
+        <a href="pages/faq.html" class="foot-lnk">FAQ</a>
+        <a href="account.html" class="foot-lnk">Track My Order</a>
+      </div>
+      <div style="margin-top:20px">
+        <h4 class="foot-col-h">Contact</h4>
+        <div class="foot-lnks">
+          <a href="tel:7568577968" class="foot-lnk">📞 7568577968</a>
+          <a href="tel:9950062186" class="foot-lnk">📞 9950062186</a>
+          <a href="https://wa.me/917568577968" class="foot-lnk">💬 WhatsApp Us</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot-div"></div>
+  <div class="foot-legal">
+    <span class="foot-legal-txt">© 2026 Jai Shree Cashew Industries. All rights reserved. GSTIN: 08ADJPP5115H1ZH | FSSAI: 12420015000757</span>
+    <div class="foot-legal-lnks">
+      <span class="foot-legal-txt" style="margin-right:16px">💳 UPI &nbsp;|&nbsp; COD &nbsp;|&nbsp; NetBanking</span>
+      <a href="pages/privacy-policy.html" class="foot-legal-lnk">Privacy</a>
+      <a href="pages/terms.html" class="foot-legal-lnk">Terms</a>
+      <a href="pages/sitemap.html" class="foot-legal-lnk">Sitemap</a>
+    </div>
+  </div>
+</footer>
+
+<!-- CART DRAWER H.8 — BLACK header, slide right, ₹499 free shipping bar -->
+<div class="cart-ov" id="cart-ov" onclick="closeCart()"></div>
+<div class="cart-dr" id="cart-dr" role="dialog" aria-modal="true" aria-label="Shopping Cart">
+  <div class="cart-hdr">
+    <div style="display:flex;align-items:center">
+      <span class="cart-title-txt">Your Cart</span>
+      <span class="cart-cnt" id="cart-cnt">(0 items)</span>
+    </div>
+    <button class="cart-cls" onclick="closeCart()" aria-label="Close cart">✕</button>
+  </div>
+  <div class="ship-bar">
+    <div class="ship-lbl" id="ship-lbl">Add ₹499 more for <strong>Free Shipping</strong></div>
+    <div class="ship-prog"><div class="ship-fill" id="ship-fill" style="width:0%"></div></div>
+  </div>
+  <div class="cart-scroll" id="cart-scroll">
+    <div class="cart-empty-state" id="cart-empty-state">
+      <div class="cart-empty-ico">🛒</div>
+      <div class="cart-empty-h">Your cart is empty</div>
+      <p class="cart-empty-p">Add some premium dry fruits to get started!</p>
+      <button class="btn btn-primary btn-md" style="margin-top:8px" onclick="closeCart();location.href='products.html'">Browse Products</button>
+    </div>
+  </div>
+  <div class="cart-foot" id="cart-foot" style="display:none">
+    <div class="cart-row">
+      <span class="cart-total-lbl">Subtotal</span>
+      <span class="cart-total-val" id="cart-total">₹0</span>
+    </div>
+    <button class="btn btn-primary btn-block btn-md" onclick="location.href='checkout.html'">Proceed to Checkout →</button>
+    <button class="btn btn-secondary btn-block btn-sm" style="margin-top:10px" onclick="location.href='cart.html'">View Full Cart</button>
+  </div>
+</div>
+
+<!-- AUTH MODAL H.7 — scale+fade 250ms, BLACK header -->
+<div class="auth-ov" id="auth-ov" onclick="if(event.target===this)closeAuth()">
+  <div class="auth-modal" id="auth-modal" role="dialog" aria-modal="true" aria-label="Account">
+    <div class="auth-hdr">
+      <span class="auth-hdr-title">Your Account</span>
+      <button class="auth-cls" onclick="closeAuth()" aria-label="Close">✕</button>
+    </div>
+    <div class="auth-tabs" role="tablist">
+      <button class="atab active" data-t="login" onclick="switchTab('login')" role="tab" aria-selected="true">Login</button>
+      <button class="atab" data-t="register" onclick="switchTab('register')" role="tab" aria-selected="false">Register</button>
+      <button class="atab" data-t="forgot" onclick="switchTab('forgot')" role="tab" aria-selected="false">Forgot?</button>
+    </div>
+    <div class="auth-body">
+      <div class="tab-pnl active" id="tab-login" role="tabpanel">
+        <div class="fg"><label class="flbl" for="l-email">Email</label><input class="finp" type="email" id="l-email" placeholder="you@example.com" autocomplete="email"></div>
+        <div class="fg"><label class="flbl" for="l-pass">Password</label><input class="finp" type="password" id="l-pass" placeholder="Your password" autocomplete="current-password"></div>
+        <div class="f-err" id="l-err"></div>
+        <button class="btn btn-primary btn-block btn-md" onclick="doLogin()">Login</button>
+        <p style="text-align:center;margin-top:14px;font-size:13px;color:#999">or <button style="font-size:13px;color:var(--color-primary);background:none;border:none;cursor:pointer;font-weight:700" onclick="doGoogleLogin()">Sign in with Google</button></p>
+      </div>
+      <div class="tab-pnl" id="tab-register" role="tabpanel">
+        <div class="fg"><label class="flbl" for="r-name">Full Name</label><input class="finp" type="text" id="r-name" placeholder="Your name" autocomplete="name"></div>
+        <div class="fg"><label class="flbl" for="r-email">Email</label><input class="finp" type="email" id="r-email" placeholder="you@example.com" autocomplete="email"></div>
+        <div class="fg"><label class="flbl" for="r-phone">Phone</label><input class="finp" type="tel" id="r-phone" placeholder="10-digit mobile" autocomplete="tel"></div>
+        <div class="fg"><label class="flbl" for="r-pass">Password</label><input class="finp" type="password" id="r-pass" placeholder="Min 8 characters" autocomplete="new-password"></div>
+        <div class="f-err" id="r-err"></div>
+        <button class="btn btn-primary btn-block btn-md" onclick="doRegister()">Create Account</button>
+      </div>
+      <div class="tab-pnl" id="tab-forgot" role="tabpanel">
+        <p style="font-size:14px;color:#666;margin-bottom:16px;line-height:1.6">Enter your email and we'll send a password reset link.</p>
+        <div class="fg"><label class="flbl" for="f-email">Email</label><input class="finp" type="email" id="f-email" placeholder="you@example.com"></div>
+        <div class="f-msg" id="f-msg"></div>
+        <button class="btn btn-primary btn-block btn-md" onclick="doReset()">Send Reset Link</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- QUICK VIEW MODAL -->
+<div class="qv-ov" id="qv-ov" onclick="if(event.target===this)closeQV()">
+  <div class="qv-modal" id="qv-modal" role="dialog" aria-modal="true" aria-label="Product Quick View" style="position:relative">
+    <button class="qv-close" onclick="closeQV()" aria-label="Close">✕</button>
+    <div class="qv-img" id="qv-img">🥜</div>
+    <div class="qv-content" id="qv-content"></div>
+  </div>
+</div>
+
+<!-- MOBILE BOTTOM NAV F.5 — 64px LOCKED, 5 tabs, navy active -->
+<nav class="mob-nav" id="mob-nav" aria-label="Mobile navigation">
+  <a href="index.html" class="mob-ni active" aria-current="page"><span class="mob-ni-ico">🏠</span><span>Home</span></a>
+  <a href="products.html" class="mob-ni"><span class="mob-ni-ico">🛍️</span><span>Shop</span></a>
+  <button class="mob-ni" onclick="focusSearch()" aria-label="Search"><span class="mob-ni-ico">🔍</span><span>Search</span></button>
+  <button class="mob-ni" onclick="openCart()" aria-label="Cart" style="position:relative"><span class="mob-ni-ico">🛒</span><span>Cart</span></button>
+  <button class="mob-ni" onclick="openAuth('login')" aria-label="Account"><span class="mob-ni-ico">👤</span><span>Account</span></button>
+</nav>
+
+<!-- STICKY ATC (mobile — shown when product ATC scrolls out of view) -->
+<div class="sticky-atc" id="sticky-atc">
+  <div class="sticky-atc-info">
+    <div class="sticky-atc-name" id="sticky-atc-name">Add to Cart</div>
+    <div class="sticky-atc-price" id="sticky-atc-price">₹0</div>
+  </div>
+  <button class="btn btn-primary btn-md" id="sticky-atc-btn" onclick="stickyATC()">Add to Cart</button>
+</div>
+
+<!-- BACK TO TOP -->
+<button class="btt" id="btt" onclick="window.scrollTo({top:0,behavior:'smooth'})" aria-label="Back to top">↑</button>
+
+<!-- WHATSAPP FLOAT -->
+<a href="https://wa.me/917568577968?text=Hi%2C+I+want+to+order+dry+fruits" class="wa-float" target="_blank" rel="noopener noreferrer" aria-label="Chat on WhatsApp" title="WhatsApp us">💬</a>
+
+<!-- TOAST -->
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="firebase-config.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/cart.js"></script>
+<script src="js/products.js"></script>
+<script src="js/utils.js"></script>
+<script>
+'use strict';
+// ================================================================
+// JAI SHREE DRY FRUITS — Phase 1 Homepage JS
+// Complete functional implementation
+// ================================================================
+
+// ── ANNOUNCEMENT BAR ──
+(function(){
+  var K='jsd_ann_v2', bar=document.getElementById('ann-bar'), btn=document.getElementById('ann-close');
+  try{if(localStorage.getItem(K)&&Date.now()-+localStorage.getItem(K)<86400000)bar.classList.add('dismissed');}catch(e){}
+  btn.addEventListener('click',function(){bar.classList.add('dismissed');try{localStorage.setItem(K,Date.now());}catch(e){}});
+})();
+
+// ── HEADER SCROLL SHADOW — account for util-bar ──
+(function(){
+  var h=document.getElementById('site-header');
+  window.addEventListener('scroll',function(){
+    h.classList.toggle('scrolled',window.scrollY>8);
+  },{passive:true});
+})();
+
+// ── NEWSLETTER SUBMIT ──
+function nlSubmit(){
+  var inp=document.getElementById('nl-email');
+  var form=document.getElementById('nl-form');
+  var success=document.getElementById('nl-success');
+  if(!inp||!inp.value.trim()||!/\S+@\S+\.\S+/.test(inp.value.trim())){
+    inp.style.borderColor='rgba(192,57,43,0.7)';
+    setTimeout(function(){inp.style.borderColor='';},1200);
+    return;
+  }
+  form.style.display='none';
+  success.style.display='block';
+  // Optionally save to Firebase
+  if(typeof firebase!=='undefined'&&firebase.apps&&firebase.apps.length){
+    try{firebase.firestore().collection('newsletter').add({email:inp.value.trim(),ts:new Date().toISOString()});}catch(e){}
+  }
+}
+
+// ── BACK TO TOP ──
+(function(){
+  var btn=document.getElementById('btt');
+  window.addEventListener('scroll',function(){
+    btn.classList.toggle('visible',window.scrollY>400);
+  },{passive:true});
+})();
+
+// ── MOBILE MENU ──
+function openMob(){
+  document.getElementById('mob-ov').classList.add('open');
+  document.getElementById('mob-drawer').classList.add('open');
+  document.getElementById('hamburger').classList.add('open');
+  document.getElementById('hamburger').setAttribute('aria-expanded','true');
+  document.body.style.overflow='hidden';
+}
+function closeMob(){
+  document.getElementById('mob-ov').classList.remove('open');
+  document.getElementById('mob-drawer').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+  document.getElementById('hamburger').setAttribute('aria-expanded','false');
+  document.body.style.overflow='';
+}
+
+// ── SCROLL REVEAL — Elements visible by default, animate on entry ──
+(function(){
+  if(!window.IntersectionObserver)return;
+  var els=[].slice.call(document.querySelectorAll('.pcard,.hcard,.wcard,.rcard,.pbanner'));
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){e.target.classList.add('sr-visible');io.unobserve(e.target);}
+    });
+  },{threshold:0.08,rootMargin:'0px 0px -40px 0px'});
+  els.forEach(function(el){io.observe(el);});
+})();// Close on Escape
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){closeMob();closeCart();closeAuth();closeQV();}
+});
+
+// ── SEARCH — AI.1 Hinglish synonyms, debounce 250ms ──
+var SYN={
+  kaju:'cashew',caju:'cashew',cashewnuts:'cashew',chasew:'cashew',kash:'cashew',
+  badam:'almond',badaam:'almond',almod:'almond',
+  akhrot:'walnut',akhroot:'walnut',
+  pista:'pistachio',pistas:'pistachio',pisto:'pistachio',
+  khajoor:'dates',khejoor:'dates',mejdool:'dates',medjool:'dates',ajwa:'dates',khalas:'dates',
+  kishmish:'raisin',kismis:'raisin',munakka:'raisin',munnaka:'raisin',
+  beej:'seeds',beeaj:'seeds',pumpkin:'pumpkin seeds',chia:'chia seeds',flax:'flax seeds',
+  akhroat:'walnut',baadaam:'almond'
+};
+var DEMO_PRODUCTS=[
+  {id:'w180',name:'Premium Cashews W180',grade:'W180',price:320,mrp:399,cat:'Premium Nuts',emoji:'🥜',vars:['250g','500g','1kg'],save:20},
+  {id:'w240',name:'Cashews W240',grade:'W240',price:260,mrp:320,cat:'Premium Nuts',emoji:'🥜',vars:['250g','500g','1kg'],save:18},
+  {id:'almond',name:'California Almonds',grade:'Premium',price:280,mrp:340,cat:'Premium Nuts',emoji:'🌰',vars:['250g','500g','1kg'],save:17},
+  {id:'walnut',name:'Premium Walnuts',grade:'Grade A',price:240,mrp:299,cat:'Premium Nuts',emoji:'🌰',vars:['250g','500g'],save:20},
+  {id:'pistachio',name:'Roasted Pistachios',grade:'Premium',price:320,mrp:390,cat:'Premium Nuts',emoji:'🟢',vars:['200g','500g'],save:18},
+  {id:'pumpkin',name:'Pumpkin Seeds',grade:'Raw',price:180,mrp:220,cat:'Superfood Seeds',emoji:'🌱',vars:['200g','500g'],save:18},
+  {id:'chia',name:'Chia Seeds',grade:'Premium',price:160,mrp:199,cat:'Superfood Seeds',emoji:'🌱',vars:['200g','500g'],save:20},
+  {id:'medjool',name:'Medjool Dates',grade:'Premium',price:350,mrp:430,cat:'Exotic Dates',emoji:'🌴',vars:['250g','500g'],save:18},
+  {id:'ajwa',name:'Ajwa Dates',grade:'Premium',price:420,mrp:520,cat:'Exotic Dates',emoji:'🌴',vars:['250g','500g'],save:19},
+  {id:'cranberry',name:'Dried Cranberries',grade:'Premium',price:220,mrp:270,cat:'Berries & Raisins',emoji:'🍇',vars:['200g','500g'],save:18},
+  {id:'raisin',name:'Long Green Raisins',grade:'Premium',price:180,mrp:220,cat:'Berries & Raisins',emoji:'🍇',vars:['250g','500g'],save:18},
+  {id:'w320',name:'Cashews W320',grade:'W320',price:210,mrp:260,cat:'Premium Nuts',emoji:'🥜',vars:['250g','500g','1kg'],save:19}
+];
+var _srchTimer=null;
+function handleSearch(val,isMob){
+  clearTimeout(_srchTimer);
+  _srchTimer=setTimeout(function(){
+    var raw=(val||'').trim().toLowerCase();
+    if(!raw){hideDD();return;}
+    var term=SYN[raw]||raw;
+    var matches=DEMO_PRODUCTS.filter(function(p){
+      return p.name.toLowerCase().includes(term)||p.cat.toLowerCase().includes(term)||(p.grade&&p.grade.toLowerCase().includes(term));
+    }).slice(0,5);
+    renderDD(matches,raw,isMob);
+  },250);
+}
+function renderDD(matches,raw,isMob){
+  var dd=document.getElementById('srch-dd');
+  if(!dd)return;
+  if(!matches.length){
+    dd.innerHTML='<div class="srch-no-result">No results for "'+raw+'" — try: kaju, badam, pista</div>';
+  } else {
+    var html='<div class="srch-sec">Results</div>';
+    matches.forEach(function(p){
+      html+='<div class="srch-item" data-id="'+p.id+'">'
+        +'<div class="srch-thumb">'+p.emoji+'</div>'
+        +'<div><div style="font-weight:600">'+p.name+'</div>'
+        +'<div style="font-size:12px;color:#999">'+p.cat+' &nbsp; <span style="font-weight:700;color:#1a1a1a">₹'+p.price+'</span></div></div>'
+        +'</div>';
+    });
+    dd.innerHTML=html;
+    dd.querySelectorAll('.srch-item').forEach(function(el){
+      el.addEventListener('click',function(){
+        location.href='products.html?q='+encodeURIComponent(el.dataset.id);
+      });
+    });
+  }
+  dd.classList.add('open');
+}
+function showDD(){document.getElementById('srch-dd').classList.add('open');}
+function hideDD(){var d=document.getElementById('srch-dd');if(d)d.classList.remove('open');}
+function focusSearch(){
+  var inp=document.getElementById('mob-srch-inp')||document.getElementById('srch-inp');
+  if(inp)inp.focus();
+  var bar=document.getElementById('mob-srch-bar');
+  if(bar)bar.scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+// ── CART — localStorage persistence ──
+var FREE_SHIP=499;
+function loadCart(){
+  try{var d=localStorage.getItem('jsd_cart_v2');return d?JSON.parse(d):[];}catch(e){return [];}
+}
+function saveCart(){
+  try{localStorage.setItem('jsd_cart_v2',JSON.stringify(_cart));}catch(e){}
+}
+var _cart=loadCart();
+
+function openCart(){
+  document.getElementById('cart-ov').classList.add('open');
+  document.getElementById('cart-dr').classList.add('open');
+  document.body.style.overflow='hidden';
+  renderCart();
+}
+function closeCart(){
+  document.getElementById('cart-ov').classList.remove('open');
+  document.getElementById('cart-dr').classList.remove('open');
+  document.body.style.overflow='';
+}
+function addToCart(prod,variant,qty){
+  var cp=Number(prod.price)||0;
+  var ex=_cart.find(function(i){return i.id===prod.id&&i.variant===variant;});
+  if(ex){ex.qty+=(qty||1);}
+  else{_cart.push({id:prod.id,name:prod.name,variant:variant,price:cp,qty:qty||1,emoji:prod.emoji||'🥜',img:prod.img||''});}
+  saveCart();
+  updateCartBadge();
+  renderCart();
+  openCart();
+  showToast('Added to cart ✓');
+}
+function updateCartBadge(){
+  var n=_cart.reduce(function(s,i){return s+i.qty;},0);
+  var bdg=document.getElementById('cart-bdg');
+  if(bdg){bdg.textContent=n;bdg.classList.toggle('on',n>0);}
+  var cnt=document.getElementById('cart-cnt');
+  if(cnt)cnt.textContent='('+n+' item'+(n===1?'':'s')+')';
+}
+function renderCart(){
+  var total=_cart.reduce(function(s,i){return s+i.price*i.qty;},0);
+  var scroll=document.getElementById('cart-scroll');
+  var foot=document.getElementById('cart-foot');
+  var emptyState=document.getElementById('cart-empty-state');
+  // Shipping bar
+  var pct=Math.min(100,(total/FREE_SHIP)*100);
+  var fill=document.getElementById('ship-fill');
+  if(fill)fill.style.width=pct+'%';
+  var lbl=document.getElementById('ship-lbl');
+  if(lbl)lbl.innerHTML=total>=FREE_SHIP?'🎉 You get <strong>Free Shipping!</strong>':'Add ₹'+(FREE_SHIP-total)+' more for <strong>Free Shipping</strong>';
+  if(_cart.length===0){
+    scroll.innerHTML='';scroll.appendChild(emptyState);emptyState.style.display='flex';
+    if(foot)foot.style.display='none';
+    return;
+  }
+  emptyState.style.display='none';
+  if(foot)foot.style.display='block';
+  // Remove existing cart items
+  scroll.querySelectorAll('.cart-item').forEach(function(el){el.remove();});
+  _cart.forEach(function(item,idx){
+    var el=document.createElement('div');el.className='cart-item';
+    el.innerHTML='<div class="ci-thumb">'+(item.img?'<img src="'+item.img+'" alt="">':item.emoji)+'</div>'
+      +'<div class="ci-info">'
+        +'<div class="ci-name">'+item.name+'</div>'
+        +'<div class="ci-var">'+item.variant+'</div>'
+        +'<div class="ci-price">₹'+(item.price*item.qty).toLocaleString('en-IN')+'</div>'
+        +'<div class="qty-step">'
+          +'<button class="qty-btn" aria-label="Decrease">−</button>'
+          +'<span class="qty-n">'+item.qty+'</span>'
+          +'<button class="qty-btn" aria-label="Increase">+</button>'
+        +'</div>'
+      +'</div>'
+      +'<button class="ci-rm" aria-label="Remove item">✕</button>';
+    el.querySelectorAll('.qty-btn')[0].addEventListener('click',function(){chQty(idx,-1);});
+    el.querySelectorAll('.qty-btn')[1].addEventListener('click',function(){chQty(idx,1);});
+    el.querySelector('.ci-rm').addEventListener('click',function(){rmItem(idx);});
+    scroll.insertBefore(el,foot);
+  });
+  var tv=document.getElementById('cart-total');
+  if(tv)tv.textContent='₹'+total.toLocaleString('en-IN');
+}
+function chQty(idx,d){
+  _cart[idx].qty=Math.max(1,_cart[idx].qty+d);
+  saveCart();updateCartBadge();renderCart();
+}
+function rmItem(idx){
+  _cart.splice(idx,1);
+  saveCart();updateCartBadge();renderCart();
+}
+
+// ── AUTH MODAL ──
+function openAuth(tab){
+  document.getElementById('auth-ov').classList.add('open');
+  if(tab)switchTab(tab);
+  document.body.style.overflow='hidden';
+}
+function closeAuth(){
+  document.getElementById('auth-ov').classList.remove('open');
+  document.body.style.overflow='';
+}
+function switchTab(t){
+  document.querySelectorAll('.atab').forEach(function(b){var a=b.dataset.t===t;b.classList.toggle('active',a);b.setAttribute('aria-selected',a);});
+  document.querySelectorAll('.tab-pnl').forEach(function(p){p.classList.toggle('active',p.id==='tab-'+t);});
+}
+function doLogin(){
+  var e=document.getElementById('l-email').value.trim();
+  var p=document.getElementById('l-pass').value;
+  var err=document.getElementById('l-err');
+  err.style.display='none';
+  if(!e||!p){err.textContent='Please fill in all fields.';err.style.display='block';return;}
+  if(typeof firebase!=='undefined'&&firebase.apps.length){
+    firebase.auth().signInWithEmailAndPassword(e,p)
+      .then(function(){closeAuth();showToast('Welcome back!');})
+      .catch(function(ex){err.textContent=ex.message;err.style.display='block';});
+  } else {
+    showToast('Firebase not configured yet');
+  }
+}
+function doRegister(){
+  var n=document.getElementById('r-name').value.trim();
+  var e=document.getElementById('r-email').value.trim();
+  var p=document.getElementById('r-pass').value;
+  var err=document.getElementById('r-err');
+  err.style.display='none';
+  if(!n||!e||!p){err.textContent='Please fill in all fields.';err.style.display='block';return;}
+  if(p.length<8){err.textContent='Password must be at least 8 characters.';err.style.display='block';return;}
+  if(typeof firebase!=='undefined'&&firebase.apps.length){
+    firebase.auth().createUserWithEmailAndPassword(e,p)
+      .then(function(uc){return uc.user.updateProfile({displayName:n});})
+      .then(function(){closeAuth();showToast('Account created!');})
+      .catch(function(ex){err.textContent=ex.message;err.style.display='block';});
+  } else {
+    showToast('Firebase not configured yet');
+  }
+}
+function doGoogleLogin(){
+  if(typeof firebase!=='undefined'&&firebase.apps.length){
+    firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider())
+      .then(function(){closeAuth();showToast('Welcome!');})
+      .catch(console.error);
+  }
+}
+function doReset(){
+  var e=document.getElementById('f-email').value.trim();
+  var msg=document.getElementById('f-msg');
+  msg.style.display='none';
+  if(!e){msg.textContent='Please enter your email.';msg.style.color='#C0392B';msg.style.display='block';return;}
+  if(typeof firebase!=='undefined'&&firebase.apps.length){
+    firebase.auth().sendPasswordResetEmail(e)
+      .then(function(){msg.textContent='Reset link sent! Check your inbox.';msg.style.color='#1E7E34';msg.style.display='block';})
+      .catch(function(ex){msg.textContent=ex.message;msg.style.color='#C0392B';msg.style.display='block';});
+  }
+}
+// Auth state observer
+if(typeof firebase!=='undefined'){
+  firebase.auth&&firebase.auth().onAuthStateChanged&&firebase.auth().onAuthStateChanged(function(user){
+    var btn=document.getElementById('login-btn');
+    if(user&&btn){btn.title=user.displayName||user.email;btn.setAttribute('aria-label','My Account');}
+  });
+}
+
+// ── FAQ ──
+function toggleFAQ(btn){
+  var item=btn.closest('.faq-item');
+  var wasOpen=item.classList.contains('open');
+  document.querySelectorAll('.faq-item').forEach(function(i){i.classList.remove('open');i.querySelector('.faq-q').setAttribute('aria-expanded','false');});
+  if(!wasOpen){item.classList.add('open');btn.setAttribute('aria-expanded','true');}
+}
+
+// ── FILTER + CIRCLE CATS SYNC ──
+function filterClick(f,btn){
+  document.querySelectorAll('.ftag').forEach(function(t){t.classList.remove('active');});
+  btn.classList.add('active');
+  document.querySelectorAll('.cc-item').forEach(function(c){c.classList.toggle('active',c.dataset.f===f);});
+  filterGrid(f);
+}
+function activateFilter(f,el){
+  document.querySelectorAll('.cc-item').forEach(function(c){c.classList.remove('active');});
+  el.classList.add('active');
+  document.querySelectorAll('.ftag').forEach(function(t){t.classList.toggle('active',t.dataset.f===f);});
+  filterGrid(f);
+}
+function filterGrid(f){
+  document.querySelectorAll('.pcard').forEach(function(c){
+    c.style.display=(f==='All'||!f||c.dataset.cat===f)?'flex':'none';
+  });
+  var visible=[].filter.call(document.querySelectorAll('.pcard'),function(c){return c.style.display!=='none'});
+  document.getElementById('prod-empty').style.display=(visible.length===0)?'block':'none';
+}
+
+// ── PRODUCT CARDS ──
+function loadProds(){
+  var grid=document.getElementById('prod-grid');
+  document.getElementById('prod-empty').style.display='none';
+  document.getElementById('prod-error').style.display='none';
+  // ALWAYS show demo products immediately — replace with Firebase data if available
+  renderDemoProds(grid);
+  // Then try Firebase in background (non-blocking)
+  try {
+    if(typeof firebase!=='undefined'&&firebase.apps&&firebase.apps.length){
+      firebase.firestore().collection('products')
+        .where('visible','==',true).orderBy('sortOrder').limit(8).get()
+        .then(function(snap){
+          if(snap&&!snap.empty){
+            grid.innerHTML='';
+            snap.docs.forEach(function(doc){grid.appendChild(mkCard(Object.assign({id:doc.id},doc.data())));});
+          }
+        })
+        .catch(function(){}); // Silently fail — demo data already showing
+    }
+  } catch(e) {}
+}
+function renderDemoProds(grid){
+  grid.innerHTML='';
+  DEMO_PRODUCTS.slice(0,8).forEach(function(p){grid.appendChild(mkCard(p));});
+}
+
+// ── DEALS GRID RENDER (Nutraj Super Saver style) ──
+var DEAL_PRODUCTS=[
+  {id:'w180',name:'Premium Cashews W180',grade:'W180',price:599,mrp:799,cat:'Premium Nuts',emoji:'🥜',vars:['500g','1kg'],save:25,dealLabel:'Buy 500g + 500g'},
+  {id:'almond',name:'California Almonds',grade:'Premium',price:499,mrp:680,cat:'Premium Nuts',emoji:'🌰',vars:['500g','1kg'],save:26,dealLabel:'Best Value Pack'},
+  {id:'medjool',name:'Medjool + Ajwa Dates Combo',grade:'Premium',price:649,mrp:950,cat:'Exotic Dates',emoji:'🌴',vars:['500g'],save:31,dealLabel:'Date Lovers Combo'},
+  {id:'walnut',name:'Walnut + Almond Saver Pack',grade:'Grade A',price:449,mrp:599,cat:'Premium Nuts',emoji:'🌰',vars:['500g'],save:25,dealLabel:'Heart Health Duo'}
+];
+function loadDeals(){
+  var grid=document.getElementById('deals-grid');
+  if(!grid)return;
+  grid.innerHTML='';
+  DEAL_PRODUCTS.forEach(function(p){
+    var c=mkCard(p);
+    // Add deal label above card
+    var dealTag=document.createElement('div');
+    dealTag.style.cssText='position:absolute;top:10px;left:10px;background:var(--color-warning);color:#fff;font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;z-index:2';
+    dealTag.textContent=p.dealLabel||'Best Deal';
+    c.querySelector('.pcard-img').appendChild(dealTag);
+    grid.appendChild(c);
+  });
+}
+function mkCard(p){
+  var c=document.createElement('div');
+  c.className='pcard';c.dataset.cat=p.cat||p.category||'';
+  var pid=p.id,pname=p.name,pprice=Number(p.price)||0,pemoji=p.emoji||'🥜';
+  var vars=p.vars||p.variants||['250g','500g','1kg'];
+  // L1 — Image
+  var imgWrap=document.createElement('div');imgWrap.className='pcard-img';
+  imgWrap.addEventListener('click',function(){location.href='product.html?id='+pid;});
+  if(p.imageUrl){var img=document.createElement('img');img.src=p.imageUrl;img.alt=p.name;img.loading='lazy';imgWrap.appendChild(img);}
+  else{var ph=document.createElement('div');ph.className='pcard-placeholder';ph.textContent=pemoji;imgWrap.appendChild(ph);}
+  if(p.stock&&p.stock<=10){var sb=document.createElement('div');sb.className='stock-bdg on';sb.textContent='Only '+p.stock+' left!';imgWrap.appendChild(sb);}
+  if(p.badge){var bdg=document.createElement('div');bdg.className='prod-badge-tag';bdg.textContent=p.badge;imgWrap.appendChild(bdg);}
+  // Wishlist button
+  var wb=document.createElement('button');wb.className='wish-btn';wb.setAttribute('aria-label','Add to wishlist');
+  var wl=[];try{wl=JSON.parse(localStorage.getItem('jsd_wl')||'[]');}catch(e){}
+  wb.textContent=wl.includes(pid)?'❤️':'🤍';
+  if(wl.includes(pid))wb.classList.add('wishlisted');
+  wb.addEventListener('click',function(e){e.stopPropagation();toggleWish(pid,wb);});
+  imgWrap.appendChild(wb);
+  // Quick view button
+  var qvb=document.createElement('button');qvb.className='qv-btn';qvb.innerHTML='👁 Quick View';
+  qvb.addEventListener('click',function(e){e.stopPropagation();openQV(p);});
+  imgWrap.appendChild(qvb);
+  c.appendChild(imgWrap);
+  // L2 — Title + stars
+  var body=document.createElement('div');body.className='pcard-body';
+  var titleEl=document.createElement('div');titleEl.className='pcard-title';titleEl.textContent=p.name;
+  if(p.grade){var gb=document.createElement('span');gb.className='grade-bdg';gb.textContent=p.grade;titleEl.appendChild(gb);}
+  body.appendChild(titleEl);
+  var stars=document.createElement('div');stars.className='p-stars';
+  stars.innerHTML='<span class="pstar">★</span><span class="pstar">★</span><span class="pstar">★</span><span class="pstar">★</span><span class="pstar">★</span><span class="prc">(124)</span>';
+  body.appendChild(stars);
+  // Scarcity badge for low-stock products (Nutraj pattern)
+  if(p.lowStock||p.stockLeft){
+    var scarc=document.createElement('div');scarc.className='scarcity-bdg';
+    scarc.textContent='🔥 Only '+(p.stockLeft||5)+' left!';
+    body.appendChild(scarc);
+  }
+  // L3 — Weight selector
+  var sel=document.createElement('select');sel.className='w-sel';sel.setAttribute('aria-label','Select weight');
+  vars.forEach(function(v){var o=document.createElement('option');o.value=v;o.textContent=v;sel.appendChild(o);});
+  var priceEl=document.createElement('span');priceEl.className='p-sell';priceEl.dataset.bp=pprice;priceEl.dataset.cp=pprice;
+  priceEl.textContent='₹'+pprice;
+  sel.addEventListener('change',function(){
+    var m={'100g':0.45,'200g':0.75,'250g':1,'500g':1.85,'1kg':3.5};
+    var np=Math.round(pprice*(m[sel.value]||1));
+    priceEl.textContent='₹'+np;priceEl.dataset.cp=np;
+  });
+  body.appendChild(sel);
+  // L4 — Price row
+  var pr=document.createElement('div');pr.className='price-row';
+  var left=document.createElement('div');left.style.display='flex';left.style.alignItems='baseline';left.style.gap='4px';
+  left.appendChild(priceEl);
+  if(p.mrp){var mrpEl=document.createElement('span');mrpEl.className='p-mrp';mrpEl.textContent='₹'+p.mrp;left.appendChild(mrpEl);}
+  pr.appendChild(left);
+  if(p.save){var sv=document.createElement('span');sv.className='save-bdg';sv.textContent='Save '+p.save+'%';pr.appendChild(sv);}
+  body.appendChild(pr);
+  c.appendChild(body);
+  // L5 — ATC button
+  var foot=document.createElement('div');foot.className='pcard-foot';
+  if(p.stock===undefined||p.stock>0){
+    var atc=document.createElement('button');atc.className='btn-atc';atc.textContent='Add to Cart';
+    atc.addEventListener('click',function(){
+      var cp=parseInt(priceEl.dataset.cp,10)||pprice;
+      atc.disabled=true;atc.textContent='Adding...';
+      setTimeout(function(){
+        atc.textContent='✓ Added';
+        addToCart({id:pid,name:pname,price:cp,emoji:pemoji,img:p.imageUrl||''},sel.value,1);
+        addRecentlyViewed(p);
+        setTimeout(function(){atc.textContent='Add to Cart';atc.disabled=false;},1500);
+      },280);
+    });
+    foot.appendChild(atc);
+  } else {
+    var ntf=document.createElement('button');ntf.className='btn-atc oos';ntf.textContent='Notify Me';ntf.disabled=true;foot.appendChild(ntf);
+  }
+  c.appendChild(foot);
+  return c;
+}
+function toggleWish(id,btn){
+  var wl=[];try{wl=JSON.parse(localStorage.getItem('jsd_wl')||'[]');}catch(e){}
+  var i=wl.indexOf(id);
+  if(i>-1){wl.splice(i,1);btn.textContent='🤍';btn.classList.remove('wishlisted');showToast('Removed from wishlist');}
+  else{wl.push(id);btn.textContent='❤️';btn.classList.add('wishlisted');showToast('Added to wishlist ❤️');}
+  try{localStorage.setItem('jsd_wl',JSON.stringify(wl));}catch(e){}
+}
+
+// ── QUICK VIEW ──
+function openQV(p){
+  document.getElementById('qv-img').textContent=p.emoji||'🥜';
+  var content=document.getElementById('qv-content');
+  content.innerHTML='<div class="sec-lbl" style="margin-bottom:8px">'+p.cat+'</div>'
+    +'<h2 style="font-size:22px;font-weight:700;color:var(--color-primary);margin-bottom:8px">'+p.name+(p.grade?'<span class="grade-bdg" style="margin-left:8px">'+p.grade+'</span>':'')+'</h2>'
+    +'<div style="font-family:var(--font-mono);font-size:24px;font-weight:700;margin-bottom:16px">₹'+p.price+(p.mrp?'<span style="font-size:14px;color:#aaa;text-decoration:line-through;margin-left:8px;font-weight:400">₹'+p.mrp+'</span>':'')+'</div>'
+    +'<div style="font-size:14px;color:#666;margin-bottom:20px;line-height:1.6">Premium quality '+p.name+'. Freshly packed to order. Zero preservatives. Delivered across India.</div>'
+    +'<button class="btn btn-primary btn-md btn-block" onclick="addToCart({id:\''+p.id+'\',name:\''+p.name+'\',price:'+p.price+',emoji:\''+p.emoji+'\'},\'250g\',1);closeQV()">Add to Cart</button>'
+    +'<a href="product.html?id='+p.id+'" class="btn btn-secondary btn-md btn-block" style="margin-top:8px">View Full Details</a>';
+  document.getElementById('qv-ov').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeQV(){
+  document.getElementById('qv-ov').classList.remove('open');
+  document.body.style.overflow='';
+}
+
+// ── RECENTLY VIEWED X.2 ──
+var _rv=[];
+try{_rv=JSON.parse(localStorage.getItem('jsd_rv')||'[]');}catch(e){}
+function addRecentlyViewed(p){
+  _rv=_rv.filter(function(i){return i.id!==p.id;});
+  _rv.unshift({id:p.id,name:p.name,price:p.price,emoji:p.emoji,cat:p.cat});
+  if(_rv.length>6)_rv.pop();
+  try{localStorage.setItem('jsd_rv',JSON.stringify(_rv));}catch(e){}
+  renderRV();
+}
+function renderRV(){
+  var sec=document.getElementById('rv-sec');
+  var scroll=document.getElementById('rv-scroll');
+  if(!_rv.length){sec.classList.remove('has-items');return;}
+  sec.classList.add('has-items');
+  scroll.innerHTML='';
+  _rv.forEach(function(p){
+    var card=document.createElement('div');card.className='rv-card';
+    card.innerHTML='<div class="rv-card-img">'+p.emoji+'</div>'
+      +'<div class="rv-card-name">'+p.name+'</div>'
+      +'<div class="rv-card-price">₹'+p.price+'</div>';
+    card.addEventListener('click',function(){location.href='product.html?id='+p.id;});
+    scroll.appendChild(card);
+  });
+}
+
+// ── REVIEW SORTING ──
+var REVIEWS=[
+  {rating:5,text:"Best cashews I've ever had! Bahut fresh aur tasty. Definitely ordering again!",name:"Priya Sharma",city:"Jaipur, India",verified:true,date:new Date('2026-05-20')},
+  {rating:5,text:"W180 cashews are premium quality — big size, fresh taste. Will order again!",name:"Rahul Gupta",city:"Delhi, India",verified:true,date:new Date('2026-05-15')},
+  {rating:5,text:"Variety pack — almonds, walnuts, cashews. All super fresh. Delivered in 3 days to Mumbai!",name:"Sunita Agarwal",city:"Mumbai, India",verified:true,date:new Date('2026-05-10')},
+  {rating:4,text:"Good quality almonds. Packaging was nice. Would have liked slightly bigger size.",name:"Amit Verma",city:"Pune, India",verified:true,date:new Date('2026-04-28')},
+];
+function sortReviews(mode){
+  var sorted=REVIEWS.slice();
+  if(mode==='highest')sorted.sort(function(a,b){return b.rating-a.rating;});
+  else if(mode==='lowest')sorted.sort(function(a,b){return a.rating-b.rating;});
+  else sorted.sort(function(a,b){return b.date-a.date;});
+  renderReviews(sorted);
+}
+function renderReviews(list){
+  var grid=document.getElementById('rev-grid');
+  if(!grid)return;
+  grid.innerHTML='';
+  list.forEach(function(r){
+    var card=document.createElement('div');card.className='rcard';
+    card.innerHTML='<div class="r-stars">'+'<span class="rstar">★</span>'.repeat(r.rating)+'</div>'
+      +'<p class="r-text">"'+r.text+'"</p>'
+      +'<div class="r-author">'
+        +'<div class="r-avatar">'+r.name.charAt(0)+'</div>'
+        +'<div><div class="r-name">'+r.name+'</div><div class="r-city">'+r.city+'</div>'
+        +(r.verified?'<div class="verified">✓ Verified Buyer</div>':'')
+        +'</div></div>';
+    grid.appendChild(card);
+  });
+}
+
+// ── TOAST ──
+var _toastTimer=null;
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(function(){t.classList.remove('show');},2400);
+}
+
+// ── STICKY ATC ──
+var _stickyActive=false;
+function stickyATC(){
+  if(_cart.length){addToCart(_cart[0],_cart[0].variant,1);}
+}
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded',function(){
+  loadProds();
+  loadDeals();
+  updateCartBadge();
+  renderCart();
+  renderRV();
+  // Init reviews
+  sortReviews('newest');
+});
+</script>
+</body>
+</html>

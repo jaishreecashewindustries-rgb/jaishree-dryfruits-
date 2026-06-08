@@ -1,0 +1,298 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gold: #C9A84C;
+  --gold-light: #E8C97A;
+  --brown: #1A2744;
+  --cream: #F4F6FF;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #FAFAFA;
+  color: #1a1a1a;
+  -webkit-font-smoothing: antialiased;
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-brand-gold hover:bg-brand-gold-dark text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg;
+  }
+  .btn-outline {
+    @apply border border-brand-gold text-brand-gold font-semibold py-3 px-6 rounded-lg transition-all duration-200 hover:scale-105;
+    background: linear-gradient(135deg, rgba(201,168,76,0.06), rgba(232,201,122,0.1));
+    box-shadow: 0 2px 12px rgba(201,168,76,0.15), inset 0 1px 0 rgba(255,255,255,0.6);
+  }
+  .btn-outline:hover {
+    background: linear-gradient(135deg, #E8C97A, #C9A84C);
+    color: white;
+    box-shadow: 0 6px 20px rgba(201,168,76,0.35);
+  }
+  .btn-brown {
+    @apply bg-brand-brown hover:bg-brand-brown-light text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200;
+  }
+  .card-luxury {
+    @apply bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden;
+  }
+  .section-title {
+    @apply font-serif text-3xl md:text-4xl font-bold text-brand-brown text-center;
+  }
+  .gold-divider {
+    @apply w-16 h-1 bg-brand-gold mx-auto my-4 rounded-full;
+  }
+  .badge-gold {
+    @apply bg-brand-gold text-white text-xs font-semibold px-2 py-1 rounded-full;
+  }
+  .badge-new {
+    @apply bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded-full;
+  }
+  .badge-sale {
+    @apply bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full;
+  }
+  .input-field {
+    @apply w-full border border-gray-200 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-gold focus:border-transparent transition-all;
+  }
+  .nav-link {
+    @apply text-gray-700 hover:text-brand-gold font-medium transition-colors duration-200 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-brand-gold after:transition-all after:duration-200 hover:after:w-full;
+  }
+}
+
+/* Swiper customization */
+.swiper-pagination-bullet-active {
+  background-color: var(--gold) !important;
+}
+.swiper-button-next,
+.swiper-button-prev {
+  color: var(--gold) !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #9E7A2E; }
+
+/* Star rating */
+.star-filled { color: #F59E0B; }
+.star-empty { color: #D1D5DB; }
+
+/* Image zoom */
+.product-image-zoom {
+  transition: transform 0.4s ease;
+}
+.product-image-zoom:hover {
+  transform: scale(1.05);
+}
+
+/* Skeleton loader */
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Admin sidebar */
+.admin-sidebar-link {
+  @apply flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-brand-cream hover:text-brand-brown transition-all duration-200;
+}
+.admin-sidebar-link.active {
+  @apply bg-brand-gold text-white;
+}
+
+/* Quantity selector */
+.qty-btn {
+  @apply w-8 h-8 flex items-center justify-center border border-gray-200 rounded-lg hover:bg-brand-cream hover:border-brand-gold transition-all cursor-pointer text-lg font-semibold;
+}
+
+/* Product gallery thumbnail */
+.thumb-active {
+  @apply border-2 border-brand-gold;
+}
+
+/* Toast override */
+.toast-gold {
+  background: var(--brown);
+  color: white;
+}
+
+/* Mobile bottom nav safe area */
+.pb-safe {
+  padding-bottom: max(8px, env(safe-area-inset-bottom));
+}
+
+/* Bulk order slider */
+.bulk-slider {
+  background: linear-gradient(to right, var(--gold) 0%, var(--gold) var(--val, 0%), rgba(255,255,255,0.15) var(--val, 0%), rgba(255,255,255,0.15) 100%);
+  outline: none;
+}
+.bulk-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--gold);
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(201,168,76,0.6);
+  border: 2px solid white;
+}
+.bulk-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--gold);
+  cursor: pointer;
+  border: 2px solid white;
+}
+
+/* Glow effect for premium elements */
+.glow-gold {
+  box-shadow: 0 0 30px rgba(201,168,76,0.25), 0 0 60px rgba(201,168,76,0.1);
+}
+
+/* Premium text gradient */
+.text-gradient-gold {
+  background: linear-gradient(135deg, #C9A84C 0%, #E8C97A 50%, #9E7A2E 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glass morphism */
+.glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Body padding for mobile bottom nav */
+@media (max-width: 768px) {
+  body {
+    padding-bottom: 80px;
+  }
+}
+
+/* 3D perspective utilities */
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+/* Smooth scrollbar on mobile */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar { display: none; }
+}
+
+/* ── Glossy card shine effect ─────────────────────────── */
+.glossy-card {
+  position: relative;
+  overflow: hidden;
+}
+.glossy-card::after {
+  content: '';
+  position: absolute;
+  top: -60%;
+  left: -60%;
+  width: 60%;
+  height: 200%;
+  background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.18) 50%, transparent 80%);
+  transform: skewX(-15deg);
+  transition: left 0.6s ease;
+  pointer-events: none;
+}
+.glossy-card:hover::after {
+  left: 130%;
+}
+
+/* ── Glossy gold button ───────────────────────────────── */
+.btn-primary {
+  background: linear-gradient(135deg, #E8C97A 0%, #C9A84C 50%, #9E7A2E 100%) !important;
+  box-shadow: 0 4px 20px rgba(201,168,76,0.35), inset 0 1px 0 rgba(255,255,255,0.25) !important;
+  transition: all 0.25s ease !important;
+}
+.btn-primary:hover {
+  box-shadow: 0 6px 28px rgba(201,168,76,0.5), inset 0 1px 0 rgba(255,255,255,0.3) !important;
+  transform: translateY(-1px) scale(1.03) !important;
+}
+
+/* ── Lively section backgrounds ──────────────────────── */
+.section-glossy {
+  background: linear-gradient(145deg, #fff 0%, #F4F6FF 60%, #E8ECF8 100%);
+}
+
+/* ── Gold shimmer on text ─────────────────────────────── */
+.shimmer-gold {
+  background: linear-gradient(90deg, #C9A84C 0%, #E8C97A 40%, #C9A84C 60%, #9E7A2E 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+/* ── Card hover lift ──────────────────────────────────── */
+.card-lift {
+  transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s ease;
+}
+.card-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(201,168,76,0.15);
+}
+
+/* ── Lively gold divider pulse ────────────────────────── */
+.gold-divider {
+  background: linear-gradient(90deg, transparent, #C9A84C, #E8C97A, #C9A84C, transparent) !important;
+  animation: pulseGold 3s ease-in-out infinite !important;
+}
+
+/* ── Promo banner moving shine sweep ─────────────────── */
+.promo-shine-sweep {
+  position: absolute;
+  top: -100%;
+  left: -100%;
+  width: 50%;
+  height: 400%;
+  background: linear-gradient(105deg, transparent 20%, rgba(255,255,255,0.07) 40%, rgba(201,168,76,0.12) 50%, rgba(255,255,255,0.07) 60%, transparent 80%);
+  transform: skewX(-20deg);
+  animation: promoSweep 4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes promoSweep {
+  0% { left: -100%; }
+  60%, 100% { left: 200%; }
+}
+
+/* ── Floating glow on section headers ────────────────── */
+.section-glow-title {
+  text-shadow: 0 0 40px rgba(201,168,76,0.15), 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* ── Pulsing border glow on featured cards ───────────── */
+@keyframes borderGlow {
+  0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.06), 0 0 0 1px rgba(201,168,76,0.08); }
+  50%       { box-shadow: 0 8px 30px rgba(0,0,0,0.1),  0 0 0 1px rgba(201,168,76,0.25); }
+}
+.card-pulse-border {
+  animation: borderGlow 4s ease-in-out infinite;
+}
+
+/* ── Floating animation for 3D category circles ──────── */
+@keyframes floatCircle {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
+}
+.float-circle {
+  animation: floatCircle 3s ease-in-out infinite;
+}
