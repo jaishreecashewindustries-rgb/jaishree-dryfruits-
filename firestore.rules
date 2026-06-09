@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users: only the user themselves can read/write their own doc
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Products: anyone can read, only admin can write
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Orders: user can read their own, admin can read/write all
+    match /orders/{orderId} {
+      allow create: if request.auth != null;
+      allow read, update: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+
+    // Reviews: anyone can read approved reviews, auth users can create, admin can manage
+    match /reviews/{reviewId} {
+      allow read: if resource.data.status == 'approved' || (request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}
