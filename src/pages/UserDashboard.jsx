@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Navigate, Link } from "react-router-dom";
-import { Package, User, Heart, MapPin, LogOut, Star, ChevronRight } from "lucide-react";
+import { Package, User, Heart, MapPin, LogOut, Star, ChevronRight, Coins } from "lucide-react";
 import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
+import { useCoins, COINS_RULES } from "../context/CoinsContext";
 import { formatPrice, formatDate, getStatusStyle, ORDER_STATUSES } from "../utils/helpers";
 
 const TABS = [
   { id: "orders", label: "My Orders", icon: Package },
+  { id: "coins", label: "JS Coins", icon: Coins },
   { id: "profile", label: "Profile", icon: User },
   { id: "wishlist", label: "Wishlist", icon: Heart },
   { id: "address", label: "Address", icon: MapPin },
@@ -15,8 +17,10 @@ const TABS = [
 
 export default function UserDashboard() {
   const { user, userProfile, logout } = useAuth();
+  const { coins: balance, history: transactions, loading: coinsLoading, redeemCoins } = useCoins();
   const [tab, setTab] = useState("orders");
   const [orders, setOrders] = useState([]);
+  const [redeemAmount, setRedeemAmount] = useState("");
   const [loadingOrders, setLoadingOrders] = useState(true);
 
   useEffect(() => {
@@ -47,7 +51,9 @@ export default function UserDashboard() {
         <div>
           <h1 className="font-serif text-xl font-bold">Hello, {userProfile?.displayName || "Customer"}!</h1>
           <p className="text-white/60 text-sm">{user.email}</p>
-          <p className="text-brand-gold text-xs font-semibold mt-1">🌟 {userProfile?.loyaltyPoints || 0} Loyalty Points</p>
+          <p className="text-brand-gold text-xs font-semibold mt-1 flex items-center gap-1.5">
+            <Coins size={12} /> {balance} JS Coins &nbsp;&middot;&nbsp; Worth ₹{Math.floor(balance * COINS_RULES.redeemRate)}
+          </p>
         </div>
       </div>
 
@@ -119,6 +125,101 @@ export default function UserDashboard() {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {tab === "coins" && (
+            <div className="space-y-6">
+              <h2 className="font-serif text-2xl font-bold text-brand-brown">JS Coins — My Rewards</h2>
+
+              {/* Balance card */}
+              <div className="rounded-2xl p-8 text-center"
+                style={{ background: "linear-gradient(135deg, #1B2E4B 0%, #243D63 100%)", border: "1px solid rgba(201,168,76,0.3)" }}>
+                <p className="text-white/50 text-xs font-semibold tracking-widest uppercase mb-3">Total Balance</p>
+                <p className="font-serif text-6xl font-bold text-brand-gold mb-2">{balance}</p>
+                <p className="text-white/60 text-sm mb-6">JS Coins = ₹{Math.floor(balance * COINS_RULES.redeemRate)} Discount Value</p>
+                <div className="grid grid-cols-3 gap-4 max-w-sm mx-auto">
+                  {[
+                    { label: "On Signup", val: `${COINS_RULES.signup}` },
+                    { label: "Per ₹1 Spent", val: "1 Coin" },
+                    { label: "Per Review", val: `${COINS_RULES.review}` },
+                  ].map(r => (
+                    <div key={r.label} className="text-center border-t border-white/10 pt-4">
+                      <p className="font-serif text-2xl font-normal text-white mb-1">{r.val}</p>
+                      <p className="text-white/40 text-xs uppercase tracking-wider">{r.label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Redeem section */}
+              {balance >= COINS_RULES.minRedeem && (
+                <div className="card-luxury p-6">
+                  <h3 className="font-serif text-lg font-bold text-brand-brown mb-1">Redeem Your Coins</h3>
+                  <p className="text-sm text-gray-400 mb-4">Min. {COINS_RULES.minRedeem} coins required. 1 coin = ₹{COINS_RULES.redeemRate} off.</p>
+                  <div className="flex gap-3">
+                    <input
+                      type="number"
+                      placeholder={`Enter coins (max ${balance})`}
+                      min={COINS_RULES.minRedeem}
+                      max={balance}
+                      value={redeemAmount}
+                      onChange={e => setRedeemAmount(e.target.value)}
+                      className="input-field flex-1 text-sm"
+                    />
+                    <button
+                      onClick={async () => {
+                        const amt = parseInt(redeemAmount);
+                        if (!amt || amt < COINS_RULES.minRedeem) return;
+                        await redeemCoins(amt, "Manual redemption from dashboard");
+                        setRedeemAmount("");
+                      }}
+                      className="btn-gold px-5 py-2 text-sm"
+                    >
+                      Redeem {redeemAmount ? `→ Save ₹${Math.floor(parseInt(redeemAmount) * COINS_RULES.redeemRate)}` : ""}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {balance < COINS_RULES.minRedeem && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-center">
+                  <p className="text-amber-700 text-sm font-medium flex items-center justify-center gap-2">
+                    <Coins size={14} /> Earn {COINS_RULES.minRedeem - balance} more coins to unlock redemption
+                  </p>
+                  <Link to="/products" className="text-xs text-amber-600 underline mt-1 block">Shop Now to Earn Coins</Link>
+                </div>
+              )}
+
+              {/* Transaction history */}
+              <div className="card-luxury overflow-hidden">
+                <div className="px-5 py-4 border-b border-gray-100">
+                  <h3 className="font-serif text-base font-bold text-brand-brown">Transaction History</h3>
+                </div>
+                {coinsLoading ? (
+                  <div className="text-center py-10 text-gray-400 text-sm">Loading...</div>
+                ) : transactions.length === 0 ? (
+                  <div className="text-center py-10 text-gray-400 text-sm">
+                    <p>No transactions yet. Start shopping to earn coins!</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-gray-50">
+                    {transactions.slice(0, 20).map(tx => (
+                      <div key={tx.id} className="flex items-center justify-between px-5 py-3">
+                        <div>
+                          <p className="text-sm font-medium text-brand-brown">{tx.description}</p>
+                          <p className="text-xs text-gray-400">
+                            {tx.createdAt?.toDate?.().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) || "—"}
+                          </p>
+                        </div>
+                        <span className={`font-bold text-sm flex items-center gap-1 ${tx.type === "earn" ? "text-green-600" : "text-red-500"}`}>
+                          {tx.type === "earn" ? "+" : "-"}{tx.amount}
+                          <Coins size={11} />
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

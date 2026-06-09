@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Star, Heart, ShoppingCart, Zap, Shield, Truck, MessageCircle, ChevronRight, Minus, Plus, Share2, CheckCircle, XCircle, Award, Leaf, Package } from "lucide-react";
+import { Star, Heart, ShoppingCart, Zap, Shield, Truck, MessageCircle, ChevronRight, Minus, Plus, Share2, CheckCircle, XCircle, Award, Leaf, Package, Flame, ThumbsUp, BadgeCheck } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import ProductCard from "../components/ProductCard";
 import { DEMO_PRODUCTS, formatPrice, discountPercent, whatsappProductLink } from "../utils/helpers";
@@ -108,8 +108,8 @@ export default function ProductDetail() {
               </div>
               <span className="text-sm font-semibold text-brand-brown">{avgRating}</span>
               <a href="#reviews" className="text-sm text-blue-500 hover:underline">{DUMMY_REVIEWS.length} reviews</a>
-              <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full font-medium">🔥 Popular</span>
-              <span className="text-sm text-green-600 font-medium">✓ In Stock</span>
+              <span className="text-xs text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full font-medium flex items-center gap-1"><Flame size={10} /> Popular</span>
+              <span className="text-sm text-green-600 font-medium flex items-center gap-1"><CheckCircle size={13} /> In Stock</span>
             </div>
           </div>
 
@@ -291,12 +291,12 @@ export default function ProductDetail() {
                   <div className="flex items-center gap-3 mt-3 flex-wrap">
                     <span className="text-xs font-semibold text-gray-600">{r.user}</span>
                     <span className="text-xs text-gray-400">{r.city}</span>
-                    {r.verified && <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full font-medium">✓ Verified Purchase</span>}
+                    {r.verified && <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full font-medium flex items-center gap-1"><BadgeCheck size={10} /> Verified Purchase</span>}
                     <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{r.variant}</span>
                     <button
                       className="ml-auto text-xs text-gray-400 hover:text-brand-gold transition-colors flex items-center gap-1"
                       onClick={() => setHelpfulVotes(v => ({ ...v, [r.id]: !v[r.id] }))}>
-                      👍 Helpful ({(helpfulVotes[r.id] ? 1 : 0) + r.helpful})
+                      <ThumbsUp size={11} /> Helpful ({(helpfulVotes[r.id] ? 1 : 0) + r.helpful})
                     </button>
                   </div>
                 </div>

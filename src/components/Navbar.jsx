@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { ShoppingCart, User, Search, Menu, X, Heart, ChevronDown, LogOut, LayoutDashboard, Package, Truck, Award, Phone } from "lucide-react";
+import { ShoppingCart, User, Search, Menu, X, Heart, ChevronDown, LogOut, LayoutDashboard, Package, Truck, Award, Phone, BookOpen, Leaf, HelpCircle, Sparkles } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { PRODUCT_CATEGORIES } from "../utils/helpers";
@@ -13,6 +13,7 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [shopMenuOpen, setShopMenuOpen] = useState(false);
+  const [exploreMenuOpen, setExploreMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, userProfile, isAdmin, logout } = useAuth();
   const { totalItems, toggleCart } = useCart();
@@ -28,6 +29,7 @@ export default function Navbar() {
   useEffect(() => {
     setMenuOpen(false);
     setShopMenuOpen(false);
+    setExploreMenuOpen(false);
     setUserMenuOpen(false);
   }, [location]);
 
@@ -43,9 +45,10 @@ export default function Navbar() {
   return (
     <>
       {/* Festival banner */}
-      <div className="text-center text-xs font-bold py-1.5 px-4 tracking-wide"
-        style={{ background: "linear-gradient(90deg, #7B1C1C, #C9A84C, #7B1C1C)", color: "#fff" }}>
-        🪔 Monsoon Sale — Use <span className="underline">MONSOON20</span> for 20% OFF · Limited Period!
+      <div className="relative overflow-hidden text-center text-xs font-bold py-1.5 px-4 tracking-widest uppercase"
+        style={{ background: "linear-gradient(90deg, #0D1B2A, #1B2E4B, #C9A84C, #1B2E4B, #0D1B2A)", color: "#F0DFA0", letterSpacing: "2.5px" }}>
+        <span className="relative z-10">Monsoon Sale &mdash; Use <span className="underline decoration-brand-gold">MONSOON20</span> for 20% Off &nbsp;&middot;&nbsp; Limited Period</span>
+        <span className="absolute inset-0 promo-shine-sweep opacity-30" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)", width: "40%" }} />
       </div>
 
       {/* Top announcement bar — single scrolling line on mobile */}
@@ -108,16 +111,43 @@ export default function Navbar() {
                         </Link>
                       ))}
                     </div>
-                    <div className="border-t border-gray-100 mt-3 pt-3">
-                      <Link to="/products?badge=Best Seller" className="text-xs text-brand-warm font-semibold hover:underline block mb-1">🔥 Best Sellers</Link>
-                      <Link to="/products?badge=New" className="text-xs text-green-600 font-semibold hover:underline block">✨ New Arrivals</Link>
+                    <div className="border-t border-gray-100 mt-3 pt-3 space-y-1">
+                      <Link to="/products?badge=Best Seller" className="text-xs text-brand-gold font-bold uppercase tracking-wider hover:underline block">Best Sellers</Link>
+                      <Link to="/products?badge=New" className="text-xs text-brand-brown font-bold uppercase tracking-wider hover:underline block">New Arrivals</Link>
                     </div>
                   </div>
                 )}
               </div>
 
               <Link to="/products?category=Gift Hampers" className="nav-link text-sm">Gift Hampers</Link>
-              <Link to="/about" className="nav-link text-sm">About</Link>
+
+              {/* Explore dropdown */}
+              <div className="relative" onMouseEnter={() => setExploreMenuOpen(true)} onMouseLeave={() => setExploreMenuOpen(false)}>
+                <button className="nav-link text-sm flex items-center gap-1">
+                  Explore <ChevronDown size={14} className={`transition-transform ${exploreMenuOpen ? "rotate-180" : ""}`} />
+                </button>
+                {exploreMenuOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-52 bg-white shadow-2xl border border-gray-100 p-4 animate-fade-in z-50">
+                    <Link to="/blog" className="flex items-center gap-3 py-2.5 text-sm text-gray-700 hover:text-brand-brown group">
+                      <BookOpen size={15} className="text-brand-gold" />
+                      <span className="group-hover:translate-x-0.5 transition-transform">Our Blog</span>
+                    </Link>
+                    <Link to="/sourcing" className="flex items-center gap-3 py-2.5 text-sm text-gray-700 hover:text-brand-brown group">
+                      <Leaf size={15} className="text-brand-gold" />
+                      <span className="group-hover:translate-x-0.5 transition-transform">Sourcing Story</span>
+                    </Link>
+                    <Link to="/faq" className="flex items-center gap-3 py-2.5 text-sm text-gray-700 hover:text-brand-brown group">
+                      <HelpCircle size={15} className="text-brand-gold" />
+                      <span className="group-hover:translate-x-0.5 transition-transform">FAQ</span>
+                    </Link>
+                    <Link to="/about" className="flex items-center gap-3 py-2.5 text-sm text-gray-700 hover:text-brand-brown group">
+                      <Sparkles size={15} className="text-brand-gold" />
+                      <span className="group-hover:translate-x-0.5 transition-transform">About Us</span>
+                    </Link>
+                  </div>
+                )}
+              </div>
+
               <Link to="/contact" className="nav-link text-sm">Contact</Link>
             </div>
 
@@ -221,6 +251,9 @@ export default function Navbar() {
                 </Link>
               ))}
               <Link to="/products?category=Gift Hampers" className="block py-2 text-sm font-medium text-brand-brown">Gift Hampers</Link>
+              <Link to="/blog" className="block py-2 text-sm font-medium text-brand-brown">Blog</Link>
+              <Link to="/sourcing" className="block py-2 text-sm font-medium text-brand-brown">Our Sourcing Story</Link>
+              <Link to="/faq" className="block py-2 text-sm font-medium text-brand-brown">FAQ</Link>
               <Link to="/about" className="block py-2 text-sm font-medium text-brand-brown">About</Link>
               <Link to="/contact" className="block py-2 text-sm font-medium text-brand-brown">Contact</Link>
               {!user && (

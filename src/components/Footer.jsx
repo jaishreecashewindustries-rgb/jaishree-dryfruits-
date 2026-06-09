@@ -65,6 +65,8 @@ export default function Footer() {
               { to: "/products", label: "All Products" },
               { to: "/products?badge=Best Seller", label: "Best Sellers" },
               { to: "/products?category=Gift Hampers", label: "Gift Hampers" },
+              { to: "/blog", label: "Our Blog" },
+              { to: "/sourcing", label: "Sourcing Story" },
               { to: "/about", label: "About Us" },
               { to: "/contact", label: "Contact Us" },
             ].map((l) => (

@@ -4,6 +4,7 @@ import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { LanguageProvider } from "./context/LanguageContext";
+import { CoinsProvider } from "./context/CoinsContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import CartSidebar from "./components/CartSidebar";
@@ -15,6 +16,10 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import Login from "./pages/Login";
 import UserDashboard from "./pages/UserDashboard";
+import FAQ from "./pages/FAQ";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import SourcingStory from "./pages/SourcingStory";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ProductManagement from "./pages/admin/ProductManagement";
@@ -22,6 +27,10 @@ import OrderManagement from "./pages/admin/OrderManagement";
 import CustomerManagement from "./pages/admin/CustomerManagement";
 import ReviewManagement from "./pages/admin/ReviewManagement";
 import ColorManagement from "./pages/admin/ColorManagement";
+import CouponManagement from "./pages/admin/CouponManagement";
+import BlogManagement from "./pages/admin/BlogManagement";
+import InquiryManagement from "./pages/admin/InquiryManagement";
+import CoinsManagement from "./pages/admin/CoinsManagement";
 import MobileBottomNav from "./components/MobileBottomNav";
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -43,6 +52,7 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <LanguageProvider>
+        <CoinsProvider>
         <CartProvider>
           <Toaster
             position="top-center"
@@ -65,7 +75,10 @@ export default function App() {
             {/* Static pages */}
             <Route path="/about" element={<MainLayout><StaticPage title="About Us" content="We are JAI SHREE DRYFRUITS, committed to bringing you the finest quality dry fruits and nuts from around the world." /></MainLayout>} />
             <Route path="/contact" element={<MainLayout><ContactPage /></MainLayout>} />
-            <Route path="/faq" element={<MainLayout><StaticPage title="FAQs" content="Find answers to common questions about our products, shipping, and returns." /></MainLayout>} />
+            <Route path="/faq" element={<MainLayout><FAQ /></MainLayout>} />
+            <Route path="/blog" element={<MainLayout><Blog /></MainLayout>} />
+            <Route path="/blog/:id" element={<MainLayout><BlogPost /></MainLayout>} />
+            <Route path="/sourcing" element={<MainLayout><SourcingStory /></MainLayout>} />
             <Route path="/shipping" element={<MainLayout><StaticPage title="Shipping Policy" content="We ship pan-India. Free shipping on orders above ₹499. Delivery in 3-5 business days." /></MainLayout>} />
             <Route path="/returns" element={<MainLayout><StaticPage title="Return & Refund Policy" content="We offer a 7-day hassle-free return policy. Contact us within 7 days of delivery for returns." /></MainLayout>} />
             <Route path="/privacy" element={<MainLayout><StaticPage title="Privacy Policy" content="Your privacy is important to us. We never sell or share your personal data." /></MainLayout>} />
@@ -79,12 +92,17 @@ export default function App() {
               <Route path="customers" element={<CustomerManagement />} />
               <Route path="reviews" element={<ReviewManagement />} />
               <Route path="colors" element={<ColorManagement />} />
+              <Route path="coupons" element={<CouponManagement />} />
+              <Route path="blog" element={<BlogManagement />} />
+              <Route path="inquiries" element={<InquiryManagement />} />
+              <Route path="coins" element={<CoinsManagement />} />
             </Route>
 
             {/* 404 */}
             <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
           </Routes>
         </CartProvider>
+        </CoinsProvider>
         </LanguageProvider>
       </AuthProvider>
     </BrowserRouter>

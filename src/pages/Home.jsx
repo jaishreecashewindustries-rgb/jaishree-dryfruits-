@@ -4,6 +4,8 @@ import { motion, useInView, useAnimation } from "framer-motion";
 import {
   ArrowRight, Shield, Truck, Award, RefreshCw, Star,
   Leaf, Package, Zap, Gift, CheckCircle, Phone, ChevronLeft, ChevronRight,
+  Heart, Activity, Flame, ShieldCheck, Scale, Dumbbell, Sparkles, Users,
+  ShoppingBag, Tag, Coins, TrendingUp, BookOpen,
 } from "lucide-react";
 import ProductCard from "../components/ProductCard";
 import { DEMO_PRODUCTS, formatPrice } from "../utils/helpers";
@@ -338,13 +340,16 @@ export default function Home() {
               </div>
               <div className="grid grid-cols-2 md:flex md:gap-10 gap-x-8 gap-y-4 w-full md:w-auto">
                 {[
-                  { place: "Kashmir", product: "Walnuts & Saffron", flag: "🏔️" },
-                  { place: "California", product: "Almonds & Pistachios", flag: "☀️" },
-                  { place: "Iran", product: "Premium Pistachios", flag: "🌿" },
-                  { place: "Afghanistan", product: "Dates & Raisins", flag: "⭐" },
+                  { place: "Kashmir", product: "Walnuts & Saffron", code: "IN" },
+                  { place: "California", product: "Almonds & Pistachios", code: "US" },
+                  { place: "Iran", product: "Premium Pistachios", code: "IR" },
+                  { place: "Saudi Arabia", product: "Dates & Figs", code: "SA" },
                 ].map(o => (
                   <div key={o.place} className="text-center flex flex-col items-center">
-                    <p className="text-2xl mb-0.5">{o.flag}</p>
+                    <div className="w-8 h-6 flex items-center justify-center border border-brand-gold/30 mb-1.5"
+                      style={{ background: "rgba(201,168,76,0.12)" }}>
+                      <span className="text-brand-gold font-bold text-[10px] tracking-wider">{o.code}</span>
+                    </div>
                     <p className="text-white font-semibold text-xs">{o.place}</p>
                     <p className="text-white/45 text-[10px]">{o.product}</p>
                   </div>
@@ -549,6 +554,176 @@ export default function Home() {
               className="rounded-full transition-all duration-300"
               style={{ width: testimonialIdx === i ? 20 : 8, height: 8, background: testimonialIdx === i ? "#C9A84C" : "#D1D5DB" }} />
           ))}
+        </div>
+      </section>
+
+      {/* ═══ SHOP BY HEALTH GOAL ════════════════════════════════ */}
+      <section className="py-24 px-4" style={{ background: "#F8FAFE" }}>
+        <div className="max-w-6xl mx-auto">
+          <FadeUp className="text-center mb-14">
+            <p className="sec-tag justify-center mb-4">Personalised Nutrition</p>
+            <h2 className="section-title text-brand-brown">Shop by <em style={{ color: "#C9A84C" }}>Health Goal</em></h2>
+            <div className="gold-divider mx-auto mt-4" />
+            <p className="text-brand-text-soft text-sm mt-5 max-w-lg mx-auto leading-relaxed">Find the right nut for your wellness journey. Every goal, every body — the perfect dry fruit awaits.</p>
+          </FadeUp>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-gray-100 border border-gray-100">
+            {[
+              { goal: "Heart Health", Icon: Heart, desc: "Rich in omega-3 & antioxidants", product: "Walnuts", accentBg: "#1B2E4B", link: "/products?goal=heart" },
+              { goal: "Brain Power", Icon: Activity, desc: "Boost memory & concentration", product: "Almonds", accentBg: "#243D63", link: "/products?goal=brain" },
+              { goal: "Energy Boost", Icon: Flame, desc: "Natural fuel for active days", product: "Dates & Raisins", accentBg: "#1B2E4B", link: "/products?goal=energy" },
+              { goal: "Immunity", Icon: ShieldCheck, desc: "Strengthen your body's defences", product: "Pistachios", accentBg: "#243D63", link: "/products?goal=immunity" },
+              { goal: "Weight Balance", Icon: Scale, desc: "Healthy snacking, stay satiated", product: "Cashews", accentBg: "#243D63", link: "/products?goal=weight" },
+              { goal: "Bone Strength", Icon: Dumbbell, desc: "Calcium & phosphorus rich", product: "Figs & Apricots", accentBg: "#1B2E4B", link: "/products?goal=bones" },
+              { goal: "Skin & Hair", Icon: Sparkles, desc: "Glow from the inside out", product: "Pumpkin Seeds", accentBg: "#243D63", link: "/products?goal=skin" },
+              { goal: "Kids Nutrition", Icon: Users, desc: "Growing bodies need the best", product: "Mixed Nuts", accentBg: "#1B2E4B", link: "/products?goal=kids" },
+            ].map((item, i) => (
+              <motion.div
+                key={item.goal}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.55, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <Link to={item.link}
+                  className="group flex flex-col items-center text-center p-7 bg-white transition-all duration-400 hover:bg-brand-brown"
+                  style={{ minHeight: 200 }}
+                >
+                  <div className="w-12 h-12 flex items-center justify-center mb-4 transition-all duration-300 group-hover:scale-110"
+                    style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.25)" }}>
+                    <item.Icon size={20} className="text-brand-gold" />
+                  </div>
+                  <h3 className="font-serif text-sm font-normal text-brand-brown group-hover:text-white mb-1.5 transition-colors duration-300" style={{ letterSpacing: "0.3px" }}>{item.goal}</h3>
+                  <p className="text-xs text-gray-400 group-hover:text-white/60 mb-4 leading-relaxed transition-colors duration-300">{item.desc}</p>
+                  <span className="text-xs font-bold text-brand-gold uppercase tracking-widest mt-auto flex items-center gap-1.5">
+                    {item.product} <ArrowRight size={10} className="group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ HANDPICKED COMBO DEALS ══════════════════════════════ */}
+      <section className="py-24 px-4 overflow-hidden" style={{ background: "linear-gradient(160deg, #0D1B2A 0%, #1B2E4B 60%, #243D63 100%)" }}>
+        <div className="max-w-6xl mx-auto">
+          <FadeUp className="text-center mb-14">
+            <p className="text-brand-gold text-xs font-semibold tracking-[3.5px] uppercase mb-4">Curated Value Bundles</p>
+            <h2 className="font-serif text-white mb-4" style={{ fontSize: "clamp(28px,4vw,46px)", fontWeight: 400 }}>Handpicked <em style={{ color: "#E2C06A" }}>Combo Deals</em></h2>
+            <div className="w-12 h-px mx-auto" style={{ background: "linear-gradient(90deg, transparent, #C9A84C, transparent)" }} />
+            <p className="text-white/40 text-sm max-w-lg mx-auto mt-5 leading-relaxed">Curated combos for gifting, daily snacking and bulk value. Save more when you buy together.</p>
+          </FadeUp>
+          <div className="flex gap-5 overflow-x-auto pb-6 snap-x snap-mandatory" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+            {[
+              { name: "Everyday Wellness Trio", items: "Almonds 250g + Cashews 250g + Walnuts 200g", price: "₹899", original: "₹1,149", saving: "₹250 off", badge: "Best Seller", img: "https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=400&q=80", tag: "wellness" },
+              { name: "Diwali Gifting Box", items: "Premium Mixed Nuts 500g + Dates 200g + Pistachios 150g", price: "₹1,299", original: "₹1,699", saving: "₹400 off", badge: "Gift Ready", img: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400&q=80", tag: "gifting" },
+              { name: "Brain Booster Pack", items: "Almonds 500g + Walnuts 250g + Pumpkin Seeds 150g", price: "₹1,099", original: "₹1,399", saving: "₹300 off", badge: "Popular", img: "https://images.unsplash.com/photo-1524593656068-fbac72624bb0?w=400&q=80", tag: "brain" },
+              { name: "Heart Care Bundle", items: "Walnuts 500g + Flaxseeds 200g + Sunflower Seeds 200g", price: "₹999", original: "₹1,299", saving: "₹300 off", badge: "Wellness", img: "https://images.unsplash.com/photo-1573555657105-47a0bb37c3ea?w=400&q=80", tag: "heart" },
+              { name: "Protein Power Pack", items: "Cashews 500g + Almonds 250g + Peanuts 250g", price: "₹849", original: "₹1,049", saving: "₹200 off", badge: "Fitness", img: "https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=400&q=80", tag: "protein" },
+              { name: "Family Mega Box", items: "Almonds 1kg + Cashews 500g + Raisins 500g + Dates 500g", price: "₹2,499", original: "₹3,199", saving: "₹700 off", badge: "Family Value", img: "https://images.unsplash.com/photo-1502825751399-28baa9b81efe?w=400&q=80", tag: "family" },
+            ].map((combo, i) => (
+              <motion.div
+                key={combo.name}
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.08 }}
+                className="flex-shrink-0 snap-start overflow-hidden group"
+                style={{ width: "clamp(260px, 28vw, 300px)", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(201,168,76,0.15)" }}
+              >
+                {/* Card image header */}
+                <div className="relative h-40 overflow-hidden">
+                  <img src={combo.img} alt={combo.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-70" />
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(13,27,42,0.3), rgba(13,27,42,0.75))" }} />
+                  <span className="absolute top-3 left-3 text-xs font-bold tracking-widest uppercase px-3 py-1"
+                    style={{ background: "#C9A84C", color: "#1B2E4B", fontSize: "9px" }}>
+                    {combo.badge}
+                  </span>
+                  <span className="absolute bottom-3 right-3 text-xs font-bold text-green-300 bg-green-900/40 px-2 py-0.5">{combo.saving}</span>
+                </div>
+                <div className="p-5">
+                  <h3 className="font-serif text-base font-normal text-white mb-1.5" style={{ letterSpacing: "0.2px" }}>{combo.name}</h3>
+                  <p className="text-white/40 text-xs leading-relaxed mb-4">{combo.items}</p>
+                  <div className="flex items-end justify-between mb-4">
+                    <div>
+                      <p className="font-serif text-xl font-normal text-brand-gold">{combo.price}</p>
+                      <p className="text-white/25 text-xs line-through mt-0.5">{combo.original}</p>
+                    </div>
+                  </div>
+                  <Link to={`/products?combo=${combo.tag}`}
+                    className="flex items-center justify-center gap-2 text-xs font-bold py-2.5 w-full tracking-widest uppercase transition-all group-hover:gap-3"
+                    style={{ background: "linear-gradient(135deg, #C9A84C, #E2C06A)", color: "#1B2E4B" }}>
+                    Add to Cart <ArrowRight size={12} />
+                  </Link>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          <FadeUp className="text-center mt-10">
+            <Link to="/products?filter=combos" className="inline-flex items-center gap-2 text-brand-gold text-xs font-bold uppercase tracking-widest hover:gap-3 transition-all">
+              View All Combos <ArrowRight size={13} />
+            </Link>
+          </FadeUp>
+        </div>
+      </section>
+
+      {/* ═══ JS COINS LOYALTY BANNER ═════════════════════════════ */}
+      <section className="py-20 px-4 overflow-hidden" style={{ background: "#F4F0E8", borderTop: "1px solid #E8D9A0", borderBottom: "1px solid #E8D9A0" }}>
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="grid md:grid-cols-[auto_1fr_auto] gap-10 items-center"
+          >
+            {/* Left: Icon lockup */}
+            <div className="text-center md:text-left">
+              <div className="w-20 h-20 mx-auto md:mx-0 flex items-center justify-center mb-4"
+                style={{ background: "linear-gradient(135deg, #C9A84C, #9E7A2E)", boxShadow: "0 8px 32px rgba(201,168,76,0.35)" }}>
+                <Coins size={34} className="text-white" />
+              </div>
+              <p className="font-serif text-3xl font-normal text-brand-brown leading-tight">JS Coins</p>
+              <p className="text-xs font-semibold tracking-widest uppercase text-brand-gold mt-1">Loyalty Rewards</p>
+            </div>
+
+            {/* Middle: Steps */}
+            <div className="grid sm:grid-cols-3 gap-6">
+              {[
+                { step: "01", title: "Shop & Earn", desc: "1 JS Coin for every ₹1 spent on any order", Icon: ShoppingBag },
+                { step: "02", title: "Bonus Rewards", desc: "Extra coins for reviews, referrals & birthdays", Icon: TrendingUp },
+                { step: "03", title: "Redeem Savings", desc: "100 coins = ₹25 off. No minimum order required", Icon: Tag },
+              ].map((step, i) => (
+                <motion.div
+                  key={step.step}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.12, duration: 0.5 }}
+                  className="text-center border-t-2 border-brand-gold/30 pt-4"
+                >
+                  <step.Icon size={18} className="text-brand-gold mx-auto mb-3" />
+                  <p className="text-xs font-bold tracking-widest text-brand-gold uppercase mb-1">{step.step}</p>
+                  <h3 className="font-serif text-base font-normal text-brand-brown mb-1">{step.title}</h3>
+                  <p className="text-xs text-gray-500 leading-relaxed">{step.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Right: CTA */}
+            <div className="text-center md:text-right space-y-4 flex-shrink-0">
+              <div>
+                <p className="font-serif text-lg font-normal text-brand-brown">Start Earning</p>
+                <p className="text-xs text-gray-500 mt-1">50 bonus coins on first sign-up</p>
+              </div>
+              <Link to="/login" className="btn-gold inline-flex px-7 py-3 text-xs">
+                Join Free — Earn 50 Coins
+              </Link>
+              <p className="text-xs text-gray-400">
+                Member? <Link to="/dashboard" className="text-brand-gold font-semibold underline">View balance</Link>
+              </p>
+            </div>
+          </motion.div>
         </div>
       </section>
 

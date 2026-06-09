@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ShoppingBag, Users, Package, Star, TrendingUp, ArrowRight, AlertCircle } from "lucide-react";
+import { ShoppingBag, Users, Package, Star, TrendingUp, ArrowRight, AlertCircle, Plus, MessageSquare } from "lucide-react";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
 import { db } from "../../firebase/config";
 import { formatPrice, formatDate, getStatusStyle, ORDER_STATUSES } from "../../utils/helpers";
@@ -135,13 +135,13 @@ export default function AdminDashboard() {
       {/* Quick actions */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { to: "/admin/products", label: "Add Product", emoji: "➕", color: "bg-brand-cream border-brand-gold/20" },
-          { to: "/admin/orders", label: "Manage Orders", emoji: "📦", color: "bg-blue-50 border-blue-200" },
-          { to: "/admin/reviews", label: "Moderate Reviews", emoji: "⭐", color: "bg-amber-50 border-amber-200" },
-          { to: "/admin/customers", label: "View Customers", emoji: "👥", color: "bg-purple-50 border-purple-200" },
+          { to: "/admin/products", label: "Add Product",      Icon: Plus,           color: "bg-brand-cream border-brand-gold/20",  iconColor: "text-brand-gold" },
+          { to: "/admin/orders",   label: "Manage Orders",    Icon: Package,        color: "bg-blue-50 border-blue-200",           iconColor: "text-blue-500" },
+          { to: "/admin/reviews",  label: "Moderate Reviews", Icon: Star,           color: "bg-amber-50 border-amber-200",         iconColor: "text-amber-500" },
+          { to: "/admin/customers",label: "View Customers",   Icon: Users,          color: "bg-purple-50 border-purple-200",       iconColor: "text-purple-500" },
         ].map((a) => (
-          <Link key={a.to} to={a.to} className={`${a.color} border rounded-2xl p-4 text-center hover:shadow-md transition-all`}>
-            <p className="text-2xl mb-1">{a.emoji}</p>
+          <Link key={a.to} to={a.to} className={`${a.color} border rounded-2xl p-5 text-center hover:shadow-md transition-all group`}>
+            <a.Icon size={22} className={`${a.iconColor} mx-auto mb-2 group-hover:scale-110 transition-transform`} />
             <p className="text-xs font-semibold text-brand-brown">{a.label}</p>
           </Link>
         ))}
