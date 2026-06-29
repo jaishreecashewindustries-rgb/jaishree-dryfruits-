@@ -1,40 +1,27 @@
 import React, { useState, useEffect } from "react";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase/config";
-import {
-  Save, Loader2, LayoutDashboard, Users, Home, MapPin, Phone, Star,
-  Video, Megaphone, Grid, Target, Package, Layers, Leaf, Coins,
-  CheckCircle,
-} from "lucide-react";
+import { Save, Loader2, LayoutDashboard, Users, Home, MapPin, Phone, Star } from "lucide-react";
 import ImageUpload from "../../components/ImageUpload";
 import toast from "react-hot-toast";
-import {
-  DEFAULT_HERO, DEFAULT_ANNOUNCEMENT, DEFAULT_CATEGORIES,
-  DEFAULT_HEALTH_GOALS, DEFAULT_COMBOS, DEFAULT_WHY_US,
-  DEFAULT_ORIGINS, DEFAULT_COINS_RULES,
-} from "../../context/SiteSettingsContext";
-
-const ICON_OPTIONS = [
-  "Heart","Activity","Flame","ShieldCheck","Scale","Dumbbell","Sparkles","Users",
-  "Star","Leaf","Award","Gift","Package","Zap","Phone","CheckCircle",
-];
 
 const TABS = [
-  { id: "hero",         label: "Hero",           icon: Video },
-  { id: "announcement", label: "Announcement",    icon: Megaphone },
-  { id: "categories",   label: "Categories",      icon: Grid },
-  { id: "healthGoals",  label: "Health Goals",    icon: Target },
-  { id: "combos",       label: "Combo Deals",     icon: Layers },
-  { id: "whyUs",        label: "Why Us",          icon: Leaf },
-  { id: "origins",      label: "Origins",         icon: MapPin },
-  { id: "coins",        label: "JS Coins",        icon: Coins },
-  { id: "about",        label: "About & Story",   icon: LayoutDashboard },
-  { id: "team",         label: "Team",            icon: Users },
-  { id: "contact",      label: "Contact & Footer",icon: Phone },
-  { id: "trust",        label: "Trust Bar",       icon: Star },
+  { id: "hero", label: "Hero / Banner", icon: Home },
+  { id: "about", label: "About & Story", icon: LayoutDashboard },
+  { id: "team", label: "Team", icon: Users },
+  { id: "sourcing", label: "Sourcing Story", icon: MapPin },
+  { id: "contact", label: "Contact & Footer", icon: Phone },
+  { id: "trust", label: "Trust Bar", icon: Star },
 ];
 
-const SITE_CONTENT_DEFAULTS = {
+const DEFAULTS = {
+  hero: {
+    headline: "Premium Dry Fruits,\nDelivered Fresh",
+    subheadline: "Sourced from the world's finest farms. Freshness guaranteed.",
+    backgroundImage: "",
+    ctaText: "Shop Premium Collection",
+    ctaSecondary: "Our Story",
+  },
   about: {
     storyTitle: "Our Story",
     storyText: "Founded with a passion for purity, Jai Shree Dry Fruits sources the finest nuts and dry fruits from trusted farms around the world.",
@@ -53,19 +40,31 @@ const SITE_CONTENT_DEFAULTS = {
       { name: "Priya Kumar", title: "COO", bio: "Operations expert ensuring every order is perfect and on time.", photo: "" },
     ],
   },
+  sourcing: {
+    title: "From Farm to Your Table",
+    text: "We travel to the source — California almonds, Iranian pistachios, Kashmiri walnuts — building direct relationships with farmers who share our commitment to quality.",
+    image: "",
+    highlights: [
+      { label: "Farm Partners", value: "50+" },
+      { label: "Countries Sourced", value: "12" },
+      { label: "Quality Checks", value: "3-Stage" },
+      { label: "Years Experience", value: "15+" },
+    ],
+  },
   contact: {
-    phone: "+91 75685 77968",
-    email: "info@jaishreegryfruits.com",
-    address: "41, Barah Ji Ki Gali, Gangauri Bazar, Jaipur – 302001",
-    whatsapp: "+91 75685 77968",
+    phone: "+91 98765 43210",
+    email: "hello@jaishreedryfruits.com",
+    address: "Mumbai, Maharashtra, India",
+    whatsapp: "+91 98765 43210",
     footerTagline: "Premium Dry Fruits & Nuts — Fresh, Pure, Authentic",
     socialInstagram: "",
     socialFacebook: "",
+    socialTwitter: "",
   },
   trust: {
     items: [
       { icon: "🌿", text: "100% Natural" },
-      { icon: "🚚", text: "Free Delivery ₹499+" },
+      { icon: "🚚", text: "Free Delivery ₹999+" },
       { icon: "⭐", text: "4.9 Rated" },
       { icon: "🔒", text: "Secure Payments" },
       { icon: "↩️", text: "Easy Returns" },
@@ -75,48 +74,16 @@ const SITE_CONTENT_DEFAULTS = {
 
 export default function ContentManagement() {
   const [activeTab, setActiveTab] = useState("hero");
-  // Homepage settings (hero, announcement, categories, healthGoals, combos, whyUs, origins)
-  const [homepage, setHomepage] = useState({
-    hero: DEFAULT_HERO,
-    announcement: DEFAULT_ANNOUNCEMENT,
-    categories: DEFAULT_CATEGORIES,
-    healthGoals: DEFAULT_HEALTH_GOALS,
-    combos: DEFAULT_COMBOS,
-    whyUs: DEFAULT_WHY_US,
-    origins: DEFAULT_ORIGINS,
-  });
-  // Coins settings
-  const [coinsData, setCoinsData] = useState(DEFAULT_COINS_RULES);
-  // Site content (about, team, contact, trust)
-  const [siteContent, setSiteContent] = useState(SITE_CONTENT_DEFAULTS);
+  const [data, setData] = useState(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [homepageSnap, coinsSnap, contentSnap] = await Promise.all([
-          getDoc(doc(db, "settings", "homepage")),
-          getDoc(doc(db, "settings", "coins")),
-          getDoc(doc(db, "settings", "siteContent")),
-        ]);
-        if (homepageSnap.exists()) {
-          const d = homepageSnap.data();
-          setHomepage(prev => ({
-            hero: d.hero ? { ...prev.hero, ...d.hero } : prev.hero,
-            announcement: d.announcement ? { ...prev.announcement, ...d.announcement } : prev.announcement,
-            categories: d.categories?.length ? d.categories : prev.categories,
-            healthGoals: d.healthGoals?.length ? d.healthGoals : prev.healthGoals,
-            combos: d.combos?.length ? d.combos : prev.combos,
-            whyUs: d.whyUs?.length ? d.whyUs : prev.whyUs,
-            origins: d.origins?.length ? d.origins : prev.origins,
-          }));
-        }
-        if (coinsSnap.exists()) {
-          setCoinsData(c => ({ ...c, ...coinsSnap.data() }));
-        }
-        if (contentSnap.exists()) {
-          setSiteContent(prev => ({ ...prev, ...contentSnap.data() }));
+        const snap = await getDoc(doc(db, "settings", "siteContent"));
+        if (snap.exists()) {
+          setData((prev) => ({ ...prev, ...snap.data() }));
         }
       } catch (e) {
         console.error(e);
@@ -130,48 +97,255 @@ export default function ContentManagement() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      const homepageTabs = ["hero","announcement","categories","healthGoals","combos","whyUs","origins"];
-      const coinsTabs = ["coins"];
-      const contentTabs = ["about","team","contact","trust"];
-
-      if (homepageTabs.includes(activeTab)) {
-        await setDoc(doc(db, "settings", "homepage"), { ...homepage, updatedAt: serverTimestamp() }, { merge: true });
-      } else if (coinsTabs.includes(activeTab)) {
-        await setDoc(doc(db, "settings", "coins"), { ...coinsData, updatedAt: serverTimestamp() }, { merge: true });
-      } else if (contentTabs.includes(activeTab)) {
-        await setDoc(doc(db, "settings", "siteContent"), { ...siteContent, updatedAt: serverTimestamp() }, { merge: true });
-      }
-      toast.success("Saved!");
+      await setDoc(doc(db, "settings", "siteContent"), { ...data, updatedAt: serverTimestamp() }, { merge: true });
+      toast.success("Content saved!");
     } catch (e) {
-      toast.error("Save failed");
+      toast.error("Failed to save");
     } finally {
       setSaving(false);
     }
   };
 
-  // Helpers
-  const updateHomepage = (key, value) => setHomepage(prev => ({ ...prev, [key]: value }));
-  const updateHero = (field, val) => setHomepage(prev => ({ ...prev, hero: { ...prev.hero, [field]: val } }));
-  const updateAnnouncement = (field, val) => setHomepage(prev => ({ ...prev, announcement: { ...prev.announcement, [field]: val } }));
-  const updateListItem = (listKey, idx, field, val) => {
-    setHomepage(prev => {
-      const arr = [...prev[listKey]];
-      arr[idx] = { ...arr[idx], [field]: val };
-      return { ...prev, [listKey]: arr };
-    });
+  const update = (tab, field, value) => {
+    setData((prev) => ({ ...prev, [tab]: { ...prev[tab], [field]: value } }));
   };
-  const addListItem = (listKey, template) => setHomepage(prev => ({ ...prev, [listKey]: [...prev[listKey], template] }));
-  const removeListItem = (listKey, idx) => setHomepage(prev => ({ ...prev, [listKey]: prev[listKey].filter((_, i) => i !== idx) }));
-  const updateCoins = (field, val) => setCoinsData(prev => ({ ...prev, [field]: parseFloat(val) || 0 }));
-  const updateContent = (tab, field, val) => setSiteContent(prev => ({ ...prev, [tab]: { ...prev[tab], [field]: val } }));
-  const updateContentNested = (tab, arrField, idx, field, val) => {
-    setSiteContent(prev => {
-      const arr = [...(prev[tab][arrField] || [])];
-      arr[idx] = { ...arr[idx], [field]: val };
-      return { ...prev, [tab]: { ...prev[tab], [arrField]: arr } };
+
+  const updateNested = (tab, arrayField, index, field, value) => {
+    setData((prev) => {
+      const arr = [...(prev[tab][arrayField] || [])];
+      arr[index] = { ...arr[index], [field]: value };
+      return { ...prev, [tab]: { ...prev[tab], [arrayField]: arr } };
     });
   };
 
   if (loading) return (
+    <div className="flex items-center justify-center h-60">
+      <Loader2 size={32} className="animate-spin text-brand-gold" />
+    </div>
+  );
 
-... [359 lines truncated] ...
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="font-serif text-2xl font-bold text-brand-brown">Content Management</h1>
+          <p className="text-sm text-gray-400 mt-0.5">Edit all website pages, photos, and text from here</p>
+        </div>
+        <button onClick={handleSave} disabled={saving} className="btn-primary flex items-center gap-2 py-2.5 px-5">
+          {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+          {saving ? "Saving…" : "Save All Changes"}
+        </button>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex flex-wrap gap-2">
+        {TABS.map((t) => {
+          const Icon = t.icon;
+          return (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+                activeTab === t.id
+                  ? "bg-brand-brown text-white shadow"
+                  : "bg-white text-gray-500 hover:text-brand-brown"
+              }`}
+            >
+              <Icon size={14} /> {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="bg-white rounded-2xl shadow-sm p-6 space-y-6">
+        {/* HERO */}
+        {activeTab === "hero" && (
+          <>
+            <Section title="Homepage Hero Banner">
+              <Field label="Main Headline">
+                <textarea value={data.hero.headline} onChange={e => update("hero", "headline", e.target.value)} rows={2} className="input-field resize-none" />
+              </Field>
+              <Field label="Subheadline">
+                <input value={data.hero.subheadline} onChange={e => update("hero", "subheadline", e.target.value)} className="input-field" />
+              </Field>
+              <Field label="Primary CTA Button Text">
+                <input value={data.hero.ctaText} onChange={e => update("hero", "ctaText", e.target.value)} className="input-field" />
+              </Field>
+              <Field label="Secondary CTA Text">
+                <input value={data.hero.ctaSecondary} onChange={e => update("hero", "ctaSecondary", e.target.value)} className="input-field" />
+              </Field>
+              <ImageUpload label="Hero Background Image" value={data.hero.backgroundImage} onChange={url => update("hero", "backgroundImage", url)} folder="content/hero" />
+            </Section>
+          </>
+        )}
+
+        {/* ABOUT */}
+        {activeTab === "about" && (
+          <>
+            <Section title="Our Story Section">
+              <Field label="Section Title">
+                <input value={data.about.storyTitle} onChange={e => update("about", "storyTitle", e.target.value)} className="input-field" />
+              </Field>
+              <Field label="Story Text">
+                <textarea value={data.about.storyText} onChange={e => update("about", "storyText", e.target.value)} rows={4} className="input-field resize-none" />
+              </Field>
+              <Field label="Mission Title">
+                <input value={data.about.missionTitle} onChange={e => update("about", "missionTitle", e.target.value)} className="input-field" />
+              </Field>
+              <Field label="Mission Text">
+                <textarea value={data.about.missionText} onChange={e => update("about", "missionText", e.target.value)} rows={3} className="input-field resize-none" />
+              </Field>
+              <ImageUpload label="About Page Banner Image" value={data.about.bannerImage} onChange={url => update("about", "bannerImage", url)} folder="content/about" />
+            </Section>
+            <Section title="Our Values (3 cards)">
+              {(data.about.values || []).map((v, i) => (
+                <div key={i} className="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-xl">
+                  <Field label={`Value ${i + 1} Title`}>
+                    <input value={v.title} onChange={e => updateNested("about", "values", i, "title", e.target.value)} className="input-field text-sm py-2" />
+                  </Field>
+                  <Field label="Description">
+                    <input value={v.desc} onChange={e => updateNested("about", "values", i, "desc", e.target.value)} className="input-field text-sm py-2" />
+                  </Field>
+                </div>
+              ))}
+            </Section>
+          </>
+        )}
+
+        {/* TEAM */}
+        {activeTab === "team" && (
+          <Section title="Team Members">
+            {(data.team.members || []).map((m, i) => (
+              <div key={i} className="border border-gray-100 rounded-2xl p-4 space-y-4">
+                <p className="text-xs font-bold text-brand-brown uppercase tracking-widest">Member {i + 1}</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Full Name">
+                    <input value={m.name} onChange={e => updateNested("team", "members", i, "name", e.target.value)} className="input-field" />
+                  </Field>
+                  <Field label="Title / Role">
+                    <input value={m.title} onChange={e => updateNested("team", "members", i, "title", e.target.value)} className="input-field" />
+                  </Field>
+                  <div className="col-span-2">
+                    <Field label="Bio">
+                      <textarea value={m.bio} onChange={e => updateNested("team", "members", i, "bio", e.target.value)} rows={2} className="input-field resize-none" />
+                    </Field>
+                  </div>
+                </div>
+                <ImageUpload label="Profile Photo" value={m.photo} onChange={url => updateNested("team", "members", i, "photo", url)} folder="content/team" />
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setData(prev => ({ ...prev, team: { ...prev.team, members: [...(prev.team.members || []), { name: "", title: "", bio: "", photo: "" }] } }))}
+              className="text-sm text-brand-gold hover:underline"
+            >
+              + Add Team Member
+            </button>
+          </Section>
+        )}
+
+        {/* SOURCING */}
+        {activeTab === "sourcing" && (
+          <>
+            <Section title="Sourcing Story">
+              <Field label="Section Title">
+                <input value={data.sourcing.title} onChange={e => update("sourcing", "title", e.target.value)} className="input-field" />
+              </Field>
+              <Field label="Story Text">
+                <textarea value={data.sourcing.text} onChange={e => update("sourcing", "text", e.target.value)} rows={4} className="input-field resize-none" />
+              </Field>
+              <ImageUpload label="Sourcing Image" value={data.sourcing.image} onChange={url => update("sourcing", "image", url)} folder="content/sourcing" />
+            </Section>
+            <Section title="Stats Highlights (4 numbers)">
+              <div className="grid grid-cols-2 gap-3">
+                {(data.sourcing.highlights || []).map((h, i) => (
+                  <div key={i} className="bg-gray-50 p-3 rounded-xl space-y-2">
+                    <Field label="Label">
+                      <input value={h.label} onChange={e => updateNested("sourcing", "highlights", i, "label", e.target.value)} className="input-field text-sm py-1.5" />
+                    </Field>
+                    <Field label="Value">
+                      <input value={h.value} onChange={e => updateNested("sourcing", "highlights", i, "value", e.target.value)} className="input-field text-sm py-1.5" />
+                    </Field>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          </>
+        )}
+
+        {/* CONTACT */}
+        {activeTab === "contact" && (
+          <Section title="Contact & Footer Info">
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Phone">
+                <input value={data.contact.phone} onChange={e => update("contact", "phone", e.target.value)} className="input-field" />
+              </Field>
+              <Field label="WhatsApp">
+                <input value={data.contact.whatsapp} onChange={e => update("contact", "whatsapp", e.target.value)} className="input-field" />
+              </Field>
+              <Field label="Email">
+                <input value={data.contact.email} onChange={e => update("contact", "email", e.target.value)} className="input-field" />
+              </Field>
+              <Field label="Address">
+                <input value={data.contact.address} onChange={e => update("contact", "address", e.target.value)} className="input-field" />
+              </Field>
+              <div className="col-span-2">
+                <Field label="Footer Tagline">
+                  <input value={data.contact.footerTagline} onChange={e => update("contact", "footerTagline", e.target.value)} className="input-field" />
+                </Field>
+              </div>
+              <Field label="Instagram URL">
+                <input value={data.contact.socialInstagram} onChange={e => update("contact", "socialInstagram", e.target.value)} className="input-field" placeholder="https://instagram.com/..." />
+              </Field>
+              <Field label="Facebook URL">
+                <input value={data.contact.socialFacebook} onChange={e => update("contact", "socialFacebook", e.target.value)} className="input-field" placeholder="https://facebook.com/..." />
+              </Field>
+            </div>
+          </Section>
+        )}
+
+        {/* TRUST BAR */}
+        {activeTab === "trust" && (
+          <Section title="Trust Bar (shown site-wide)">
+            <p className="text-xs text-gray-400 mb-3">These items appear in the scrolling trust marquee at top of pages</p>
+            {(data.trust.items || []).map((item, i) => (
+              <div key={i} className="grid grid-cols-2 gap-3 bg-gray-50 p-3 rounded-xl">
+                <Field label="Icon (emoji)">
+                  <input value={item.icon} onChange={e => updateNested("trust", "items", i, "icon", e.target.value)} className="input-field" maxLength={4} />
+                </Field>
+                <Field label="Text">
+                  <input value={item.text} onChange={e => updateNested("trust", "items", i, "text", e.target.value)} className="input-field" />
+                </Field>
+              </div>
+            ))}
+          </Section>
+        )}
+      </div>
+
+      <div className="flex justify-end">
+        <button onClick={handleSave} disabled={saving} className="btn-primary flex items-center gap-2 py-2.5 px-6">
+          {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+          {saving ? "Saving…" : "Save All Changes"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Section({ title, children }) {
+  return (
+    <div className="space-y-4">
+      <h3 className="text-sm font-bold text-brand-brown border-b border-gray-100 pb-2">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function Field({ label, children }) {
+  return (
+    <div>
+      <label className="text-xs font-semibold text-gray-500 block mb-1">{label}</label>
+      {children}
+    </div>
+  );
+}

@@ -97,7 +97,7 @@ export default function CoinsManagement() {
                 {balances.sort((a, b) => (b.balance || 0) - (a.balance || 0)).map(b => (
                   <tr key={b.id}>
                     <td className="text-sm">{b.email || b.userId}</td>
-                    <td><span className="coin-badge flex items-center gap-1"><Coins size={11} /> {b.balance || 0}</span></td>
+                    <td><span className="coin-badge">🪙 {b.balance || 0}</span></td>
                     <td className="text-green-600 font-semibold">₹{Math.floor((b.balance || 0) * COINS_RULES.redeemRate)}</td>
                   </tr>
                 ))}

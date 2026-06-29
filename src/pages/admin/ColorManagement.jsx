@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Plus, X, Edit2, Save, Package } from "lucide-react";
+import { Plus, X, Edit2, Save } from "lucide-react";
 import toast from "react-hot-toast";
 
 const DEFAULT_COLORS = [
@@ -149,7 +149,7 @@ export default function ColorManagement() {
             <div className="grid grid-cols-3 gap-3">
               {[1,2,3].map((i) => (
                 <div key={i} className="bg-white rounded-xl p-3 shadow-sm">
-                  <div className="h-20 bg-brand-cream rounded-lg mb-2 flex items-center justify-center"><Package size={28} className="text-brand-gold/40" /></div>
+                  <div className="h-20 bg-brand-cream rounded-lg mb-2 flex items-center justify-center text-2xl">🌰</div>
                   <p className="text-xs font-semibold text-brand-brown">Premium Almonds</p>
                   <p className="text-xs text-brand-gold font-bold mt-1">₹349</p>
                   <div className="mt-2 bg-brand-gold text-white text-xs py-1 rounded-lg text-center font-semibold">Add to Cart</div>

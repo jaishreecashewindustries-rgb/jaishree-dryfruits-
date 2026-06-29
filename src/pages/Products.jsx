@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { SlidersHorizontal, X, ChevronDown, Search } from "lucide-react";
+import { SlidersHorizontal, X, ChevronDown } from "lucide-react";
 import ProductCard from "../components/ProductCard";
 import { DEMO_PRODUCTS, PRODUCT_CATEGORIES } from "../utils/helpers";
 
@@ -170,7 +170,7 @@ export default function Products() {
             </div>
           ) : (
             <div className="text-center py-20">
-              <Search size={40} className="text-gray-200 mx-auto mb-4" />
+              <p className="text-5xl mb-4">🔍</p>
               <p className="text-gray-500 font-medium">No products found</p>
               <button onClick={() => { setParams({}); setPriceRange([0, 5000]); }} className="mt-4 btn-outline">
                 Clear Filters

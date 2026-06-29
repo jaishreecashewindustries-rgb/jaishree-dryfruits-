@@ -30,7 +30,7 @@ export default function BulkCalculator() {
   const finalTotal = originalTotal - discountAmt;
 
   return (
-    <section className="py-16 px-4 bg-gradient-to-br from-brand-brown via-[#0D1B35] to-brand-brown">
+    <section className="py-16 px-4 bg-gradient-to-br from-brand-brown via-[#2C1A10] to-brand-brown">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-10">
@@ -42,7 +42,7 @@ export default function BulkCalculator() {
             Get Bulk Pricing
           </h2>
           <div className="w-16 h-0.5 bg-brand-gold mx-auto mb-3" />
-          <p className="text-gray-300 text-sm">Save up to 20% on bulk orders. Perfect for businesses, weddings & gifting.</p>
+          <p className="text-gray-300 text-sm">Save up to 20% on bulk orders. Perfect for businesses, weddings &amp; gifting.</p>
         </div>
 
         <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-6 md:p-8">

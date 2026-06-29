@@ -91,7 +91,7 @@ export const CartProvider = ({ children }) => {
 
   const totalItems = state.items.reduce((s, i) => s + i.qty, 0);
   const subtotal = state.items.reduce((s, i) => s + i.price * i.qty, 0);
-  const shipping = subtotal >= 499 ? 0 : 60;
+  const shipping = subtotal >= 999 ? 0 : 99;
   const total = subtotal + shipping;
 
   return (

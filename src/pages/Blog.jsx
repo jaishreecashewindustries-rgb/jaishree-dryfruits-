@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Clock, User, ArrowRight, Search, BookOpen } from "lucide-react";
-import { motion } from "framer-motion";
+import { Clock, User, ArrowRight, Tag } from "lucide-react";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "../firebase/config";
 
@@ -113,21 +112,10 @@ export default function Blog() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero */}
-      <div className="relative overflow-hidden py-20 px-4 text-center" style={{ background: "linear-gradient(160deg, #0D1B2A 0%, #1B2E4B 60%, #243D63 100%)" }}>
-        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: "radial-gradient(circle at 70% 30%, #C9A84C 0%, transparent 50%)" }} />
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-          className="relative"
-        >
-          <p className="text-brand-gold text-xs font-semibold tracking-[3.5px] uppercase mb-4">Our Blog</p>
-          <h1 className="font-serif text-white mb-4" style={{ fontSize: "clamp(30px,5vw,54px)", fontWeight: 400, lineHeight: 1.1 }}>
-            Insights, <em style={{ color: "#E2C06A" }}>Recipes &amp; Guides</em>
-          </h1>
-          <div className="w-12 h-px mx-auto mb-5" style={{ background: "linear-gradient(90deg, transparent, #C9A84C, transparent)" }} />
-          <p className="text-white/45 text-sm max-w-sm mx-auto leading-relaxed">Expert knowledge about dry fruits, health, nutrition, and the stories behind our sourcing.</p>
-        </motion.div>
+      <div className="py-14 px-4 text-center" style={{ background: "linear-gradient(135deg, #0D1B2A 0%, #1B2E4B 100%)" }}>
+        <p className="sec-tag justify-center mb-3" style={{ color: "#C9A84C" }}>Our Blog</p>
+        <h1 className="section-title text-white mb-3">Insights, <em style={{ color: "#E2C06A" }}>Recipes & Guides</em></h1>
+        <p className="text-white/50 text-sm max-w-sm mx-auto">Expert knowledge about dry fruits, health, nutrition, and the stories behind our sourcing.</p>
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-10">
@@ -189,8 +177,8 @@ export default function Blog() {
 
         {filtered.length === 0 && (
           <div className="text-center py-16 text-gray-400">
-            <BookOpen size={40} className="mx-auto mb-3 text-gray-200" />
-            <p className="font-serif text-lg text-gray-500">No posts found</p>
+            <p className="text-4xl mb-3">📝</p>
+            <p className="font-semibold text-gray-600">No posts found</p>
           </div>
         )}
       </div>

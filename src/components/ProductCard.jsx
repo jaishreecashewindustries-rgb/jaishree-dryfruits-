@@ -1,16 +1,20 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Star, Heart, ShoppingCart, Eye } from "lucide-react";
+import { Star, Heart, ShoppingCart } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
+import { useLanguage } from "../context/LanguageContext";
 import { formatPrice, discountPercent } from "../utils/helpers";
 
 export default function ProductCard({ product }) {
   const { addToCart } = useCart();
-  const [wishlist, setWishlist] = useState(false);
+  const { isWishlisted, toggleWishlist } = useWishlist();
+  const { tr } = useLanguage();
   const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0]);
+  const [justAdded, setJustAdded] = useState(false);
+  const wishlisted = isWishlisted(product.id);
 
   const handleAddToCart = (e) => {
-    e.preventDefault();
     e.stopPropagation();
     addToCart({
       id: product.id,
@@ -20,6 +24,8 @@ export default function ProductCard({ product }) {
       price: selectedVariant.price,
       image: product.images?.[0],
     });
+    setJustAdded(true);
+    setTimeout(() => setJustAdded(false), 1400);
   };
 
   const discount = selectedVariant?.originalPrice
@@ -35,54 +41,73 @@ export default function ProductCard({ product }) {
   };
 
   return (
-    <Link to={`/product/${product.id}`} className="card-luxury group relative flex flex-col h-full">
-      {/* Image */}
+    /**
+     * Single outer div — no anchor wraps interactive elements.
+     * Each clickable zone is either a plain <Link> with no children buttons,
+     * or a standalone <button>. Zero nested <a><button> in the entire tree.
+     */
+    <div className="card-luxury group relative flex flex-col h-full">
+
+      {/* ── Image ─── plain Link, only contains img + non-interactive overlays ── */}
       <div className="relative overflow-hidden bg-brand-cream aspect-square flex-shrink-0">
-        <img
-          src={product.images?.[0]}
-          alt={product.name}
-          className="w-full h-full object-cover product-image-zoom"
-          loading="lazy"
-        />
-        {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-          {product.badge && (
-            <span className={badgeColors[product.badge] || "badge-gold"}>{product.badge}</span>
-          )}
-          {discount >= 5 && (
-            <span className="badge-sale">-{discount}%</span>
-          )}
+        <Link to={`/product/${product.id}`} className="block w-full h-full" tabIndex={-1}>
+          <img
+            src={product.images?.[0]}
+            alt={product.name}
+            className="w-full h-full object-cover product-image-zoom"
+            loading="lazy"
+          />
+        </Link>
+
+        {/* Badges — non-interactive overlay */}
+        <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none">
+          {product.badge && <span className={badgeColors[product.badge] || "badge-gold"}>{product.badge}</span>}
+          {discount >= 5 && <span className="badge-sale">-{discount}%</span>}
         </div>
-        {/* Wishlist */}
+
+        {/* Wishlist — standalone button, never inside <a> */}
         <button
-          onClick={(e) => { e.preventDefault(); setWishlist(!wishlist); }}
-          className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform"
+          type="button"
+          onClick={() => toggleWishlist(product.id)}
+          className="absolute top-3 right-3 w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform z-10"
+          aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
         >
-          <Heart size={16} className={wishlist ? "fill-red-500 text-red-500" : "text-gray-400"} />
+          <Heart size={16} className={wishlisted ? "fill-red-500 text-red-500" : "text-gray-400"} />
         </button>
-        {/* Quick actions overlay */}
-        <div className="absolute inset-x-0 bottom-0 flex gap-2 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+
+        {/* Quick-add bar — standalone, positioned over image, NOT inside any <a> */}
+        <div
+          className="absolute inset-x-0 bottom-0 p-2.5 translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-10"
+          style={{ background: "linear-gradient(to top, rgba(11,61,46,0.92), rgba(11,61,46,0.7))" }}
+        >
           <button
+            type="button"
             onClick={handleAddToCart}
-            className="flex-1 bg-brand-brown text-white text-xs font-semibold py-2 rounded-lg hover:bg-brand-gold transition-colors flex items-center justify-center gap-1"
+            className="w-full flex items-center justify-center gap-1.5 text-white font-semibold py-2 rounded-lg text-xs transition-all duration-300"
+            style={{ background: justAdded ? "#22C55E" : "rgba(255,255,255,0.15)" }}
           >
-            <ShoppingCart size={14} /> Add to Cart
+            <ShoppingCart size={13} />
+            {justAdded ? "Added ✓" : tr("addToCart")}
           </button>
-          <div className="w-10 h-8 bg-white rounded-lg flex items-center justify-center shadow-sm">
-            <Eye size={15} className="text-brand-brown" />
-          </div>
         </div>
       </div>
 
-      {/* Info */}
+      {/* ── Info ── plain div, Link only on the title text ─────────────────── */}
       <div className="p-4 flex flex-col flex-1">
-        <p className="text-xs text-brand-gold font-semibold uppercase tracking-wide mb-1">{product.category}</p>
-        <h3 className="font-serif font-semibold text-brand-brown text-base leading-tight mb-2 group-hover:text-brand-gold transition-colors">
-          {product.name}
-        </h3>
+        <p className="text-xs text-brand-gold font-semibold uppercase tracking-wide mb-1">
+          {product.category}
+        </p>
 
-        {/* Rating */}
-        <div className="flex items-center gap-1 mb-3">
+        {/* Title is the only Link in the info section — no buttons inside */}
+        <Link
+          to={`/product/${product.id}`}
+          className="font-serif font-semibold text-brand-brown text-base leading-tight mb-2 hover:text-brand-gold transition-colors block"
+        >
+          {product.name}
+        </Link>
+
+        {/* Rating — non-interactive display */}
+        <div className="flex items-center gap-1 mb-3 pointer-events-none">
           {[1, 2, 3, 4, 5].map((s) => (
             <Star
               key={s}
@@ -93,13 +118,14 @@ export default function ProductCard({ product }) {
           <span className="text-xs text-gray-500 ml-1">({product.reviewCount})</span>
         </div>
 
-        {/* Variant selector */}
+        {/* Variant selector — standalone buttons, NOT inside any <a> */}
         {product.variants?.length > 1 && (
           <div className="flex gap-1.5 mb-3 flex-wrap">
             {product.variants.map((v) => (
               <button
                 key={v.id}
-                onClick={(e) => { e.preventDefault(); setSelectedVariant(v); }}
+                type="button"
+                onClick={() => setSelectedVariant(v)}
                 className={`text-xs px-2.5 py-1 rounded-lg border transition-all ${
                   selectedVariant?.id === v.id
                     ? "border-brand-gold bg-brand-cream text-brand-gold font-semibold"
@@ -113,21 +139,15 @@ export default function ProductCard({ product }) {
         )}
 
         {/* Price */}
-        <div className="flex items-center justify-between mt-auto">
-          <div>
-            <span className="text-brand-brown font-bold text-lg">{formatPrice(selectedVariant?.price)}</span>
-            {selectedVariant?.originalPrice && (
-              <span className="text-gray-400 text-sm line-through ml-2">{formatPrice(selectedVariant.originalPrice)}</span>
-            )}
-          </div>
-          {selectedVariant?.stock <= 5 && selectedVariant?.stock > 0 && (
-            <span className="text-xs text-red-500 font-semibold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse inline-block" />
-              Only {selectedVariant.stock} left!
-            </span>
-          )}
+        <div className="mt-auto">
+          <span
+            key={selectedVariant?.id}
+            className="price-fade font-serif text-brand-brown font-semibold text-lg inline-block"
+          >
+            {formatPrice(selectedVariant?.price)}
+          </span>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

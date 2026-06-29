@@ -31,20 +31,20 @@ export default function CartSidebar() {
         </div>
 
         {/* Free shipping progress */}
-        {subtotal < 499 && subtotal > 0 && (
+        {subtotal < 999 && subtotal > 0 && (
           <div className="px-5 py-3 bg-brand-cream">
             <p className="text-xs text-brand-brown">
-              Add <span className="font-bold text-brand-gold">{formatPrice(499 - subtotal)}</span> more for FREE shipping!
+              Add <span className="font-bold text-brand-gold">{formatPrice(999 - subtotal)}</span> more for FREE shipping!
             </p>
             <div className="mt-1.5 bg-white rounded-full h-1.5 overflow-hidden">
               <div
                 className="h-full bg-brand-gold rounded-full transition-all duration-500"
-                style={{ width: `${Math.min((subtotal / 499) * 100, 100)}%` }}
+                style={{ width: `${Math.min((subtotal / 999) * 100, 100)}%` }}
               />
             </div>
           </div>
         )}
-        {subtotal >= 499 && subtotal > 0 && (
+        {subtotal >= 999 && subtotal > 0 && (
           <div className="px-5 py-2 bg-green-50 text-green-700 text-xs font-semibold text-center">
             🎉 You've unlocked FREE shipping!
           </div>

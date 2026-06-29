@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, Navigate, Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingBag, Users, Star, Tag, LogOut, Menu, ChevronRight, MessageSquare, BookOpen, Coins, Image, TrendingUp, Lock } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, Users, Star, Tag, LogOut, Menu, ChevronRight, MessageSquare, BookOpen, Coins, Image, TrendingUp, FileText, Settings } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
 const NAV_LINKS = [
@@ -13,6 +13,8 @@ const NAV_LINKS = [
   { to: "/admin/blog", label: "Blog", icon: BookOpen },
   { to: "/admin/inquiries", label: "Inquiries", icon: MessageSquare },
   { to: "/admin/coins", label: "JS Coins", icon: Coins },
+  { to: "/admin/content", label: "Content", icon: FileText },
+  { to: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export default function AdminLayout() {
@@ -26,7 +28,7 @@ export default function AdminLayout() {
   if (!isAdmin) return (
     <div className="min-h-screen flex items-center justify-center text-center px-4">
       <div>
-        <div className="w-16 h-16 mx-auto mb-3 flex items-center justify-center bg-gray-100 rounded-full"><Lock size={28} className="text-gray-400" /></div>
+        <p className="text-4xl mb-3">🔒</p>
         <h2 className="font-serif text-2xl font-bold text-brand-brown mb-2">Access Denied</h2>
         <p className="text-gray-500 text-sm">You don't have admin privileges.</p>
       </div>
