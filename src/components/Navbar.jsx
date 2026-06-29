@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ShoppingCart, User, Search, Menu, X, Heart, ChevronDown, LogOut, LayoutDashboard, Package } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
+import { useLanguage } from "../context/LanguageContext";
 import { PRODUCT_CATEGORIES } from "../utils/helpers";
 
 export default function Navbar() {
@@ -14,6 +15,7 @@ export default function Navbar() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, userProfile, isAdmin, logout } = useAuth();
   const { totalItems, toggleCart } = useCart();
+  const { tr } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -29,6 +31,12 @@ export default function Navbar() {
     setUserMenuOpen(false);
   }, [location]);
 
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [menuOpen]);
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -40,9 +48,39 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Top announcement bar */}
-      <div className="bg-brand-brown text-brand-gold text-center text-xs py-2 px-4 font-medium tracking-wide">
-        🎁 FREE SHIPPING on orders above ₹999 &nbsp;|&nbsp; 🌰 100% Premium Quality Guaranteed &nbsp;|&nbsp; 📞 WhatsApp: +91 99999 99999
+      {/* ── Premium Announcement Bar ────────────────────────────────────── */}
+      <div
+        className="overflow-hidden"
+        style={{
+          background: "linear-gradient(90deg, #071E14 0%, #0B3D2E 40%, #0D4A35 60%, #071E14 100%)",
+          borderBottom: "1px solid rgba(201,168,76,0.18)",
+          paddingTop: 10,
+          paddingBottom: 10,
+        }}
+      >
+        <div
+          className="marquee-track-luxury flex items-center whitespace-nowrap"
+          style={{ width: "max-content" }}
+        >
+          {[
+            "COMPLIMENTARY PREMIUM AIR EXPRESS DISPATCH ON ALLOCATIONS ABOVE ₹1,200",
+            "REGISTER CORPORATE GSTIN AT CHECKOUT FOR ENTERPRISE TAX CREDIT",
+            "FRESHLY SORTED · SINGLE-ORIGIN HARVEST · DIRECT FROM FARM",
+            "COMPLIMENTARY PREMIUM AIR EXPRESS DISPATCH ON ALLOCATIONS ABOVE ₹1,200",
+            "REGISTER CORPORATE GSTIN AT CHECKOUT FOR ENTERPRISE TAX CREDIT",
+            "FRESHLY SORTED · SINGLE-ORIGIN HARVEST · DIRECT FROM FARM",
+          ].map((msg, i) => (
+            <span key={i} className="inline-flex items-center">
+              <span
+                className="font-serif italic"
+                style={{ color: "#E8C97A", fontSize: 13, letterSpacing: "0.2em", padding: "0 2.5rem" }}
+              >
+                {msg}
+              </span>
+              <span style={{ color: "rgba(201,168,76,0.4)", fontSize: 8 }}>✦</span>
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* Main navbar */}
@@ -66,7 +104,7 @@ export default function Navbar() {
 
             {/* Desktop nav */}
             <div className="hidden md:flex items-center gap-8">
-              <Link to="/" className="nav-link text-sm">Home</Link>
+              <Link to="/" className="nav-link text-sm">{tr("home")}</Link>
 
               {/* Shop dropdown */}
               <div className="relative" onMouseEnter={() => setShopMenuOpen(true)} onMouseLeave={() => setShopMenuOpen(false)}>
@@ -76,7 +114,7 @@ export default function Navbar() {
                 {shopMenuOpen && (
                   <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 animate-fade-in z-50">
                     <Link to="/products" className="block text-sm font-semibold text-brand-gold mb-3 hover:underline">
-                      All Products
+                      {tr("products")}
                     </Link>
                     <div className="grid grid-cols-2 gap-1">
                       {PRODUCT_CATEGORIES.slice(0, 8).map((c) => (
@@ -95,7 +133,7 @@ export default function Navbar() {
 
               <Link to="/products?category=Gift Hampers" className="nav-link text-sm">Gift Hampers</Link>
               <Link to="/about" className="nav-link text-sm">About</Link>
-              <Link to="/contact" className="nav-link text-sm">Contact</Link>
+              <Link to="/contact" className="nav-link text-sm">{tr("contact")}</Link>
             </div>
 
             {/* Right icons */}
@@ -160,7 +198,7 @@ export default function Navbar() {
                 </div>
               ) : (
                 <Link to="/login" className="hidden md:flex items-center gap-1 text-sm font-medium text-brand-brown hover:text-brand-gold transition-colors px-3 py-2 hover:bg-brand-cream rounded-lg">
-                  <User size={18} /> Login
+                  <User size={18} /> {tr("account")}
                 </Link>
               )}
             </div>
@@ -176,8 +214,9 @@ export default function Navbar() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search almonds, cashews, gift hampers..."
+                placeholder={`${tr("search")} almonds, cashews, gift hampers...`}
                 className="input-field flex-1"
+                style={{ fontSize: "16px" }}
               />
               <button type="submit" className="btn-primary py-3 px-6">Search</button>
             </form>

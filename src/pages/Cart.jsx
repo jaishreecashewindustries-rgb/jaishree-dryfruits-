@@ -1,9 +1,12 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Minus, Plus, Trash2, ArrowRight, ShoppingBag, Tag, Truck, Lock, Package, RotateCcw, CheckCircle2, X } from "lucide-react";
+import { Minus, Plus, Trash2, ArrowRight, ShoppingBag, Tag, Truck, Lock, Package, RotateCcw, CheckCircle2, X, Coins } from "lucide-react";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useCart } from "../context/CartContext";
+import { useCoins, COINS_RULES } from "../context/CoinsContext";
+import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { formatPrice } from "../utils/helpers";
 import toast from "react-hot-toast";
 
@@ -17,16 +20,51 @@ const FALLBACK_COUPONS = [
 
 export default function Cart() {
   const { items, removeFromCart, updateQty, subtotal, shipping, total } = useCart();
+  const { tr } = useLanguage();
+  const { user } = useAuth();
+  const { coins, coinsWorth, redeemCoins } = useCoins() || {};
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponLoading, setCouponLoading] = useState(false);
+  const [coinsApplied, setCoinsApplied] = useState(false);
+  const [coinsDiscount, setCoinsDiscount] = useState(0);
+  const [coinsRedeemed, setCoinsRedeemed] = useState(0);
+  const [coinsLoading, setCoinsLoading] = useState(false);
 
-  const discount = appliedCoupon
+  const couponDiscount = appliedCoupon
     ? appliedCoupon.type === "percent"
       ? Math.floor(subtotal * appliedCoupon.value / 100)
       : appliedCoupon.value
     : 0;
-  const finalTotal = Math.max(0, total - discount);
+  const discount = couponDiscount;
+  const finalTotal = Math.max(0, total - discount - coinsDiscount);
+
+  // Coins guardrails
+  const coinsUnlocked = subtotal >= COINS_RULES.minCartValue && !appliedCoupon && !!user && (coins || 0) >= COINS_RULES.minRedeem;
+  const maxCoinsToRedeem = Math.min(coins || 0, Math.ceil(COINS_RULES.maxRedeemValue / COINS_RULES.redeemRate)); // 2,000
+  const coinsPotentialValue = parseFloat((maxCoinsToRedeem * COINS_RULES.redeemRate).toFixed(2));
+
+  const handleApplyCoins = async () => {
+    if (!coinsUnlocked || coinsApplied) return;
+    setCoinsLoading(true);
+    const result = await redeemCoins(maxCoinsToRedeem);
+    if (result?.success) {
+      setCoinsApplied(true);
+      setCoinsDiscount(result.discount);
+      setCoinsRedeemed(result.coinsUsed);
+      toast.success(`${result.coinsUsed} JS Coins applied — ₹${result.discount} off!`);
+    } else {
+      toast.error(result?.message || "Could not apply coins");
+    }
+    setCoinsLoading(false);
+  };
+
+  const handleRemoveCoins = () => {
+    setCoinsApplied(false);
+    setCoinsDiscount(0);
+    setCoinsRedeemed(0);
+    toast("JS Coins removed");
+  };
 
   const handleApplyCoupon = async () => {
     const code = couponInput.trim().toUpperCase();
@@ -106,7 +144,7 @@ export default function Cart() {
   const removeCoupon = () => {
     setAppliedCoupon(null);
     setCouponInput("");
-    toast("Coupon removed");
+    toast("Coupon removed — JS Coins now available");
   };
 
   if (items.length === 0) {
@@ -182,6 +220,56 @@ export default function Cart() {
 
         {/* Summary */}
         <div className="space-y-4">
+          {/* JS Coins Vault */}
+          {user && (
+            <div className="card-luxury p-4">
+              <p className="text-sm font-semibold text-brand-brown mb-1 flex items-center gap-2">
+                <span className="text-base">🪙</span> JS Coins Vault
+              </p>
+              {!coinsUnlocked && !coinsApplied && (
+                <div className="mt-2 space-y-1">
+                  {!user && <p className="text-xs text-gray-400">Sign in to use your coins</p>}
+                  {user && (coins || 0) < COINS_RULES.minRedeem && (
+                    <p className="text-xs text-gray-400">You have {coins || 0} coins — earn {COINS_RULES.minRedeem - (coins || 0)} more to redeem</p>
+                  )}
+                  {user && (coins || 0) >= COINS_RULES.minRedeem && appliedCoupon && (
+                    <p className="text-xs text-amber-600 font-medium">Cannot combine coins with a coupon code</p>
+                  )}
+                  {user && (coins || 0) >= COINS_RULES.minRedeem && !appliedCoupon && subtotal < COINS_RULES.minCartValue && (
+                    <p className="text-xs text-gray-400">Add ₹{COINS_RULES.minCartValue - subtotal} more to unlock coins (min ₹{COINS_RULES.minCartValue} cart)</p>
+                  )}
+                  <p className="text-xs text-gray-400 mt-1">You have <span className="font-bold text-brand-brown">{coins || 0} coins</span> · Worth ₹{coinsWorth || 0}</p>
+                </div>
+              )}
+              {coinsUnlocked && !coinsApplied && (
+                <div className="mt-2">
+                  <p className="text-xs text-gray-600 mb-3">
+                    <span className="font-bold text-brand-brown">{(coins || 0).toLocaleString()} Coins Available</span>
+                    {" · "}Worth up to <span className="font-bold text-emerald-700">₹{coinsPotentialValue}</span> on this order
+                  </p>
+                  <button
+                    onClick={handleApplyCoins}
+                    disabled={coinsLoading}
+                    className="w-full text-xs font-semibold py-2.5 px-4 border-2 border-brand-gold text-brand-gold hover:bg-brand-gold hover:text-white transition-all duration-200 disabled:opacity-60"
+                  >
+                    {coinsLoading ? "Applying..." : `Apply ${maxCoinsToRedeem} Coins — Save ₹${coinsPotentialValue}`}
+                  </button>
+                </div>
+              )}
+              {coinsApplied && (
+                <div className="mt-2 flex items-center justify-between bg-emerald-50 border border-emerald-200 px-3 py-2">
+                  <div>
+                    <p className="text-xs font-bold text-emerald-700">{coinsRedeemed} JS Coins Applied</p>
+                    <p className="text-xs text-emerald-600">₹{coinsDiscount} off this order</p>
+                  </div>
+                  <button onClick={handleRemoveCoins} className="text-emerald-500 hover:text-red-500 transition-colors ml-2">
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Coupon */}
           <div className="card-luxury p-4">
             <p className="text-sm font-semibold text-brand-brown mb-3 flex items-center gap-2"><Tag size={15} /> Promo Code</p>
@@ -243,8 +331,14 @@ export default function Cart() {
               </div>
               {appliedCoupon && (
                 <div className="flex justify-between text-green-600 font-medium">
-                  <span>Discount ({appliedCoupon.code})</span>
-                  <span>− {formatPrice(discount)}</span>
+                  <span>Coupon ({appliedCoupon.code})</span>
+                  <span>− {formatPrice(couponDiscount)}</span>
+                </div>
+              )}
+              {coinsApplied && (
+                <div className="flex justify-between text-emerald-600 font-medium">
+                  <span>JS Coins ({coinsRedeemed})</span>
+                  <span>− ₹{coinsDiscount}</span>
                 </div>
               )}
               {subtotal < 499 && (
@@ -256,7 +350,7 @@ export default function Cart() {
             </div>
             <Link
               to="/checkout"
-              state={{ discount, appliedCoupon: appliedCoupon?.code || null }}
+              state={{ discount: couponDiscount, appliedCoupon: appliedCoupon?.code || null, coinsDiscount, coinsRedeemed }}
               className="btn-primary w-full mt-5 flex items-center justify-center gap-2"
             >
               Proceed to Checkout <ArrowRight size={16} />

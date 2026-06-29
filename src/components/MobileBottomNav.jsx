@@ -22,12 +22,17 @@ export default function MobileBottomNav() {
 
   const isActive = (item) => {
     if (item.isSearch) return searchOpen;
-    if (item.to === "/") return location.pathname === "/";
-    // Shop is only active on /products without a search param
+    // Home: exact match only
+    if (item.to === "/") return location.pathname === "/" && !searchOpen;
+    // Shop: only active when on /products with no search query
     if (item.to === "/products") {
-      return location.pathname === "/products" && !location.search.includes("search=");
+      return location.pathname === "/products" && !location.search.includes("search=") && !searchOpen;
     }
-    return location.pathname.startsWith(item.to.split("?")[0]);
+    // Cart: handled by isCart button, active when on /cart page
+    if (item.isCart) return location.pathname === "/cart";
+    // Account
+    if (item.to === "/dashboard") return location.pathname.startsWith("/dashboard") || location.pathname.startsWith("/login");
+    return location.pathname.startsWith(item.to);
   };
 
   const handleSearch = (e) => {
@@ -58,8 +63,8 @@ export default function MobileBottomNav() {
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search dry fruits, nuts…"
-                className="flex-1 text-sm outline-none text-brand-brown placeholder-gray-400"
-                style={{ background: "transparent" }}
+                className="flex-1 outline-none text-brand-brown placeholder-gray-400"
+                style={{ background: "transparent", fontSize: "16px" }}
               />
               {searchQuery && (
                 <button type="button" onClick={() => setSearchQuery("")}>

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-import { CheckCircle, ChevronRight, Lock, Package, CreditCard, Banknote, MapPin, Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { CheckCircle, ChevronRight, Lock, Package, CreditCard, Banknote, MapPin, Loader2, AlertCircle, CheckCircle2, ShoppingCart, ChevronDown } from "lucide-react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useCart } from "../context/CartContext";
@@ -60,9 +60,12 @@ const INDIAN_STATES = [
 
 export default function Checkout() {
   const location = useLocation();
-  const { discount = 0, appliedCoupon = null } = location.state || {};
+  const { discount = 0, appliedCoupon = null, coinsDiscount = 0, coinsRedeemed: coinsRedeemedFromCart = 0 } = location.state || {};
 
   const [step, setStep] = useState(0);
+  const [gstinOpen, setGstinOpen] = useState(false);
+  const [gstinData, setGstinData] = useState({ company: "", gstin: "" });
+  const [gstinError, setGstinError] = useState("");
   const [address, setAddress] = useState({
     name: "", email: "", phone: "", address: "", landmark: "",
     city: "", state: "", pincode: "", country: "India",
@@ -80,7 +83,7 @@ export default function Checkout() {
   const { user, userProfile } = useAuth();
   const { earnCoinsForOrder } = useCoins();
 
-  const finalTotal = Math.max(0, total - discount);
+  const finalTotal = Math.max(0, total - discount - coinsDiscount);
 
   const handleAddr = async (e) => {
     const { name, value } = e.target;
@@ -134,10 +137,14 @@ export default function Checkout() {
       paymentId: paymentId || null,
       coupon: appliedCoupon || null,
       discount,
+      coinsRedeemed: coinsRedeemedFromCart || 0,
+      coinsDiscount: coinsDiscount || 0,
       subtotal,
       shipping,
       total: finalTotal,
       status: paymentId ? "confirmed" : "pending",
+      gstin: gstinData.gstin.trim() || null,
+      gstinCompany: gstinData.company.trim() || null,
       createdAt: serverTimestamp(),
     };
     const ref = await addDoc(collection(db, "orders"), order);
@@ -207,34 +214,107 @@ export default function Checkout() {
 
   // ── Success screen ──
   if (step === 3) {
+    const customerWAText = encodeURIComponent(
+      `Hi! Your order #${orderId?.slice(0, 8).toUpperCase()} has been placed successfully with Jai Shree Dryfruits 🎉\n\nItems: ${items.map((i) => `${i.name} (${i.variant}) × ${i.qty}`).join(", ")}\nTotal: ₹${finalTotal}\n\nExpected delivery: 3–5 business days. We'll send you tracking details soon.\n\nThank you for shopping with us! 🌰`
+    );
+
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 py-16">
-        <div className="max-w-md w-full text-center">
-          <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center"
-            style={{ background: "linear-gradient(135deg, #1B2E4B, #243D63)" }}>
-            <CheckCircle size={36} className="text-brand-gold" />
-          </div>
-          <h1 className="font-serif text-3xl font-normal text-brand-brown mb-2">Order Confirmed</h1>
-          <div className="w-10 h-px mx-auto mb-4" style={{ background: "linear-gradient(90deg, transparent, #C9A84C, transparent)" }} />
-          <p className="text-gray-500 mb-1 text-sm">Thank you, {address.name}.</p>
-          <p className="text-xs text-gray-400 mt-1 mb-5 font-mono bg-gray-50 px-3 py-1.5 inline-block border border-gray-200">
-            Order ID: #{orderId?.slice(0, 8).toUpperCase()}
-          </p>
-          {coinsEarned > 0 && (
-            <div className="mb-5 p-4 border border-brand-gold/30 bg-amber-50/50">
-              <p className="text-sm font-semibold text-brand-brown">
-                You earned <span className="text-brand-gold font-bold">{coinsEarned} JS Coins</span> on this order!
-              </p>
-              <p className="text-xs text-gray-500 mt-0.5">= ₹{Math.floor(coinsEarned * 0.25)} off your next order</p>
+      <div className="min-h-screen bg-gradient-to-b from-white to-brand-cream/30 flex items-start justify-center px-4 py-12">
+        <div className="max-w-xl w-full">
+
+          {/* Success card */}
+          <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+            {/* Top band */}
+            <div className="px-8 py-10 text-center"
+              style={{ background: "linear-gradient(160deg, #0D1B35, #1A2744)" }}>
+              <div className="w-20 h-20 mx-auto mb-5 flex items-center justify-center rounded-full"
+                style={{ background: "rgba(201,168,76,0.15)", border: "2px solid rgba(201,168,76,0.4)" }}>
+                <CheckCircle size={36} className="text-brand-gold" />
+              </div>
+              <h1 className="font-serif text-3xl font-normal text-white mb-2">Order Confirmed!</h1>
+              <p className="text-white/60 text-sm">Thank you, {address.name.split(" ")[0]}. Your order is placed.</p>
+              <div className="inline-block mt-3 font-mono text-xs text-brand-gold bg-white/10 border border-brand-gold/30 px-4 py-1.5 rounded-lg">
+                #{orderId?.slice(0, 8).toUpperCase()}
+              </div>
             </div>
-          )}
-          <p className="text-sm text-gray-500 mb-8 leading-relaxed">
-            Order confirmation sent to <strong>{user?.email || address.email}</strong>.<br />
-            Expected delivery: <strong>3–5 business days</strong>.
-          </p>
-          <div className="flex gap-4 justify-center">
-            <Link to="/dashboard" className="btn-primary">Track Order</Link>
-            <Link to="/products" className="btn-outline">Shop More</Link>
+
+            {/* Body */}
+            <div className="px-8 py-6 space-y-5">
+
+              {/* Coins earned */}
+              {coinsEarned > 0 && (
+                <div className="flex items-center gap-4 p-4 rounded-2xl"
+                  style={{ background: "linear-gradient(135deg, #FDF8EC, #FFF9E6)", border: "1px solid rgba(201,168,76,0.25)" }}>
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: "linear-gradient(135deg, #C9A84C, #9E7A2E)" }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="8"/><path d="M12 6v2m0 8v2M9.5 9.5c0-1.1.9-2 2.5-2s2.5.9 2.5 2-1 1.5-2.5 2-2.5.9-2.5 2 .9 2 2.5 2 2.5-.9 2.5-2"/></svg>
+                  </div>
+                  <div>
+                    <p className="font-bold text-brand-brown text-sm">You earned {coinsEarned} JS Coins!</p>
+                    <p className="text-xs text-gray-500 mt-0.5">Worth <span className="font-semibold text-brand-gold">₹{parseFloat((coinsEarned * 0.025).toFixed(2))} off</span> your next order</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Order items */}
+              <div className="space-y-2">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Items Ordered</p>
+                {items.map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
+                    <img src={item.image} alt={item.name} className="w-10 h-10 object-cover rounded-lg flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-brand-brown truncate">{item.name}</p>
+                      <p className="text-xs text-gray-400">{item.variant} × {item.qty}</p>
+                    </div>
+                    <p className="text-sm font-bold text-brand-gold flex-shrink-0">{formatPrice(item.price * item.qty)}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Delivery info */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-gray-50 rounded-xl">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Delivering to</p>
+                  <p className="text-xs font-semibold text-brand-brown">{address.name}</p>
+                  <p className="text-xs text-gray-500">{address.city}, {address.state}</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-xl">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Expected delivery</p>
+                  <p className="text-xs font-semibold text-brand-brown">3–5 business days</p>
+                  <p className="text-xs text-gray-500">{payMethod === "cod" ? "Cash on Delivery" : "Prepaid (Online)"}</p>
+                </div>
+              </div>
+
+              {/* WhatsApp confirmation to customer */}
+              <div className="p-4 rounded-2xl border border-green-100 bg-green-50/50">
+                <p className="text-xs text-green-700 font-semibold mb-1">📱 Get confirmation on WhatsApp</p>
+                <p className="text-xs text-green-600 mb-3">Save your order details directly to your WhatsApp for easy reference.</p>
+                <a
+                  href={`https://wa.me/917568577968?text=${customerWAText}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-center gap-2 text-white text-xs font-semibold py-2.5 rounded-xl w-full transition-all hover:scale-[1.02]"
+                  style={{ background: "linear-gradient(135deg, #25D366, #128C7E)" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                  Send Order Details to WhatsApp
+                </a>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-2">
+                <Link to="/dashboard" className="flex-1 btn-primary flex items-center justify-center gap-2 py-3 text-sm">
+                  <Package size={15} /> Track Order
+                </Link>
+                <Link to="/products" className="flex-1 btn-outline flex items-center justify-center gap-2 py-3 text-sm">
+                  Shop More
+                </Link>
+              </div>
+
+              <p className="text-center text-xs text-gray-400">
+                Questions? WhatsApp us at <a href="https://wa.me/917568577968" className="text-brand-gold font-semibold">+91 75685 77968</a>
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -254,7 +334,7 @@ export default function Checkout() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10 min-h-screen">
+    <div className="max-w-5xl mx-auto px-4 py-10 min-h-screen pb-28 md:pb-10">
       <h1 className="font-serif text-3xl font-normal text-brand-brown mb-8">Checkout</h1>
 
       {/* Progress */}
@@ -404,6 +484,77 @@ export default function Checkout() {
                 <p className="text-xs text-blue-600">
                   Enter your 6-digit PIN code — city and state will auto-fill. We deliver pan-India via Delhivery & Shiprocket.
                 </p>
+              </div>
+
+              {/* ── GSTIN Accordion ── */}
+              <div className="mt-5 border border-gray-100 rounded-xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setGstinOpen(o => !o)}
+                  className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-brand-cream/40 transition-colors"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-brand-brown">Register Corporate GSTIN for Tax Credit</p>
+                    <p className="text-xs text-gray-400 mt-0.5">Optional — for ITC-eligible corporate purchases</p>
+                  </div>
+                  <ChevronDown
+                    size={16}
+                    className="text-brand-gold flex-shrink-0 transition-transform duration-300"
+                    style={{ transform: gstinOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+                  />
+                </button>
+                {gstinOpen && (
+                  <div className="px-5 pb-6 pt-2 bg-[#FDFAF3]">
+                    <p className="text-xs text-gray-400 mb-5 leading-relaxed">
+                      Your GSTIN will be printed on the tax invoice. Input Tax Credit (ITC) will be
+                      claimable against GSTIN <span className="font-semibold text-brand-brown">08AAACJ0240A1ZH</span> (Jai Shree Dryfruits, Jaipur).
+                    </p>
+                    <div className="space-y-5">
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1.5">
+                          Legal Company Name
+                        </label>
+                        <input
+                          className="gstin-input"
+                          placeholder="As registered with the GST Council"
+                          value={gstinData.company}
+                          onChange={e => {
+                            setGstinData(d => ({ ...d, company: e.target.value }));
+                            setGstinError("");
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-1.5">
+                          15-Digit GSTIN
+                        </label>
+                        <input
+                          className="gstin-input"
+                          placeholder="e.g. 27AADCB2230M1ZT"
+                          maxLength={15}
+                          value={gstinData.gstin}
+                          onChange={e => {
+                            const val = e.target.value.toUpperCase();
+                            setGstinData(d => ({ ...d, gstin: val }));
+                            if (val.length > 0 && val.length < 15) setGstinError("GSTIN must be exactly 15 characters");
+                            else if (val.length === 15 && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(val)) setGstinError("Invalid GSTIN format");
+                            else setGstinError("");
+                          }}
+                        />
+                        {gstinError && (
+                          <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
+                            <AlertCircle size={11} /> {gstinError}
+                          </p>
+                        )}
+                        {gstinData.gstin.length === 15 && !gstinError && (
+                          <p className="text-emerald-600 text-xs mt-1.5 flex items-center gap-1">
+                            <CheckCircle2 size={11} /> Valid GSTIN format
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <button onClick={() => { if (validateAddress()) setStep(1); }}

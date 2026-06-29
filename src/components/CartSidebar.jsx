@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { X, ShoppingBag, Minus, Plus, Trash2, ArrowRight } from "lucide-react";
 import { useCart } from "../context/CartContext";
@@ -7,15 +7,21 @@ import { formatPrice } from "../utils/helpers";
 export default function CartSidebar() {
   const { items, isOpen, closeCart, removeFromCart, updateQty, subtotal, shipping, total, totalItems } = useCart();
 
+  // Lock body scroll when sidebar is open
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [isOpen]);
+
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — z-[55] above bottom nav, below sidebar */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40 animate-fade-in" onClick={closeCart} />
+        <div className="fixed inset-0 bg-black/50 z-[55] animate-fade-in" onClick={closeCart} />
       )}
 
-      {/* Sidebar */}
-      <div className={`fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white z-50 shadow-2xl flex flex-col transition-transform duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"}`}>
+      {/* Sidebar — z-[60] sits above mobile bottom nav (z-50) */}
+      <div className={`fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white z-[60] shadow-2xl flex flex-col transition-transform duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"}`}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-brand-brown">
           <div className="flex items-center gap-2 text-white">

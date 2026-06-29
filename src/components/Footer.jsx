@@ -1,7 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { Phone, Mail, MapPin, Instagram, Facebook, Youtube, MessageCircle, Lock, Truck, ShieldCheck } from "lucide-react";
-import { WHATSAPP_NUMBER } from "../utils/helpers";
+import { Phone, Mail, MapPin, Instagram, Facebook, Youtube, Lock, Truck, ShieldCheck } from "lucide-react";
 
 export default function Footer() {
   return (
@@ -65,21 +64,28 @@ export default function Footer() {
 
         {/* Brand — clean typographic mark, no coloured badge */}
         <div className="col-span-2 md:col-span-1">
-          {/* Typographic monogram — cream on dark, no red badge */}
-          <div className="mb-6">
-            <p
-              className="font-serif font-light leading-none"
-              style={{ fontSize: 26, color: "#F4F0E8", letterSpacing: "0.04em" }}
-            >
-              Jai Shree
-            </p>
-            <p
-              className="font-serif font-light leading-none mt-0.5"
-              style={{ fontSize: 14, color: "rgba(201,168,76,0.7)", letterSpacing: "0.22em" }}
-            >
-              DRY FRUITS
-            </p>
-            <div className="mt-3 w-8 h-px" style={{ background: "rgba(201,168,76,0.4)" }} />
+          {/* Logo + typographic mark */}
+          <div className="mb-6 flex items-center gap-3">
+            <img
+              src="/logo.png"
+              alt="Jai Shree Dry Fruits"
+              style={{ width: 52, height: 52, objectFit: "contain", filter: "brightness(1.1)" }}
+            />
+            <div>
+              <p
+                className="font-serif font-light leading-none"
+                style={{ fontSize: 22, color: "#F4F0E8", letterSpacing: "0.04em" }}
+              >
+                Jai Shree
+              </p>
+              <p
+                className="font-serif font-light leading-none mt-0.5"
+                style={{ fontSize: 12, color: "rgba(201,168,76,0.7)", letterSpacing: "0.22em" }}
+              >
+                DRY FRUITS
+              </p>
+              <div className="mt-2 w-8 h-px" style={{ background: "rgba(201,168,76,0.4)" }} />
+            </div>
           </div>
           <p className="text-sm leading-relaxed mb-7" style={{ color: "rgba(255,255,255,0.38)", lineHeight: 1.75 }}>
             Finest quality dry fruits and nuts sourced from the best farms in Kashmir, California and Iran. Delivered fresh to your door since 1999.
@@ -89,7 +95,6 @@ export default function Footer() {
               { href: "https://instagram.com", icon: <Instagram size={14} /> },
               { href: "https://facebook.com",  icon: <Facebook size={14} /> },
               { href: "https://youtube.com",   icon: <Youtube size={14} /> },
-              { href: `https://wa.me/${WHATSAPP_NUMBER}`, icon: <MessageCircle size={14} />, green: true },
             ].map((s, i) => (
               <a
                 key={i}
@@ -206,13 +211,11 @@ export default function Footer() {
             </li>
           </ul>
           <a
-            href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent("Hi! I need help with my order.")}`}
-            target="_blank"
-            rel="noreferrer"
+            href="tel:+917568577968"
             className="mt-6 inline-flex items-center gap-2 text-xs font-semibold px-4 py-2.5 transition-all hover:scale-105"
-            style={{ background: "linear-gradient(135deg, #25D366, #128C7E)", color: "#fff", boxShadow: "0 4px 12px rgba(37,211,102,0.2)" }}
+            style={{ background: "rgba(201,168,76,0.12)", color: "#C9A84C", border: "1px solid rgba(201,168,76,0.3)" }}
           >
-            <MessageCircle size={12} /> Chat on WhatsApp
+            <Phone size={12} /> Call Us Now
           </a>
         </div>
       </div>

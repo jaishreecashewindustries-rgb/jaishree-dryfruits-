@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Package, Users, Building2, Layers, ChevronDown, RefreshCw, Save, CheckCircle2 } from "lucide-react";
-import { collection, getDocs, doc, updateDoc, query, orderBy, addDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { Package, Building2, Layers, ChevronDown, RefreshCw, Save } from "lucide-react";
+import { collection, getDocs, doc, updateDoc, query, orderBy, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../../firebase/config";
 import { formatPrice, formatDate, getStatusStyle, ORDER_STATUSES, DEMO_PRODUCTS } from "../../utils/helpers";
 import toast from "react-hot-toast";

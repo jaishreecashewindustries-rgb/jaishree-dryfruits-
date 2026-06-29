@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { SlidersHorizontal, X, ChevronDown } from "lucide-react";
 import ProductCard from "../components/ProductCard";
+import SEO from "../components/SEO";
 import { DEMO_PRODUCTS, PRODUCT_CATEGORIES } from "../utils/helpers";
 
 const SORT_OPTIONS = [
@@ -19,6 +20,7 @@ export default function Products() {
 
   const activeCategory = params.get("category") || "";
   const activeBadge = params.get("badge") || "";
+  const activeGoal = params.get("goal") || "";
   const search = params.get("search") || "";
   const [priceRange, setPriceRange] = useState([0, 5000]);
 
@@ -32,6 +34,7 @@ export default function Products() {
     let list = [...DEMO_PRODUCTS];
     if (activeCategory) list = list.filter((p) => p.category === activeCategory);
     if (activeBadge) list = list.filter((p) => p.badge === activeBadge);
+    if (activeGoal) list = list.filter((p) => Array.isArray(p.goals) && p.goals.includes(activeGoal));
     if (search) list = list.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()));
     list = list.filter((p) => {
       const minPrice = Math.min(...p.variants.map((v) => v.price));
@@ -43,12 +46,17 @@ export default function Products() {
       case "rating": return [...list].sort((a, b) => b.rating - a.rating);
       default: return list;
     }
-  }, [activeCategory, activeBadge, search, priceRange, sort]);
+  }, [activeCategory, activeBadge, activeGoal, search, priceRange, sort]);
 
-  const pageTitle = activeCategory || activeBadge || (search ? `"${search}"` : "All Products");
+  const GOAL_LABELS = { heart: "Heart Health", brain: "Brain Power", energy: "Energy Boost", immunity: "Immunity", weight: "Weight Loss", bones: "Bone Strength", skin: "Skin & Hair", kids: "Kids" };
+  const pageTitle = activeCategory || (activeGoal ? GOAL_LABELS[activeGoal] || activeGoal : "") || activeBadge || (search ? `"${search}"` : "All Products");
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 min-h-screen">
+      <SEO
+        title={pageTitle !== "All Products" ? `${pageTitle} — Buy Online` : "All Products — Premium Dry Fruits"}
+        description={`Buy premium ${pageTitle.toLowerCase()} online. FSSAI certified, free shipping above ₹499. Direct from Kashmir, California & Iran. Delivered across India.`}
+      />
       {/* Breadcrumb */}
       <div className="text-xs text-gray-400 mb-6">
         <span>Home</span> <span className="mx-2">/</span>
@@ -146,12 +154,18 @@ export default function Products() {
           </div>
 
           {/* Active filters */}
-          {(activeCategory || activeBadge || search) && (
+          {(activeCategory || activeBadge || activeGoal || search) && (
             <div className="flex flex-wrap gap-2 mb-5">
               {activeCategory && (
                 <span className="flex items-center gap-1.5 bg-brand-cream border border-brand-gold/30 text-brand-brown text-xs px-3 py-1.5 rounded-full font-medium">
                   {activeCategory}
                   <button onClick={() => setCategory("")}><X size={12} /></button>
+                </span>
+              )}
+              {activeGoal && (
+                <span className="flex items-center gap-1.5 bg-brand-cream border border-brand-gold/30 text-brand-brown text-xs px-3 py-1.5 rounded-full font-medium">
+                  {GOAL_LABELS[activeGoal] || activeGoal}
+                  <button onClick={() => { const p = new URLSearchParams(params); p.delete("goal"); setParams(p); }}><X size={12} /></button>
                 </span>
               )}
               {activeBadge && (

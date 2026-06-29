@@ -11,10 +11,10 @@ import {
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import ProductCard from "../components/ProductCard";
+import SEO from "../components/SEO";
 import { SkeletonCard } from "../components/SkeletonCard";
 import AnimatedCounter from "../components/AnimatedCounter";
 import MagneticButton from "../components/MagneticButton";
-import SEO from "../components/SEO";
 import B2BGiftingForm from "../components/B2BGiftingForm";
 import { DEMO_PRODUCTS, formatPrice } from "../utils/helpers";
 

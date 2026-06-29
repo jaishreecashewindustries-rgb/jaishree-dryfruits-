@@ -3,6 +3,8 @@ import { MessageCircle, X } from "lucide-react";
 import { WHATSAPP_NUMBER } from "../utils/helpers";
 
 export default function WhatsAppButton() {
+  return null;
+  // eslint-disable-next-line no-unreachable
   const [open, setOpen] = useState(false);
 
   const quickMessages = [
@@ -12,6 +14,8 @@ export default function WhatsAppButton() {
     "Bulk / Corporate order enquiry",
     "Gift hamper customization",
   ];
+
+  return null;
 
   return (
     <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3">

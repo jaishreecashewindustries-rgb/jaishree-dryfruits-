@@ -3,15 +3,17 @@ import { doc, getDoc, setDoc, updateDoc, increment, collection, addDoc, query, w
 import { db } from "../firebase/config";
 import { useAuth } from "./AuthContext";
 
-// ── JS Coins Rules ──
+// ── JS Coins Rules — 2.5% sweet-spot math ──
 export const COINS_RULES = {
-  perOrderRupee: 1,        // 1 coin per ₹1 spent
-  signup: 50,              // 50 coins on signup
-  review: 20,              // 20 coins per review
-  referral: 100,           // 100 coins per referral
-  birthday: 200,           // 200 coins on birthday
-  redeemRate: 0.25,        // 1 coin = ₹0.25 discount
-  minRedeem: 100,          // minimum 100 coins to redeem
+  perOrderRupee: 1,          // 1 coin per ₹1 spent (earn 1,000 coins on ₹1,000 order)
+  signup: 50,                // 50 coins on signup
+  review: 20,                // 20 coins per review
+  referral: 100,             // 100 coins per referral
+  birthday: 200,             // 200 coins on birthday
+  redeemRate: 0.025,         // 100 coins = ₹2.50  (1 coin = ₹0.025)
+  minRedeem: 100,            // minimum 100 coins to redeem
+  minCartValue: 999,         // cart must be ≥ ₹999 to unlock redemption
+  maxRedeemValue: 50,        // hard ceiling: max ₹50 discount per transaction (= 2,000 coins)
 };
 
 const CoinsContext = createContext(null);
@@ -98,24 +100,28 @@ export function CoinsProvider({ children }) {
     } catch (e) {}
   }
 
-  // Redeem coins
+  // Redeem coins — enforces hard ceiling of ₹50 per transaction
   async function redeemCoins(amount) {
     if (!user || coins < COINS_RULES.minRedeem || amount > coins) return { success: false, message: "Insufficient coins" };
+    const maxCoins = Math.ceil(COINS_RULES.maxRedeemValue / COINS_RULES.redeemRate); // 2,000
+    const capped = Math.min(amount, maxCoins);
+    const discount = parseFloat((capped * COINS_RULES.redeemRate).toFixed(2));
     try {
-      await updateDoc(doc(db, "coins", user.uid), { balance: increment(-amount) });
-      await addCoinTransaction(user.uid, amount, "redeem", `Redeemed for discount — ₹${amount * COINS_RULES.redeemRate} applied`);
-      setCoins(c => c - amount);
-      const discount = amount * COINS_RULES.redeemRate;
-      return { success: true, discount, message: `₹${discount} discount applied!` };
+      await updateDoc(doc(db, "coins", user.uid), { balance: increment(-capped) });
+      await addCoinTransaction(user.uid, capped, "redeem", `Redeemed ${capped} coins — ₹${discount} applied`);
+      setCoins(c => c - capped);
+      return { success: true, discount, coinsUsed: capped, message: `₹${discount} discount applied!` };
     } catch (e) {
       return { success: false, message: "Redemption failed" };
     }
   }
 
-  const coinsValue = Math.floor(coins * COINS_RULES.redeemRate);
+  // Worth in ₹ — exact to 2 decimal places (e.g. 1,500 coins = ₹37.50)
+  const coinsWorth = parseFloat((coins * COINS_RULES.redeemRate).toFixed(2));
+  const coinsValue = coinsWorth; // alias kept for backwards compatibility
 
   return (
-    <CoinsContext.Provider value={{ coins, coinsValue, history, loading, earnCoinsForOrder, earnCoinsForReview, redeemCoins, COINS_RULES, loadHistory }}>
+    <CoinsContext.Provider value={{ coins, coinsValue, coinsWorth, history, loading, earnCoinsForOrder, earnCoinsForReview, redeemCoins, COINS_RULES, loadHistory }}>
       {children}
     </CoinsContext.Provider>
   );

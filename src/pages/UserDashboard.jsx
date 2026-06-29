@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Navigate, Link } from "react-router-dom";
-import { Package, User, Heart, LogOut, Coins, Building2, CheckCircle2, Clock, Truck, Star, ChevronRight } from "lucide-react";
+import { Package, Heart, LogOut, Coins, Building2, CheckCircle2, Truck, Star, ChevronRight } from "lucide-react";
 import { collection, query, where, orderBy, getDocs, doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";

@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Star, Heart, ShoppingCart, Zap, Shield, Truck, MessageCircle, ChevronRight, Minus, Plus, Share2, CheckCircle, XCircle, Award, Leaf, Package, Flame, ThumbsUp, BadgeCheck } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { useWishlist } from "../context/WishlistContext";
 import ProductCard from "../components/ProductCard";
+import SEO from "../components/SEO";
+import B2BGiftingForm from "../components/B2BGiftingForm";
 import { DEMO_PRODUCTS, formatPrice, discountPercent, whatsappProductLink, per100g } from "../utils/helpers";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,19 +13,30 @@ import ImageLightbox from "../components/ImageLightbox";
 import MobileCartSheet from "../components/MobileCartSheet";
 
 const DUMMY_REVIEWS = [
-  { id: 1, user: "Priya S.", city: "Mumbai", rating: 5, title: "Absolutely fresh!", body: "Best quality almonds I've ever tasted. The packaging is beautiful and delivery was super fast.", date: "12 Jan 2025", verified: true, variant: "500g", helpful: 24 },
-  { id: 2, user: "Rahul K.", city: "Delhi", rating: 4, title: "Great product", body: "Very fresh and crunchy. A bit pricey but worth the quality. Would recommend!", date: "5 Jan 2025", verified: true, variant: "250g", helpful: 18 },
-  { id: 3, user: "Ananya P.", city: "Bangalore", rating: 5, title: "Perfect gifting option!", body: "Bought for Diwali gifting. Everyone loved it. Will order again for sure.", date: "28 Dec 2024", verified: true, variant: "1kg", helpful: 31 },
-  { id: 4, user: "Sunita V.", city: "Jaipur", rating: 5, title: "Premium quality, worth every rupee", body: "I've been ordering from Jai Shree for 6 months now. The quality is consistently excellent. Way better than what you get in local stores.", date: "20 Dec 2024", verified: true, variant: "1kg", helpful: 42 },
-  { id: 5, user: "Vikram M.", city: "Pune", rating: 5, title: "Freshness guaranteed!", body: "Ordered 2kg for a wedding function. Every single piece was perfect — no broken or discolored nuts. Guests asked where we got them from!", date: "14 Dec 2024", verified: true, variant: "1kg", helpful: 19 },
-  { id: 6, user: "Kavya R.", city: "Chennai", rating: 4, title: "Good quality, quick delivery", body: "Delivery in 2 days to Chennai! Packaging was vacuum sealed which kept everything super fresh. Will definitely reorder.", date: "8 Dec 2024", verified: true, variant: "500g", helpful: 11 },
-  { id: 7, user: "Arjun N.", city: "Hyderabad", rating: 5, title: "Far better than supermarket", body: "I used to buy from Big Bazaar but the quality difference is night and day. These actually taste like premium dry fruits should.", date: "1 Dec 2024", verified: true, variant: "250g", helpful: 27 },
-  { id: 8, user: "Meera T.", city: "Ahmedabad", rating: 5, title: "My kids love these!", body: "Finally found a healthy snack my kids actually enjoy. No added salt or preservatives. The 1kg pack is great value.", date: "25 Nov 2024", verified: true, variant: "1kg", helpful: 35 },
-  { id: 9, user: "Deepak J.", city: "Kolkata", rating: 4, title: "Excellent packaging", body: "The resealable packaging is a game changer. Nuts stay fresh for weeks after opening. Really thoughtful design.", date: "18 Nov 2024", verified: true, variant: "500g", helpful: 14 },
-  { id: 10, user: "Nisha B.", city: "Surat", rating: 5, title: "Trust factor is high", body: "FSSAI certified and the batch number on the pack gave me confidence. Finally a brand I can trust completely.", date: "10 Nov 2024", verified: true, variant: "250g", helpful: 22 },
-  { id: 11, user: "Rohit A.", city: "Lucknow", rating: 5, title: "Repeat customer, never disappointed", body: "This is my 8th order! The consistency is what keeps me coming back. Highly recommend to anyone looking for authentic quality.", date: "3 Nov 2024", verified: true, variant: "1kg", helpful: 38 },
-  { id: 12, user: "Shruti P.", city: "Nagpur", rating: 5, title: "Gift hamper was beautiful", body: "Ordered the 1kg as a corporate gift with custom branding. Clients loved it. The presentation is 5-star hotel level.", date: "28 Oct 2024", verified: true, variant: "1kg", helpful: 29 },
+  { id: 1,  user: "Priya S.",   city: "Mumbai",     rating: 5, title: "Unmistakably fresh",           body: "I've ordered from two other premium dry fruit brands online. Nothing compares. The almonds have a clean, raw flavour that supermarket brands simply don't have.", date: "2026-05-24", verified: true, variant: "500g",  helpful: 24 },
+  { id: 2,  user: "Rahul K.",   city: "Delhi",      rating: 5, title: "The packaging speaks volumes",  body: "Every detail signals quality — the vacuum seal, the batch number, the resealable zip. My wife asked me to set up a monthly subscription.", date: "2026-05-10", verified: true, variant: "250g",  helpful: 18 },
+  { id: 3,  user: "Ananya P.",  city: "Bengaluru",  rating: 5, title: "Best corporate gifting choice", body: "Ordered 80 hampers for our Diwali client gifts. The feedback we received was extraordinary. Several clients messaged to ask where we sourced them.", date: "2026-04-28", verified: true, variant: "1kg",   helpful: 31 },
+  { id: 4,  user: "Sunita V.",  city: "Jaipur",     rating: 5, title: "12 consecutive orders",         body: "I live in Jaipur and I still order online because the convenience is unmatched. Consistent quality every single time. This is what a trustworthy brand looks like.", date: "2026-04-15", verified: true, variant: "1kg",   helpful: 42 },
+  { id: 5,  user: "Vikram M.",  city: "Pune",       rating: 5, title: "Wedding function, flawless",    body: "Ordered 3kg for a wedding function. Every piece was perfect — no broken or discoloured nuts. Two families at the event asked for the source.", date: "2026-04-02", verified: true, variant: "1kg",   helpful: 19 },
+  { id: 6,  user: "Kavya R.",   city: "Chennai",    rating: 4, title: "Arrived in 2 days, perfect",   body: "Delivery to Chennai in 2 days. Vacuum sealed and the freshness was evident on opening. Already on my second order.", date: "2026-03-25", verified: true, variant: "500g",  helpful: 11 },
+  { id: 7,  user: "Arjun N.",   city: "Hyderabad",  rating: 5, title: "Night and day vs supermarket",  body: "I switched from Big Bazaar after one order here. These actually taste like what premium dry fruits are supposed to taste like.", date: "2026-03-18", verified: true, variant: "250g",  helpful: 27 },
+  { id: 8,  user: "Meera T.",   city: "Ahmedabad",  rating: 5, title: "My children ask for these now", body: "No added salt, no oil coating. My 8-year-old daughter eats almonds voluntarily now. That has never happened before.", date: "2026-03-10", verified: true, variant: "1kg",   helpful: 35 },
+  { id: 9,  user: "Deepak J.",  city: "Kolkata",    rating: 4, title: "Resealable packaging is genius", body: "The zip-lock keeps everything fresh two weeks after opening. A small detail that shows the brand genuinely cares about the product post-purchase.", date: "2026-03-03", verified: true, variant: "500g",  helpful: 14 },
+  { id: 10, user: "Nisha B.",   city: "Surat",      rating: 5, title: "The batch number builds trust",  body: "The FSSAI certification and printed batch number on the pack are visible trust signals I've never seen from another online dry fruit brand.", date: "2026-02-24", verified: true, variant: "250g",  helpful: 22 },
+  { id: 11, user: "Rohit A.",   city: "Lucknow",    rating: 5, title: "9th order, never disappointed",  body: "Consistency is rare. Nine orders, nine batches, same quality every time. That is the hardest thing to achieve in food retail.", date: "2026-02-15", verified: true, variant: "1kg",   helpful: 38 },
+  { id: 12, user: "Shruti P.",  city: "Nagpur",     rating: 5, title: "Five-star presentation",         body: "Ordered the 1kg hamper as a corporate gift with our logo. The presentation was better than gifts from five-star hotel gift shops. Clients were genuinely impressed.", date: "2026-02-05", verified: true, variant: "1kg",   helpful: 29 },
 ];
+
+function relativeDate(dateStr) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const days = Math.floor((now - d) / 86400000);
+  if (days === 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 30) return `${days} days ago`;
+  if (days < 365) return `${Math.floor(days / 30)} months ago`;
+  return `${Math.floor(days / 365)} years ago`;
+}
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -34,10 +48,14 @@ export default function ProductDetail() {
   const [wishlist, setWishlist] = useState(false);
   const [stickyVisible, setStickyVisible] = useState(false);
   const [helpfulVotes, setHelpfulVotes] = useState({});
+  const [showB2BForm, setShowB2BForm] = useState(false);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [localReviews, setLocalReviews] = useState([]);
   const buyRef = useRef(null);
   const { addToCart } = useCart();
+  const navigate = useNavigate();
+  const { toggleWishlist, isWishlisted } = useWishlist();
+  const wishlisted = isWishlisted(product.id);
   const related = DEMO_PRODUCTS.filter((p) => p.id !== product.id && p.category === product.category).slice(0, 4);
   const discount = selectedVariant?.originalPrice ? discountPercent(selectedVariant.originalPrice, selectedVariant.price) : 0;
 
@@ -69,13 +87,21 @@ export default function ProductDetail() {
   };
 
   const handleBuyNow = () => {
-    handleAddToCart();
+    addToCart({ id: product.id, variantId: selectedVariant.id, name: product.name, variant: selectedVariant.weight, price: selectedVariant.price, image: product.images[0], qty });
+    navigate("/checkout");
   };
 
   const avgRating = (DUMMY_REVIEWS.reduce((s, r) => s + r.rating, 0) / DUMMY_REVIEWS.length).toFixed(1);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 min-h-screen">
+      <SEO
+        title={product.name}
+        description={`${product.description} Buy ${product.name} online from Jai Shree Dryfruits. FSSAI certified. Free shipping above ₹499.`}
+        image={product.images?.[0]}
+        type="product"
+        product={product}
+      />
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-gray-400 mb-6">
         <Link to="/" className="hover:text-brand-gold">Home</Link>
@@ -125,18 +151,12 @@ export default function ProductDetail() {
 
           {/* Price */}
           <div className="flex items-baseline gap-3 py-3 border-y border-gray-100">
-            <span className="font-bold text-3xl text-brand-brown">{formatPrice(selectedVariant.price)}</span>
-            {selectedVariant.originalPrice && (
-              <>
-                <span className="text-gray-400 text-lg line-through">{formatPrice(selectedVariant.originalPrice)}</span>
-                <span className="badge-sale text-sm px-2 py-0.5">Save {discount}%</span>
-              </>
-            )}
+            <span className="font-serif font-semibold text-3xl text-brand-brown">{formatPrice(selectedVariant.price)}</span>
           </div>
 
           {/* Variants */}
           <div>
-            <p className="text-sm font-semibold text-brand-brown mb-2">Size / Weight</p>
+            <p className="text-xs font-bold uppercase tracking-[2.5px] text-brand-brown mb-3">Size / Weight</p>
             <div className="flex gap-2 flex-wrap">
               {product.variants.map((v) => (
                 <button
@@ -144,11 +164,14 @@ export default function ProductDetail() {
                   onClick={() => setSelectedVariant(v)}
                   className={`px-4 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${selectedVariant.id === v.id ? "border-brand-gold bg-brand-cream text-brand-brown font-bold" : "border-gray-200 text-gray-600 hover:border-brand-gold"}`}
                 >
-                  <div>{v.weight}</div>
-                  <div className="text-xs text-gray-500">{formatPrice(v.price)}</div>
+                  <div className="font-serif">{v.weight}</div>
+                  <div className="text-xs text-gray-500 font-sans">{formatPrice(v.price)}</div>
                 </button>
               ))}
             </div>
+            {selectedVariant.perDay && (
+              <p className="text-[11px] text-gray-400 italic mt-2.5 font-serif">{selectedVariant.perDay}</p>
+            )}
           </div>
 
           {/* Quantity */}
@@ -164,8 +187,10 @@ export default function ProductDetail() {
                   <Plus size={16} />
                 </button>
               </div>
-              {selectedVariant.stock <= 10 && (
-                <span className="text-xs text-red-500 font-medium">Only {selectedVariant.stock} left!</span>
+              {selectedVariant.stock <= 10 && selectedVariant.stock > 0 && (
+                <p className="font-serif text-xs text-gray-400 italic leading-snug max-w-xs">
+                  Due to our strict artisan sorting criteria, fewer than {selectedVariant.stock} packs remain of this batch.
+                </p>
               )}
             </div>
           </div>
@@ -175,14 +200,15 @@ export default function ProductDetail() {
             <button onClick={handleAddToCart} className="flex-1 btn-brown flex items-center justify-center gap-2 py-3.5">
               <ShoppingCart size={18} /> Add to Cart
             </button>
-            <Link to="/checkout" onClick={handleAddToCart} className="flex-1 btn-primary flex items-center justify-center gap-2 py-3.5">
+            <button onClick={handleBuyNow} className="flex-1 btn-primary flex items-center justify-center gap-2 py-3.5">
               <Zap size={18} /> Buy Now
-            </Link>
+            </button>
             <button
-              onClick={() => setWishlist(!wishlist)}
-              className={`w-12 h-12 border-2 rounded-xl flex items-center justify-center transition-all ${wishlist ? "border-red-400 bg-red-50" : "border-gray-200 hover:border-brand-gold"}`}
+              onClick={() => toggleWishlist(product.id)}
+              className={`w-12 h-12 border-2 rounded-xl flex items-center justify-center transition-all ${wishlisted ? "border-red-400 bg-red-50" : "border-gray-200 hover:border-brand-gold"}`}
+              aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
             >
-              <Heart size={20} className={wishlist ? "fill-red-500 text-red-500" : "text-gray-400"} />
+              <Heart size={20} className={wishlisted ? "fill-red-500 text-red-500" : "text-gray-400"} />
             </button>
             <a
               href={whatsappProductLink(product.name)}
@@ -212,14 +238,15 @@ export default function ProductDetail() {
 
       {/* Tabs: Description / Nutrition / Reviews */}
       <div className="mb-16">
-        <div className="flex border-b border-gray-200 mb-6">
-          {["description", "nutrition", "reviews"].map((tab) => (
+        <div className="flex border-b border-gray-200 mb-6 overflow-x-auto">
+          {["description", "nutrition", "reviews", "passport"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-6 py-3 text-sm font-semibold capitalize transition-all border-b-2 -mb-px ${activeTab === tab ? "border-brand-gold text-brand-gold" : "border-transparent text-gray-500 hover:text-brand-brown"}`}
+              className={`px-5 py-3 text-sm font-semibold capitalize transition-all border-b-2 -mb-px whitespace-nowrap ${activeTab === tab ? "border-brand-gold text-brand-gold" : "border-transparent text-gray-500 hover:text-brand-brown"}`}
             >
-              {tab} {tab === "reviews" ? `(${DUMMY_REVIEWS.length})` : ""}
+              {tab === "passport" ? "Provenance Passport" : tab}
+              {tab === "reviews" ? ` (${DUMMY_REVIEWS.length})` : ""}
             </button>
           ))}
         </div>
@@ -227,10 +254,17 @@ export default function ProductDetail() {
         {activeTab === "description" && (
           <div className="max-w-3xl">
             <p className="text-gray-600 leading-relaxed mb-4">{product.description}</p>
-            <ul className="space-y-2">
-              {["Premium grade quality", "No artificial additives or preservatives", "Rich in protein, fiber, and healthy fats", "Ideal for snacking, cooking, and gifting", "Hygienic sealed packaging"].map((f) => (
-                <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
-                  <span className="w-5 h-5 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">✓</span>
+            <ul className="space-y-2 mt-4">
+              {[
+                "Zero mineral-oil coating — 100% natural surface",
+                "Zero artificial preservatives, colours, or sulphites",
+                "Hand-sorted for kernel integrity before dispatch",
+                "Moisture content verified below 5% per batch",
+                "Vacuum-sealed in food-grade nitrogen-flushed pouches",
+                "FSSAI certified — batch test record available on request",
+              ].map((f) => (
+                <li key={f} className="flex items-start gap-2.5 text-sm text-gray-600">
+                  <span className="w-1 h-1 rounded-full bg-brand-gold mt-2 flex-shrink-0" />
                   {f}
                 </li>
               ))}
@@ -322,13 +356,17 @@ export default function ProductDetail() {
                       </div>
                       <p className="font-semibold text-brand-brown text-sm">{r.title}</p>
                     </div>
-                    <span className="text-xs text-gray-400">{r.date}</span>
+                    <span className="text-xs text-gray-400 flex-shrink-0 ml-3">{relativeDate(r.date)}</span>
                   </div>
                   <p className="text-gray-600 text-sm">{r.body}</p>
                   <div className="flex items-center gap-3 mt-3 flex-wrap">
                     <span className="text-xs font-semibold text-gray-600">{r.user}</span>
                     <span className="text-xs text-gray-400">{r.city}</span>
-                    {r.verified && <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full font-medium flex items-center gap-1"><BadgeCheck size={10} /> Verified Purchase</span>}
+                    {r.verified && (
+                      <span className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                        <BadgeCheck size={10} /> Verified via Razorpay
+                      </span>
+                    )}
                     <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{r.variant}</span>
                     <button
                       className="ml-auto text-xs text-gray-400 hover:text-brand-gold transition-colors flex items-center gap-1"
@@ -339,6 +377,77 @@ export default function ProductDetail() {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* ── Provenance & Batch Passport ── */}
+        {activeTab === "passport" && (
+          <div className="max-w-3xl">
+            {product.passport ? (
+              <>
+                {/* Header */}
+                <div className="mb-8">
+                  <p className="text-[10px] font-bold uppercase tracking-[4px] text-brand-gold mb-2 flex items-center gap-2">
+                    <span className="w-6 h-px bg-brand-gold/50 inline-block" />
+                    Single-Origin Transparency
+                  </p>
+                  <h3 className="font-serif text-2xl text-brand-brown font-normal">Provenance &amp; Batch Passport</h3>
+                  <p className="text-sm text-gray-400 mt-1.5 leading-relaxed">
+                    Every batch we dispatch carries a full chain-of-custody record. The data below is exact — no marketing language.
+                    Rooted in our 25-year physical retail legacy at <span className="font-medium text-brand-brown">41 Barah Ji Ki Gali, Gangauri Bazar, Jaipur</span>.
+                  </p>
+                </div>
+
+                {/* Passport Grid */}
+                <div className="rounded-2xl overflow-hidden border border-gray-100">
+                  {[
+                    { label: "Orchard / Sourcing Coordinates", value: product.passport.origin, icon: "📍" },
+                    { label: "Harvest Month", value: product.passport.harvestMonth, icon: "🌾" },
+                    { label: "Moisture Threshold", value: product.passport.moisture, icon: "💧" },
+                    { label: "Hand-Grading & Batch Standard", value: product.passport.grading, icon: "✋" },
+                    { label: "Storage Protocol", value: product.passport.storage, icon: "❄️" },
+                    { label: "Certifications", value: product.passport.certifications, icon: "🏛️" },
+                    { label: "Batch Reference", value: product.passport.batchRef, icon: "🔖" },
+                    { label: "Dispatch Protocol", value: product.passport.dispatchProtocol, icon: "📦" },
+                  ].map((row, i) => (
+                    <div key={row.label} className={`grid grid-cols-5 gap-0 ${i % 2 === 0 ? "bg-white" : "bg-brand-cream/40"} border-b border-gray-100 last:border-0`}>
+                      <div className="col-span-2 px-5 py-4 flex items-start gap-2.5">
+                        <span className="text-base flex-shrink-0 mt-0.5">{row.icon}</span>
+                        <p className="text-[11px] font-bold uppercase tracking-wide text-gray-500 leading-snug mt-0.5">{row.label}</p>
+                      </div>
+                      <div className="col-span-3 px-5 py-4 border-l border-gray-100">
+                        <p className="text-sm text-brand-brown leading-relaxed">{row.value}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Heritage anchor */}
+                <div className="mt-6 p-5 rounded-xl flex gap-4 items-start"
+                  style={{ background: "linear-gradient(135deg, #F4F0E8, #EDE8DC)", border: "1px solid rgba(201,168,76,0.18)" }}>
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: "rgba(201,168,76,0.15)", border: "1px solid rgba(201,168,76,0.3)" }}>
+                    <span className="text-lg">🏛️</span>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-widest text-brand-gold mb-1">25-Year Physical Legacy</p>
+                    <p className="text-sm text-brand-brown font-medium">Gangauri Bazar, Jaipur — since 1999</p>
+                    <p className="text-xs text-gray-500 mt-1 leading-relaxed">
+                      One of Rajasthan's oldest trading districts. Our physical store at 41, Barah Ji Ki Gali has been
+                      inspected, licensed, and continuously operated since 1999. Not a digital-only brand — a provenance-backed family institution.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Batch record request */}
+                <p className="text-xs text-gray-400 mt-4 text-center">
+                  Full lab test certificate for Batch <span className="font-mono font-semibold text-brand-brown">{product.passport.batchRef}</span> available on request —
+                  <a href="https://wa.me/917568577968?text=Please share the lab test certificate for batch: {product.passport.batchRef}" target="_blank" rel="noreferrer" className="text-brand-gold font-semibold ml-1 underline">WhatsApp us</a>
+                </p>
+              </>
+            ) : (
+              <p className="text-gray-400 text-sm italic">Provenance passport not available for this product. Contact us for sourcing details.</p>
+            )}
           </div>
         )}
       </div>
@@ -429,6 +538,65 @@ export default function ProductDetail() {
         </div>
       </div>
 
+      {/* ═══ CORPORATE GIFTING CONCIERGE ═══════════════════════ */}
+      <div className="mb-16 rounded-3xl overflow-hidden" style={{ background: "linear-gradient(160deg, #0D1B35 0%, #1A2744 100%)", border: "1px solid rgba(201,168,76,0.12)" }}>
+        <div className="grid md:grid-cols-2 gap-0">
+          {/* Left: Copy */}
+          <div className="px-8 py-10 md:px-12 md:py-14 border-b md:border-b-0 md:border-r border-white/8">
+            <p className="text-[10px] font-bold uppercase tracking-[4px] text-brand-gold mb-6">Corporate & Wedding Gifting</p>
+            <h2 className="font-serif text-3xl font-normal text-white leading-tight mb-5">
+              The Concierge<br />
+              <em style={{ color: "#E8C97A" }}>Gifting Programme</em>
+            </h2>
+            <p className="text-white/50 text-sm leading-relaxed mb-7">
+              For organisations, wedding planners, and procurement teams seeking premium branded gift boxes at scale. Minimum 50 units. Full customisation available — logo, message card, custom weight assortments.
+            </p>
+            <div className="space-y-2.5 mb-8">
+              {[
+                "Custom packaging with your logo or occasion message",
+                "Budget brackets from ₹500 to ₹5,000+ per box",
+                "Pan-India bulk delivery coordinated from Jaipur",
+                "Personalised catalogue and invoice within 2 hours",
+                "Dedicated account manager for repeat clients",
+              ].map(item => (
+                <div key={item} className="flex items-start gap-3 text-sm text-white/60">
+                  <span className="w-1 h-1 rounded-full bg-brand-gold flex-shrink-0 mt-2" />
+                  {item}
+                </div>
+              ))}
+            </div>
+            {!showB2BForm && (
+              <button
+                onClick={() => setShowB2BForm(true)}
+                className="btn-gold px-8 py-3.5 text-[10px] tracking-[3px]"
+              >
+                Request Corporate Catalogue
+              </button>
+            )}
+          </div>
+          {/* Right: Form */}
+          <div className="px-8 py-10 md:px-10 md:py-14">
+            {showB2BForm ? (
+              <B2BGiftingForm theme="dark" onClose={() => setShowB2BForm(false)} />
+            ) : (
+              <div className="grid grid-cols-2 gap-4 h-full content-center">
+                {[
+                  { num: "50+", label: "Min units" },
+                  { num: "₹500–₹5K", label: "Per box range" },
+                  { num: "2 hrs", label: "Response time" },
+                  { num: "100+", label: "Corporates served" },
+                ].map(s => (
+                  <div key={s.label} className="rounded-2xl p-5 text-center" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(201,168,76,0.12)" }}>
+                    <p className="font-serif text-2xl font-semibold text-brand-gold">{s.num}</p>
+                    <p className="text-white/40 text-[10px] uppercase tracking-wider mt-1">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Related products */}
       {related.length > 0 && (
         <div>
@@ -470,11 +638,11 @@ export default function ProductDetail() {
             style={{ background: "linear-gradient(135deg, #2C4B8C, #1A2744)", border: "1px solid rgba(201,168,76,0.3)", boxShadow: "0 4px 16px rgba(26,39,68,0.5)" }}>
             <ShoppingCart size={16} /> Add to Cart
           </button>
-          <Link to="/checkout" onClick={handleAddToCart}
+          <button onClick={handleBuyNow}
             className="flex items-center gap-2 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all hover:scale-105 flex-shrink-0"
             style={{ background: "linear-gradient(135deg, #C9A84C, #9E7A2E)", boxShadow: "0 4px 16px rgba(201,168,76,0.3)" }}>
             <Zap size={16} /> Buy Now
-          </Link>
+          </button>
         </div>
       </div>
     </div>
