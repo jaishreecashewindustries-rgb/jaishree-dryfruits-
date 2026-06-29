@@ -5,13 +5,7 @@ import { motion } from "framer-motion";
 import { DEMO_PRODUCTS, formatPrice } from "../utils/helpers";
 import { useCart } from "../context/CartContext";
 
-function per100g(price, weightStr) {
-  if (!price || !weightStr) return null;
-  const match = weightStr.match(/(\d+)/);
-  if (!match) return null;
-  const grams = parseInt(match[1]);
-  return Math.round((price / grams) * 100);
-}
+const per100g = (price, weight) => { const g = parseFloat(weight); return g ? Math.round(price / g * 100) : null; };
 
 const COMPARE_ROWS = [
   { label: "Category",     key: (p) => p.category || "—" },
