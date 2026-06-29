@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { db } from "../firebase/config";
 import { motion, useInView, useAnimation, useScroll, useTransform } from "framer-motion";
 import {
   ArrowRight, Shield, Truck, Award, RefreshCw, Star,
@@ -7,15 +9,14 @@ import {
   Heart, Activity, Flame, ShieldCheck, Scale, Dumbbell, Sparkles, Users,
   ShoppingBag, Tag, Coins, TrendingUp, BookOpen,
 } from "lucide-react";
-import ProductCard from "../components/ProductCard";
-import TestimonialsCarousel from "../components/TestimonialsCarousel";
-import TrustMarquee from "../components/TrustMarquee";
-import MagneticButton from "../components/MagneticButton";
-import { DEMO_PRODUCTS, formatPrice } from "../utils/helpers";
-import { useSiteSettings } from "../context/SiteSettingsContext";
 import { useLanguage } from "../context/LanguageContext";
-import { collection, where, orderBy, getDocs, query, limit } from "firebase/firestore";
-import { db } from "../firebase/config";
+import ProductCard from "../components/ProductCard";
+import { SkeletonCard } from "../components/SkeletonCard";
+import AnimatedCounter from "../components/AnimatedCounter";
+import MagneticButton from "../components/MagneticButton";
+import SEO from "../components/SEO";
+import B2BGiftingForm from "../components/B2BGiftingForm";
+import { DEMO_PRODUCTS, formatPrice } from "../utils/helpers";
 
 /* ── Framer helpers ─────────────────────────────────────────── */
 function FadeUp({ children, delay = 0, className = "" }) {
@@ -24,9 +25,9 @@ function FadeUp({ children, delay = 0, className = "" }) {
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 0, y: 24 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.4, delay: Math.min(delay, 0.25), ease: [0.22, 1, 0.36, 1] }}
       className={className}
     >
       {children}
@@ -40,9 +41,9 @@ function ScaleIn({ children, delay = 0, className = "" }) {
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, scale: 0.85 }}
+      initial={{ opacity: 0, scale: 0.93 }}
       animate={inView ? { opacity: 1, scale: 1 } : {}}
-      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.35, delay: Math.min(delay, 0.25), ease: [0.22, 1, 0.36, 1] }}
       className={className}
     >
       {children}
@@ -57,40 +58,71 @@ const FEATURES = [
   { icon: <Award size={26} />, title: "FSSAI Certified", desc: "Stringent quality checks on every batch." },
   { icon: <RefreshCw size={26} />, title: "7-Day Returns", desc: "Hassle-free return policy, no questions." },
 ];
+
 const CATEGORIES = [
   { name: "Almonds", img: "https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=400&q=80" },
-  { name: "Cashews", img: "https://images.unsplash.com/photo-1573555657105-4da0f89ba9f0?w=400&q=80" },
-  { name: "Pistachios", img: "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?w=400&q=80" },
-  { name: "Walnuts", img: "https://images.unsplash.com/photo-1563412580-6b7e0d7e0d11?w=400&q=80" },
+  { name: "Cashews", img: "https://images.unsplash.com/photo-1573555657105-47a0bb37c3ea?w=400&q=80" },
+  { name: "Pistachios", img: "https://images.unsplash.com/photo-1502825751399-28baa9b81efe?w=400&q=80" },
+  { name: "Walnuts", img: "https://images.unsplash.com/photo-1524593656068-fbac72624bb0?w=400&q=80" },
   { name: "Dates", img: "https://images.unsplash.com/photo-1691657917109-c6e027eac44a?w=400&q=80" },
-  { name: "Gift Hampers", img: "https://images.unsplash.com/photo-1607344645866-009c320b63e0?w=400&q=80" },
+  { name: "Gift Hampers", img: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400&q=80" },
 ];
 
-const WHY_US = [
-  { icon: <Shield size={22} />, title: "100% Natural", desc: "No artificial colours, flavours or preservatives — ever." },
-  { icon: <Award size={22} />, title: "FSSAI Certified", desc: "Certified safe by India's top food authority." },
-  { icon: <Truck size={22} />, title: "Fast Delivery", desc: "Pan-India shipping. Delivered in 3–5 days." },
-  { icon: <RefreshCw size={22} />, title: "Easy Returns", desc: "7-day hassle-free return policy." },
-  { icon: <CheckCircle size={22} />, title: "Trusted Since 1999", desc: "25+ years of premium dry fruit expertise." },
-  { icon: <Gift size={22} />, title: "Gift Ready", desc: "Premium gift wrapping available on all orders" },
-];
-
-
-
-/* Fallback testimonials — shown when Firestore has < 2 approved reviews */
-const FALLBACK_TESTIMONIALS = [
+const TESTIMONIALS = [
   { name: "Priya Sharma", city: "Mumbai", rating: 5, text: "Best quality almonds I've ever bought! Freshness is unmatched. Will definitely order again.", product: "Premium Almonds" },
   { name: "Rajesh Kumar", city: "Delhi", rating: 5, text: "The Royal Gift Hamper was perfect for Diwali. Beautiful packaging, loved by family!", product: "Royal Hamper" },
   { name: "Ananya Patel", city: "Bangalore", rating: 5, text: "So fresh and creamy. Delivery was quick. Great value for premium quality.", product: "Whole Cashews" },
   { name: "Sunita Verma", city: "Jaipur", rating: 5, text: "Ordered pistachios for a wedding function. Everyone loved them. Will order bulk again!", product: "Irani Pistachios" },
 ];
 
-/* ── Live reviews from Firestore — falls back to hardcoded ──── */
+const WHY_US = [
+  { icon: <Leaf size={22} />, title: "Farm Direct", desc: "Straight from source farms in Kashmir, California & Iran" },
+  { icon: <CheckCircle size={22} />, title: "Quality Tested", desc: "Every batch lab-tested for freshness and purity" },
+  { icon: <Package size={22} />, title: "Eco Packaging", desc: "Sustainable, food-safe packaging for freshness" },
+  { icon: <Zap size={22} />, title: "Quick Dispatch", desc: "Same-day dispatch on orders before 2 PM" },
+  { icon: <Gift size={22} />, title: "Gift Ready", desc: "Premium gift wrapping available on all orders" },
+  { icon: <Phone size={22} />, title: "24/7 Support", desc: "Phone & email support for all order queries" },
+];
+
+/* ── Tilt card wrapper — desktop only, no 3D on mobile ─────── */
+function TiltCard({ children, className = "" }) {
+  const ref = useRef(null);
+  const isMobile = () => window.innerWidth < 768;
+  const handleMove = (e) => {
+    if (isMobile()) return;
+    const card = ref.current;
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
+    const y = (e.clientY - rect.top) / rect.height - 0.5;
+    card.style.transform = `perspective(800px) rotateY(${x * 6}deg) rotateX(${-y * 6}deg) scale(1.02)`;
+    card.style.zIndex = "10";
+  };
+  const handleLeave = () => {
+    if (!ref.current) return;
+    ref.current.style.transform = "none";
+    ref.current.style.zIndex = "1";
+  };
+  return (
+    <div
+      ref={ref}
+      onMouseMove={handleMove}
+      onMouseLeave={handleLeave}
+      className={`transition-transform duration-200 ${className}`}
+      style={{ position: "relative", zIndex: 1 }}
+    >
+      {children}
+    </div>
+  );
+}
+
+
+/* ── Fetch live reviews from Firestore, fallback to TESTIMONIALS ─────── */
 function useLiveTestimonials() {
-  const [reviews, setReviews] = useState(FALLBACK_TESTIMONIALS);
+  const [reviews, setReviews] = useState(TESTIMONIALS);
   useEffect(() => {
     let cancelled = false;
-    async function fetchReviews() {
+    async function fetch() {
       try {
         const q = query(
           collection(db, "reviews"),
@@ -100,89 +132,59 @@ function useLiveTestimonials() {
         );
         const snap = await getDocs(q);
         if (!cancelled && !snap.empty) {
-          const live = snap.docs.map(d => {
+          const live = snap.docs.map((d) => {
             const data = d.data();
             return {
-              name: data.userName || data.name || "Verified Customer",
-              city: data.userCity || data.city || "India",
+              name: data.userName || data.name || "Customer",
+              city: data.city || data.userCity || "India",
               rating: data.rating || 5,
               text: data.body || data.text || "",
               product: data.productName || data.product || "Premium Dry Fruits",
             };
-          }).filter(r => r.text);
+          }).filter((r) => r.text);
           if (live.length >= 2) setReviews(live);
         }
       } catch {
-        // Firestore unavailable — keep fallback
+        // Firestore unavailable — keep hardcoded fallback
       }
     }
-    fetchReviews();
+    fetch();
     return () => { cancelled = true; };
   }, []);
   return reviews;
 }
 
-/* ── Tilt card wrapper ──────────────────────────────────────── */
-function TiltCard({ children, className = "" }) {
-  const ref = useRef(null);
-  const handleMove = (e) => {
-    const card = ref.current;
-    if (!card) return;
-    const rect = card.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    card.style.transform = `perspective(600px) rotateY(${x * 12}deg) rotateX(${-y * 12}deg) scale(1.03)`;
-  };
-  const handleLeave = () => {
-    if (ref.current) ref.current.style.transform = "perspective(600px) rotateY(0) rotateX(0) scale(1)";
-  };
-  return (
-    <div
-      ref={ref}
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
-      className={`transition-transform duration-200 ${className}`}
-      style={{ transformStyle: "preserve-3d" }}
-    >
-      {children}
-    </div>
-  );
-}
-
-/* ── Countdown timer hook ───────────────────────────────────── */
-function useCountdown(targetHours = 8) {
-  const [time, setTime] = useState(() => {
-    const now = new Date();
-    const end = new Date(now);
-    end.setHours(now.getHours() + targetHours, 0, 0, 0);
-    return Math.max(0, Math.floor((end - now) / 1000));
-  });
-  useEffect(() => {
-    const t = setInterval(() => setTime(s => Math.max(0, s - 1)), 1000);
-    return () => clearInterval(t);
-  }, []);
-  const h = String(Math.floor(time / 3600)).padStart(2, "0");
-  const m = String(Math.floor((time % 3600) / 60)).padStart(2, "0");
-  const s = String(time % 60).padStart(2, "0");
-  return { h, m, s };
-}
-
 /* ── Main component ─────────────────────────────────────────── */
 export default function Home() {
   const featured = DEMO_PRODUCTS.filter((p) => p.featured).slice(0, 8);
-  const { h, m, s } = useCountdown(8);
+  const [testimonialIdx, setTestimonialIdx] = useState(0);
+  const [showB2BForm, setShowB2BForm] = useState(false);
+  const [productsReady, setProductsReady] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setProductsReady(true), 500);
+    return () => clearTimeout(t);
+  }, []);
   const scrollRef = useRef(null);
   const heroRef = useRef(null);
   const { scrollYProgress: heroScroll } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroContentY = useTransform(heroScroll, [0, 1], ["0%", "30%"]);
-  const heroContentOpacity = useTransform(heroScroll, [0, 0.7], [1, 0]);
-  const siteSettings = useSiteSettings();
-  const { categories: ctxCategories, healthGoals, combos, whyUs: ctxWhyUs, origins, hero: heroData, announcement } = siteSettings || {};
-  const { tr } = useLanguage() || { tr: (k) => k };
+  const heroContentY = useTransform(heroScroll, [0, 1], [0, -70]);
+  const heroContentOpacity = useTransform(heroScroll, [0, 0.65], [1, 0]);
   const liveTestimonials = useLiveTestimonials();
+  const { tr } = useLanguage();
+
+  useEffect(() => {
+    const t = setInterval(() => setTestimonialIdx(i => (i + 1) % liveTestimonials.length), 4000);
+    return () => clearInterval(t);
+  }, [liveTestimonials.length]);
 
   return (
     <div className="min-h-screen overflow-x-hidden">
+      <SEO
+        title="India's Finest Dry Fruits — Premium Almonds, Cashews, Pistachios"
+        description="Shop premium California almonds, Kashmiri walnuts, Iranian pistachios & gift hampers. FSSAI certified. Free shipping above ₹499. Est. 1999, Jaipur. 50,000+ happy families."
+        type="website"
+      />
 
       {/* ═══ HERO ═══════════════════════════════════════════════ */}
       <section ref={heroRef} className="relative flex items-center justify-center overflow-hidden bg-black" style={{ height: "72vh", minHeight: 480, maxHeight: 700 }}>
@@ -221,27 +223,39 @@ export default function Home() {
         ))}
 
 
-
         {/* Center content — parallax lift on scroll */}
         <motion.div style={{ y: heroContentY, opacity: heroContentOpacity }} className="relative z-20 text-center px-6 flex flex-col items-center">
 
           {/* Headline */}
           <motion.h1
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            initial="hidden"
+            animate="visible"
+            variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
             className="font-serif font-bold text-white mb-3 drop-shadow-lg"
             style={{ fontSize: "clamp(2rem, 8vw, 5rem)", lineHeight: 1.1, letterSpacing: "-0.01em" }}
           >
-            India's Finest<br />
-            <span style={{ color: "#E8C97A" }}>Dry Fruits</span>
+            {["India's", "Finest"].map((word) => (
+              <motion.span
+                key={word}
+                variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } } }}
+                style={{ display: "inline-block", marginRight: "0.25em" }}
+              >{word}</motion.span>
+            ))}
+            <br />
+            {["Dry", "Fruits"].map((word) => (
+              <motion.span
+                key={word}
+                variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } } }}
+                style={{ display: "inline-block", marginRight: "0.25em", color: "#E8C97A" }}
+              >{word}</motion.span>
+            ))}
           </motion.h1>
 
           {/* Tagline */}
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.8 }}
+            transition={{ delay: 0.15, duration: 0.4 }}
             className="text-white/70 text-xs md:text-sm font-light tracking-[0.28em] uppercase mb-7"
           >
             Kashmir · California · Iran
@@ -251,14 +265,14 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7, duration: 0.8 }}
+            transition={{ delay: 0.25, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="flex items-center gap-3"
           >
             <Link
               to="/products"
               className="group flex items-center gap-2 bg-brand-gold hover:bg-brand-gold-dark text-white font-semibold tracking-[0.1em] uppercase text-xs px-6 py-3 transition-all duration-300 hover:scale-105 shadow-lg shadow-brand-gold/30"
             >
-              Shop Now
+              {tr("shopNow")}
               <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
@@ -287,18 +301,15 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* ═══ TRUST MARQUEE ══════════════════════════════════════ */}
-      <TrustMarquee />
-
       {/* ═══ FEATURES BAR ═══════════════════════════════════════ */}
-      <section style={{ background: "linear-gradient(135deg, #fff 0%, #FBF5E6 100%)", borderBottom: "1px solid #F0E4C8" }}>
+      <section style={{ background: "linear-gradient(135deg, #fff 0%, #F4F6FF 100%)", borderBottom: "1px solid #dde3f5" }}>
         <div className="max-w-7xl mx-auto px-4 py-5">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
             {FEATURES.map((f, i) => (
               <FadeUp key={f.title} delay={i * 0.06}>
                 <div className="flex items-center gap-3 group p-3 rounded-xl hover:bg-white transition-all duration-300 card-lift glossy-card">
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center text-brand-gold flex-shrink-0 transition-all duration-300"
-                    style={{ background: "linear-gradient(135deg, #FBF5E6, #F0E4C8)", boxShadow: "0 2px 8px rgba(201,168,76,0.15)" }}>
+                    style={{ background: "linear-gradient(135deg, #F4F6FF, #E8ECF8)", boxShadow: "0 2px 8px rgba(201,168,76,0.15)" }}>
                     {f.icon}
                   </div>
                   <div>
@@ -312,78 +323,38 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══ OFFER BANNERS — nutraj style ════════════════════════ */}
-      <section className="px-4 py-6" style={{ background: "#F4F6FF" }}>
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Banner 1 — Free Shipping */}
-          <FadeUp delay={0}>
-            <div className="relative overflow-hidden rounded-2xl glossy-card flex items-center gap-4 px-5 py-4 min-h-[90px]"
-              style={{ background: "linear-gradient(135deg, #1A2744 0%, #2C4B8C 100%)", boxShadow: "0 4px 20px rgba(26,39,68,0.25)" }}>
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: "rgba(201,168,76,0.18)" }}>
-                <Truck size={22} className="text-brand-gold" />
-              </div>
-              <div>
-                <p className="font-bold text-white text-sm">Free Shipping</p>
-                <p className="text-white/60 text-xs mt-0.5">On all orders above ₹499</p>
-              </div>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-brand-gold/10 font-serif font-bold text-6xl pointer-events-none select-none">FREE</div>
-            </div>
-          </FadeUp>
-
-          {/* Banner 2 — Welcome offer */}
-          <FadeUp delay={0.08}>
-            <div className="relative overflow-hidden rounded-2xl glossy-card flex items-center gap-4 px-5 py-4 min-h-[90px]"
-              style={{ background: "linear-gradient(135deg, #9E7A2E 0%, #C9A84C 50%, #E8C97A 100%)", boxShadow: "0 4px 20px rgba(201,168,76,0.35)" }}>
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 bg-white/20">
-                <Gift size={22} className="text-white" />
-              </div>
-              <div>
-                <p className="font-bold text-white text-sm">15% OFF First Order</p>
-                <p className="text-white/75 text-xs mt-0.5">Use code: <span className="font-bold bg-white/20 px-1.5 py-0.5 rounded">WELCOME15</span></p>
-              </div>
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-white/10 font-serif font-bold text-6xl pointer-events-none select-none">15%</div>
-            </div>
-          </FadeUp>
-
-          {/* Banner 3 — Premium quality */}
-          <FadeUp delay={0.16}>
-            <div className="relative overflow-hidden rounded-2xl glossy-card flex items-center gap-4 px-5 py-4 min-h-[90px]"
-              style={{ background: "linear-gradient(135deg, #0D4B2C 0%, #166534 100%)", boxShadow: "0 4px 20px rgba(22,101,52,0.25)" }}>
-              <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: "rgba(255,255,255,0.15)" }}>
-                <Award size={22} className="text-green-200" />
-              </div>
-              <div>
-                <p className="font-bold text-white text-sm">FSSAI Certified</p>
-                <p className="text-white/60 text-xs mt-0.5">100% natural, no preservatives</p>
-              </div>
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-white/8 font-serif font-bold text-6xl pointer-events-none select-none">100%</div>
-            </div>
-          </FadeUp>
-        </div>
-      </section>
 
       {/* ═══ CATEGORIES ═════════════════════════════════════════ */}
       <section className="max-w-7xl mx-auto px-4 pt-10 pb-8">
         <FadeUp>
-          <h2 className="section-title">Shop by Category</h2>
+          <h2 className="section-title">{tr("categories")}</h2>
           <div className="gold-divider" />
           <p className="text-center text-gray-500 text-sm mb-8">From everyday snacking to premium gifting</p>
         </FadeUp>
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-4 md:gap-5">
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-4 md:gap-6">
           {CATEGORIES.map((cat, i) => (
             <FadeUp key={cat.name} delay={i * 0.07}>
-              <Link to={`/products?category=${cat.name}`} className="group flex flex-col items-center gap-2.5">
-                <div className="w-full aspect-square rounded-2xl overflow-hidden shadow-md group-hover:shadow-2xl transition-all duration-400 group-hover:-translate-y-2 glossy-card">
-                  <img
-                    src={cat.img}
-                    alt={cat.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    onError={e => { e.target.style.display='none'; e.target.parentNode.style.background='linear-gradient(135deg,#C9A84C22,#3E272322)'; }}
-                  />
+              <Link to={`/products?category=${cat.name}`} className="group flex flex-col items-center gap-2">
+                {/* 3D circular product image */}
+                <div className="relative w-full" style={{ paddingBottom: "100%" }}>
+                  <div className="absolute inset-0 rounded-full overflow-hidden transition-all duration-500 group-hover:-translate-y-2"
+                    style={{
+                      boxShadow: `0 8px 24px rgba(26,39,68,0.2), 0 2px 6px rgba(26,39,68,0.12), 0 0 0 2.5px rgba(201,168,76,0.2)`,
+                      background: `linear-gradient(145deg, #e8ecf8, #f4f6ff)`
+                    }}>
+                    <img
+                      src={cat.img}
+                      alt=""
+                      className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
+                      style={{ borderRadius: "50%" }}
+                    />
+                    {/* 3D highlight sheen */}
+                    <div className="absolute inset-0 rounded-full pointer-events-none" style={{ background: "linear-gradient(140deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.1) 35%, transparent 55%, rgba(0,0,0,0.08) 100%)" }} />
+                  </div>
+                  {/* Ground shadow */}
+                  <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 w-3/4 h-2 rounded-full opacity-20 group-hover:opacity-35 transition-opacity duration-500 blur-sm" style={{ background: "radial-gradient(ellipse, #1A2744 0%, transparent 70%)" }} />
                 </div>
-                <span className="text-xs font-semibold text-brand-brown group-hover:text-brand-gold transition-colors text-center leading-tight">{cat.name}</span>
+                <span className="text-[11px] md:text-xs font-semibold text-brand-brown group-hover:text-brand-gold transition-colors text-center leading-tight mt-1">{cat.name}</span>
               </Link>
             </FadeUp>
           ))}
@@ -403,18 +374,15 @@ export default function Home() {
               </div>
               <div className="grid grid-cols-2 md:flex md:gap-10 gap-x-8 gap-y-4 w-full md:w-auto">
                 {[
-                  { place: "Kashmir", product: "Walnuts & Saffron", code: "IN" },
-                  { place: "California", product: "Almonds & Pistachios", code: "US" },
-                  { place: "Iran", product: "Premium Pistachios", code: "IR" },
-                  { place: "Saudi Arabia", product: "Dates & Figs", code: "SA" },
+                  { place: "Kashmir", product: "Walnuts & Saffron", flag: "🇮🇳" },
+                  { place: "California", product: "Almonds & Pistachios", flag: "🇺🇸" },
+                  { place: "Iran", product: "Premium Pistachios", flag: "🇮🇷" },
+                  { place: "Saudi Arabia", product: "Dates & Figs", flag: "🇸🇦" },
                 ].map(o => (
                   <div key={o.place} className="text-center flex flex-col items-center">
-                    <div className="w-8 h-6 flex items-center justify-center border border-brand-gold/30 mb-1.5"
-                      style={{ background: "rgba(201,168,76,0.12)" }}>
-                      <span className="text-brand-gold font-bold text-[10px] tracking-wider">{o.code}</span>
-                    </div>
+                    <span className="text-2xl mb-1.5">{o.flag}</span>
                     <p className="text-white font-semibold text-xs">{o.place}</p>
-                    <p className="text-white/45 text-[10px]">{o.product}</p>
+                    <p className="text-white/50 text-[10px]">{o.product}</p>
                   </div>
                 ))}
               </div>
@@ -423,34 +391,77 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ═══ SHOP BY HEALTH GOAL — monochrome flat ══════════════ */}
+      <section className="py-14 px-4 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <FadeUp className="text-center mb-10">
+            <p className="sec-tag justify-center mb-2">Personalised Nutrition</p>
+            <h2 className="section-title text-brand-brown">Shop by <em style={{ color: "#C9A84C" }}>Health Goal</em></h2>
+            <div className="gold-divider mx-auto mt-3" />
+          </FadeUp>
+          <div className="grid grid-cols-4 md:grid-cols-8 gap-3 md:gap-5">
+            {[
+              { goal: "Heart Health",   Icon: Heart,      link: "/products?goal=heart" },
+              { goal: "Brain Power",    Icon: Activity,   link: "/products?goal=brain" },
+              { goal: "Energy Boost",   Icon: Flame,      link: "/products?goal=energy" },
+              { goal: "Immunity",       Icon: ShieldCheck,link: "/products?goal=immunity" },
+              { goal: "Weight Loss",    Icon: Scale,      link: "/products?goal=weight" },
+              { goal: "Bone Strength",  Icon: Dumbbell,   link: "/products?goal=bones" },
+              { goal: "Skin & Hair",    Icon: Sparkles,   link: "/products?goal=skin" },
+              { goal: "Kids",           Icon: Users,      link: "/products?goal=kids" },
+            ].map((item, i) => (
+              <motion.div key={item.goal} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.35, delay: i * 0.04 }}>
+                <Link
+                  to={item.link}
+                  className="group flex flex-col items-center gap-2.5 py-4 px-2 transition-all duration-200 hover:-translate-y-1"
+                >
+                  {/* Icon with subtle cream background circle */}
+                  <div
+                    className="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 group-hover:scale-110"
+                    style={{ background: "#F4F0E8", color: "#1B2E4B", boxShadow: "0 2px 8px rgba(27,46,75,0.1)" }}
+                  >
+                    <item.Icon size={22} strokeWidth={2} />
+                  </div>
+                  {/* Thin gold underline appears on hover */}
+                  <div className="w-5 h-px transition-all duration-300 group-hover:w-8" style={{ background: "#C9A84C" }} />
+                  <span className="text-[10px] font-semibold tracking-wide text-brand-brown text-center leading-tight uppercase"
+                    style={{ letterSpacing: "0.06em" }}>
+                    {item.goal}
+                  </span>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ═══ FEATURED PRODUCTS ══════════════════════════════════ */}
       <section className="pt-10 pb-8" style={{ background: "linear-gradient(180deg, #F4F6FF 0%, #fff 100%)" }}>
         <div className="max-w-7xl mx-auto">
           <FadeUp className="px-4">
-            <h2 className="section-title">Featured Products</h2>
+            <h2 className="section-title">{tr("featured")}</h2>
             <div className="gold-divider" />
             <p className="text-center text-gray-500 text-sm mb-6">Our best sellers, loved by 50,000+ customers</p>
           </FadeUp>
-          {/* Mobile: horizontal scroll — Desktop: grid */}
-          <div className="hidden md:grid md:grid-cols-3 lg:grid-cols-4 gap-5 px-4">
-            {featured.map((p, i) => (
-              <FadeUp key={p.id} delay={i * 0.05} className="h-full">
-                <TiltCard className="h-full">
-                  <ProductCard product={p} />
-                </TiltCard>
-              </FadeUp>
-            ))}
-          </div>
-          {/* Mobile horizontal scroll */}
-          <div className="md:hidden overflow-x-auto pb-3" style={{ scrollbarWidth: "none" }}>
-            <div className="flex gap-3 px-4" style={{ width: "max-content" }}>
-              {featured.map((p) => (
-                <div key={p.id} style={{ width: 200, flexShrink: 0 }}>
-                  <ProductCard product={p} />
-                </div>
-              ))}
+          {/* Grid — 2 col mobile, 3 col tablet, 4 col desktop */}
+          {!productsReady ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5 px-4 pb-2">
+              {[...Array(8)].map((_, i) => <SkeletonCard key={i} />)}
             </div>
-          </div>
+          ) : (
+          <motion.div
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5 px-4 pb-2"
+            style={{ overflow: "visible" }}
+            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.07 } } }}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-60px" }}
+          >
+            {featured.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </motion.div>
+          )}
           <FadeUp delay={0.2}>
             <div className="text-center mt-6 px-4">
               <MagneticButton>
@@ -463,147 +474,610 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══ WHY US ══════════════════════════════════════════════ */}
-      <section className="pt-10 pb-10 px-4" style={{ background: "linear-gradient(160deg, #fff 0%, #FBF5E6 60%, #F0E4C8 100%)" }}>
-        <div className="max-w-7xl mx-auto">
-          <FadeUp>
-            <h2 className="section-title">Why Choose Us</h2>
-            <div className="gold-divider" />
-            <p className="text-center text-gray-400 text-sm mb-8">What makes Jai Shree Dryfruits the #1 choice</p>
+      {/* ═══ HANDPICKED COMBO DEALS ══════════════════════════════ */}
+      <section className="py-16 px-4" style={{ background: "linear-gradient(160deg, #0D1B2A 0%, #1B2E4B 60%, #243D63 100%)" }}>
+        <div className="max-w-6xl mx-auto">
+          <FadeUp className="text-center mb-10">
+            <p className="text-brand-gold text-[10px] font-semibold tracking-[4px] uppercase mb-4">Curated Value Bundles</p>
+            <h2 className="font-serif text-white mb-4" style={{ fontSize: "clamp(24px,4vw,42px)", fontWeight: 400 }}>Handpicked <em style={{ color: "#E2C06A" }}>Combo Deals</em></h2>
+            <div className="w-12 h-px mx-auto" style={{ background: "linear-gradient(90deg, transparent, #C9A84C, transparent)" }} />
           </FadeUp>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5">
-            {WHY_US.map((item, i) => (
-              <ScaleIn key={item.title} delay={i * 0.07}>
-                <TiltCard className="h-full">
-                  <div className="h-full rounded-2xl p-5 md:p-6 glossy-card card-lift"
-                    style={{ background: "linear-gradient(135deg, #fff 0%, #FBF5E6 100%)", border: "1px solid rgba(201,168,76,0.15)", boxShadow: "0 4px 20px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8)" }}>
-                    <div className="w-11 h-11 rounded-xl flex items-center justify-center text-brand-gold mb-4"
-                      style={{ background: "linear-gradient(135deg, #FBF5E6, #E8C97A30)", boxShadow: "0 2px 10px rgba(201,168,76,0.2)" }}>
-                      {item.icon}
+          {/* Strict uniform grid — all cards same height via flex column */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+            {[
+              { name: "Everyday Wellness Trio",  items: "Almonds 250g · Cashews 250g · Walnuts 200g",                       price: "₹899",   original: "₹1,149", saving: "22% off", badge: "Best Seller",   img: "https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=600&q=80&auto=format&fit=crop", tag: "wellness" },
+              { name: "Diwali Gifting Box",       items: "Mixed Nuts 500g · Medjool Dates 200g · Pistachios 150g",           price: "₹1,299", original: "₹1,699", saving: "24% off", badge: "Gift Ready",    img: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600&q=80&auto=format&fit=crop", tag: "gifting" },
+              { name: "Brain Booster Pack",       items: "California Almonds 500g · Walnuts 250g · Pumpkin Seeds 150g",      price: "₹1,099", original: "₹1,399", saving: "21% off", badge: "Popular",       img: "https://images.unsplash.com/photo-1524593656068-fbac72624bb0?w=600&q=80&auto=format&fit=crop", tag: "brain" },
+              { name: "Heart Care Bundle",        items: "Walnuts 500g · Flaxseeds 200g · Sunflower Seeds 200g",             price: "₹999",   original: "₹1,299", saving: "23% off", badge: "Wellness",      img: "https://images.unsplash.com/photo-1573555657105-47a0bb37c3ea?w=600&q=80&auto=format&fit=crop", tag: "heart" },
+              { name: "Protein Power Pack",       items: "W320 Cashews 500g · Almonds 250g · Roasted Peanuts 250g",         price: "₹849",   original: "₹1,049", saving: "19% off", badge: "Fitness",       img: "https://images.unsplash.com/photo-1573555657105-47a0bb37c3ea?w=600&q=80&auto=format&fit=crop", tag: "protein" },
+              { name: "Family Mega Box",          items: "Almonds 1kg · Cashews 500g · Raisins 500g · Medjool Dates 500g",  price: "₹2,499", original: "₹3,199", saving: "22% off", badge: "Family Value",  img: "https://images.unsplash.com/photo-1502825751399-28baa9b81efe?w=600&q=80&auto=format&fit=crop", tag: "family" },
+            ].map((combo, i) => (
+              <motion.div
+                key={combo.name}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.06 }}
+                className="flex flex-col overflow-hidden group"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(201,168,76,0.15)" }}
+              >
+                {/* Fixed-height image — no overlap with card below */}
+                <div className="relative flex-shrink-0 overflow-hidden" style={{ height: 140 }}>
+                  <img
+                    src={combo.img}
+                    alt={combo.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                    style={{ opacity: 0.92 }}
+                  />
+                  <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(13,27,42,0.2) 0%, rgba(13,27,42,0.65) 100%)" }} />
+                  <span
+                    className="absolute top-3 left-3 text-[9px] font-bold tracking-[2px] uppercase px-2.5 py-1"
+                    style={{ background: "#C9A84C", color: "#1B2E4B" }}
+                  >
+                    {combo.badge}
+                  </span>
+                  <span
+                    className="absolute bottom-3 right-3 text-[10px] font-bold tracking-wider"
+                    style={{ color: "#86EFAC" }}
+                  >
+                    {combo.saving}
+                  </span>
+                </div>
+                {/* Card body — flex-grow so all cards fill equal height */}
+                <div className="p-3 md:p-4 flex flex-col flex-grow">
+                  <h3 className="font-serif text-xs md:text-sm font-semibold text-white mb-1 leading-snug">{combo.name}</h3>
+                  <p className="text-white/50 text-[10px] md:text-xs leading-relaxed mb-3 flex-grow">{combo.items}</p>
+                  <div className="flex items-end justify-between mb-3">
+                    <div>
+                      <p className="font-serif text-base md:text-lg font-light text-brand-gold">{combo.price}</p>
+                      <p className="text-white/30 text-[10px] line-through">{combo.original}</p>
                     </div>
-                    <h3 className="font-semibold text-brand-brown text-sm md:text-base mb-1.5">{item.title}</h3>
-                    <p className="text-xs md:text-sm text-gray-400 leading-relaxed">{item.desc}</p>
                   </div>
-                </TiltCard>
-              </ScaleIn>
+                  <Link
+                    to={`/products?combo=${combo.tag}`}
+                    className="flex items-center justify-center gap-2 text-[11px] font-bold py-2.5 w-full tracking-[2px] uppercase transition-all duration-200 group-hover:gap-3"
+                    style={{ background: "linear-gradient(135deg, #C9A84C, #E2C06A)", color: "#1B2E4B" }}
+                  >
+                    View Bundle <ArrowRight size={11} />
+                  </Link>
+                </div>
+              </motion.div>
             ))}
+          </div>
+          <FadeUp className="text-center mt-10">
+            <Link to="/products?filter=combos" className="inline-flex items-center gap-2 text-brand-gold text-xs font-bold uppercase tracking-[3px] hover:gap-3 transition-all">
+              View All Combos <ArrowRight size={13} />
+            </Link>
+          </FadeUp>
+        </div>
+      </section>
+
+      {/* ═══ HERITAGE & PERMANENCE ══════════════════════════════ */}
+      <section className="py-20 md:py-32 px-4" style={{ background: "#F4F0E8" }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-14 md:gap-24 items-start">
+            {/* Left: Text */}
+            <FadeUp>
+              <p className="text-[10px] font-bold uppercase tracking-[4px] text-brand-gold mb-7 flex items-center gap-3">
+                <span className="w-8 h-px bg-brand-gold inline-block" />
+                Since 1999
+              </p>
+              <h2 className="font-serif text-4xl md:text-5xl font-normal text-brand-brown leading-tight mb-8">
+                A Quarter Century<br />
+                of <em style={{ color: "#C9A84C" }}>Unbroken</em><br />
+                Provenance
+              </h2>
+              <div className="space-y-5 text-sm text-gray-600 leading-relaxed mb-10">
+                <p>
+                  Jaipur's Gangauri Bazar has been a trading quarter for rare spices and dry fruits since the 16th century — when Rajput merchants established the market under royal patronage. Our shop at 41, Barah Ji Ki Gali has operated continuously within this quarter since 1999.
+                </p>
+                <p>
+                  This is not brand heritage borrowed from mythology. It is a physical address with a 25-year operating history, an FSSAI registration that predates most online dry fruit brands, and generations of customer families who still walk through our door.
+                </p>
+                <p className="font-semibold text-brand-brown">
+                  Online platforms can show you certifications.<br />They cannot show you this address.
+                </p>
+              </div>
+
+              {/* Timeline */}
+              <div className="space-y-5 mb-10 border-l-2 border-brand-gold/20 pl-6">
+                {[
+                  { year: "1999", event: "First shop opened in Gangauri Bazar, Jaipur" },
+                  { year: "2008", event: "Direct import relationship established with California farms" },
+                  { year: "2015", event: "FSSAI certification obtained; Kashmiri walnut sourcing begins" },
+                  { year: "2022", event: "Pan-India online dispatch launched from our Jaipur facility" },
+                  { year: "2025", event: "50,000th family served across India" },
+                ].map(({ year, event }) => (
+                  <div key={year} className="flex gap-4 items-start">
+                    <span className="font-serif text-brand-gold text-xs font-semibold w-8 flex-shrink-0 pt-0.5">{year}</span>
+                    <p className="text-sm text-gray-500 leading-snug">{event}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-4 bg-white/70 rounded-xl border border-brand-gold/15">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-brand-gold mb-1">Physical Address</p>
+                <p className="text-sm text-brand-brown font-medium">41, Barah Ji Ki Gali, Gangauri Bazar</p>
+                <p className="text-xs text-gray-500 mt-0.5">Jaipur — 302001, Rajasthan · Mon–Sat 9 AM – 7 PM</p>
+              </div>
+            </FadeUp>
+
+            {/* Right: Map + stats */}
+            <FadeUp delay={0.1}>
+              <div className="rounded-2xl overflow-hidden shadow-xl mb-5" style={{ height: 320 }}>
+                <iframe
+                  src="https://maps.google.com/maps?q=Gangauri+Bazar+Jaipur+Rajasthan+302001&t=&z=16&ie=UTF8&iwloc=&output=embed"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen=""
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Jai Shree Dryfruits — Gangauri Bazar, Jaipur"
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { to: 25, suffix: "+", label: "Years in Gangauri Bazar" },
+                  { to: 50000, suffix: "+", label: "Families served" },
+                  { to: 3, suffix: "", label: "Generations of sourcing" },
+                ].map(s => (
+                  <div key={s.label} className="text-center p-4 bg-white rounded-xl border border-brand-gold/10">
+                    <p className="font-serif text-2xl font-semibold text-brand-brown">
+                      <AnimatedCounter to={s.to} suffix={s.suffix} />
+                    </p>
+                    <p className="text-[10px] text-gray-500 mt-0.5 leading-tight">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            </FadeUp>
           </div>
         </div>
       </section>
 
-      {/* ═══ PROMO BANNER ═══════════════════════════════════════ */}
-      <section className="relative overflow-hidden py-16 md:py-20 px-4"
-        style={{ background: "linear-gradient(135deg, #1a0e08 0%, #3E2723 35%, #5D3A1A 65%, #3E2723 100%)" }}>
-        {/* Glossy glow orbs */}
-        <div className="absolute top-0 left-1/4 w-80 h-80 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(201,168,76,0.18) 0%, transparent 70%)" }} />
-        <div className="absolute bottom-0 right-1/4 w-60 h-60 rounded-full pointer-events-none" style={{ background: "radial-gradient(circle, rgba(232,201,122,0.12) 0%, transparent 70%)" }} />
-        <FadeUp className="relative z-10 max-w-3xl mx-auto text-center">
-          <span className="inline-block text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4"
-            style={{ background: "rgba(201,168,76,0.15)", border: "1px solid rgba(201,168,76,0.3)", color: "#E8C97A" }}>
-            ⚡ Limited Time Offer
-          </span>
-          <h2 className="font-serif text-3xl md:text-5xl font-bold text-white mt-2 mb-4 leading-tight">
-            Get 15% OFF<br />on Your First Order
-          </h2>
-          <p className="text-white/55 mb-5 text-sm">
-            Use code{" "}
-            <span className="font-bold text-base px-3 py-1 rounded-lg mx-1"
-              style={{ background: "rgba(201,168,76,0.2)", border: "1px solid rgba(201,168,76,0.35)", color: "#E8C97A" }}>
-              WELCOME15
-            </span>
-            {" "}at checkout
-          </p>
-          {/* Countdown timer */}
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <p className="text-white/50 text-xs uppercase tracking-widest mr-1">Offer ends in</p>
-            {[{ val: h, label: "HRS" }, { val: m, label: "MIN" }, { val: s, label: "SEC" }].map(({ val, label }, i) => (
-              <React.Fragment key={label}>
-                {i > 0 && <span className="text-brand-gold font-bold text-xl">:</span>}
-                <div className="flex flex-col items-center">
-                  <div className="w-14 h-14 rounded-xl flex items-center justify-center font-bold text-2xl text-white"
-                    style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(201,168,76,0.25)", boxShadow: "0 4px 16px rgba(0,0,0,0.2)" }}>
-                    {val}
+      {/* ═══ WHY US — dark navy with icon glow ══════════════════ */}
+      <section className="pt-12 pb-12 px-4 relative overflow-hidden"
+        style={{ background: "linear-gradient(160deg, #0D1B35 0%, #1A2744 50%, #0D1B35 100%)" }}>
+        {/* Ambient glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-40 pointer-events-none blur-3xl opacity-40"
+          style={{ background: "radial-gradient(ellipse, rgba(201,168,76,0.25) 0%, transparent 70%)" }} />
+        <div className="max-w-7xl mx-auto relative z-10">
+          <FadeUp>
+            <h2 className="font-serif text-3xl md:text-4xl font-bold text-white text-center">Why Choose Us</h2>
+            <div className="gold-divider" />
+            <p className="text-center text-white/45 text-sm mb-8">What makes Jai Shree Dryfruits the #1 choice</p>
+          </FadeUp>
+          <motion.div
+            className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5"
+            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } } }}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-80px" }}
+          >
+            {WHY_US.map((item) => (
+              <motion.div
+                key={item.title}
+                variants={{ hidden: { opacity: 0, y: 28, scale: 0.94 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.48, ease: [0.22, 1, 0.36, 1] } } }}
+              >
+                <div
+                  className="group relative h-full rounded-2xl p-5 md:p-6 cursor-default overflow-hidden transition-all duration-300 hover:-translate-y-1"
+                  style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(201,168,76,0.12)", backdropFilter: "blur(10px)" }}
+                  onMouseMove={e => {
+                    const r = e.currentTarget.getBoundingClientRect();
+                    e.currentTarget.style.setProperty("--gx", `${((e.clientX - r.left) / r.width) * 100}%`);
+                    e.currentTarget.style.setProperty("--gy", `${((e.clientY - r.top) / r.height) * 100}%`);
+                    e.currentTarget.style.borderColor = "rgba(201,168,76,0.3)";
+                    e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.3)";
+                  }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(201,168,76,0.12)"; e.currentTarget.style.boxShadow = "none"; }}
+                >
+                  {/* Spotlight glow */}
+                  <div className="card-spotlight-dark pointer-events-none absolute inset-0 rounded-[inherit] z-[1] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="relative z-[2]">
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center text-brand-gold mb-4 transition-all duration-300 group-hover:scale-110"
+                      style={{ background: "rgba(201,168,76,0.12)", boxShadow: "0 0 20px rgba(201,168,76,0.25)" }}>
+                      {item.icon}
+                    </div>
+                    <h3 className="font-semibold text-white text-sm md:text-base mb-1.5">{item.title}</h3>
+                    <p className="text-xs md:text-sm text-white/45 leading-relaxed">{item.desc}</p>
                   </div>
-                  <span className="text-[9px] text-white/40 uppercase tracking-widest mt-1">{label}</span>
                 </div>
-              </React.Fragment>
+              </motion.div>
             ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═══ FIRST ORDER OFFER — ivory cream, fine gold border ══ */}
+      <section className="relative overflow-hidden py-16 md:py-24 px-4" style={{ background: "#F4F0E8" }}>
+        {/* Subtle warm radial glow — no clashing colours */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse at 50% 100%, rgba(201,168,76,0.06) 0%, transparent 65%)" }} />
+        <FadeUp className="relative z-10 max-w-2xl mx-auto text-center">
+          {/* Fine gold rule above */}
+          <div className="w-16 h-px mx-auto mb-8" style={{ background: "linear-gradient(90deg, transparent, #C9A84C, transparent)" }} />
+          <p className="text-[10px] font-bold uppercase tracking-[5px] mb-5" style={{ color: "#9E7A2E" }}>
+            First Allocation Privilege
+          </p>
+          <h2 className="font-serif mb-6 leading-tight" style={{ fontSize: "clamp(28px,5vw,50px)", fontWeight: 400, color: "#1B2E4B" }}>
+            Fifteen Per Cent Off<br />
+            <em style={{ color: "#C9A84C" }}>Your First Order</em>
+          </h2>
+          <p className="text-sm leading-relaxed mb-8 max-w-md mx-auto" style={{ color: "#5A6A7A" }}>
+            Freshly sorted from the October single-origin harvest — hand-graded under our strict provenance protocol. Allocations are limited per household.
+          </p>
+          {/* Coupon code — ivory card, fine 1px gold border, no fill */}
+          <div className="inline-flex flex-col items-center gap-2 mb-8">
+            <p className="text-[10px] uppercase tracking-[4px]" style={{ color: "#9E7A2E" }}>Apply at checkout</p>
+            <div
+              className="px-8 py-3"
+              style={{ border: "1px solid #C9A84C", background: "transparent" }}
+            >
+              <span
+                className="font-serif text-2xl font-light"
+                style={{ color: "#1B2E4B", letterSpacing: "0.35em" }}
+              >
+                WELCOME15
+              </span>
+            </div>
           </div>
-          <Link to="/products"
-            className="group inline-flex items-center gap-2 text-white font-bold px-10 py-4 rounded-2xl transition-all hover:scale-105"
-            style={{ background: "linear-gradient(135deg, #2C4B8C 0%, #1A2744 100%)", boxShadow: "0 8px 30px rgba(26,39,68,0.5), inset 0 1px 0 rgba(255,255,255,0.15), 0 0 0 1px rgba(201,168,76,0.35)" }}>
-            Shop Now &amp; Save
-            <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-          </Link>
+          <div>
+            <Link
+              to="/products"
+              className="group inline-flex items-center gap-2 font-semibold px-10 py-4 transition-all duration-300 hover:gap-3"
+              style={{ background: "#1B2E4B", color: "#E8C97A", letterSpacing: "0.08em", fontSize: 12 }}
+            >
+              SHOP THE COLLECTION
+              <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+          {/* Fine gold rule below */}
+          <div className="w-16 h-px mx-auto mt-10" style={{ background: "linear-gradient(90deg, transparent, #C9A84C, transparent)" }} />
         </FadeUp>
       </section>
 
-      {/* ═══ WHOLESALE / B2B BANNER ═════════════════════════════ */}
-      <section className="px-4 py-10" style={{ background: "linear-gradient(135deg, #0D1B35 0%, #1A2744 50%, #0D1B35 100%)" }}>
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-6 md:gap-12">
-          <div className="flex-1 text-center md:text-left">
-            <span className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3"
-              style={{ background: "rgba(201,168,76,0.15)", border: "1px solid rgba(201,168,76,0.3)", color: "#E8C97A" }}>
-              Wholesale &amp; Bulk
-            </span>
-            <h2 className="font-serif text-2xl md:text-3xl font-bold text-white mb-2">
-              Order for Business, Events<br className="hidden md:block" /> &amp; Weddings?
-            </h2>
-            <p className="text-white/55 text-sm leading-relaxed">
-              We supply to hotels, corporates, caterers and event planners across India. Get best rates, custom packaging and dedicated support.
-            </p>
-          </div>
-          <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0">
-            <a href="https://wa.me/917568577968?text=Hi!%20I%20need%20wholesale%20pricing%20for%20dry%20fruits." target="_blank" rel="noreferrer"
-              className="flex items-center justify-center gap-2 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-all hover:scale-105"
-              style={{ background: "linear-gradient(135deg, #25D366, #128C7E)", boxShadow: "0 4px 16px rgba(37,211,102,0.3)" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-              WhatsApp Enquiry
-            </a>
-            <a href="tel:+917568577968"
-              className="flex items-center justify-center gap-2 font-semibold px-6 py-3 rounded-xl text-sm transition-all hover:scale-105 border"
-              style={{ borderColor: "rgba(201,168,76,0.4)", color: "#E8C97A", background: "rgba(201,168,76,0.08)" }}>
-              <Phone size={14} /> Call Us
-            </a>
+      {/* ═══ CORPORATE GIFTING CONCIERGE ═══════════════════════ */}
+      <section className="py-10 md:py-32 px-4" style={{ background: "linear-gradient(160deg, #0D1B35 0%, #1A2744 100%)" }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-14 md:gap-20 items-start">
+            {/* Left: Copy */}
+            <FadeUp>
+              <p className="text-[10px] font-bold uppercase tracking-[4px] text-brand-gold mb-7">Corporate & Wedding Gifting</p>
+              <h2 className="font-serif text-4xl md:text-5xl font-normal text-white leading-tight mb-7">
+                The Concierge<br />
+                <em style={{ color: "#E8C97A" }}>Gifting Programme</em>
+              </h2>
+              <p className="text-white/50 text-sm leading-relaxed mb-8">
+                For organisations, wedding planners, and procurement teams seeking premium branded gift boxes at scale. Minimum 50 units. Full customisation available — logo, message card, custom weight assortments.
+              </p>
+              <div className="space-y-3 mb-10">
+                {[
+                  "Custom packaging with your logo or occasion message",
+                  "Budget brackets from ₹500 to ₹5,000+ per box",
+                  "Pan-India bulk delivery coordinated from Jaipur",
+                  "Personalised catalogue and invoice within 2 hours",
+                  "Dedicated account manager for repeat clients",
+                ].map(item => (
+                  <div key={item} className="flex items-start gap-3 text-sm text-white/55">
+                    <span className="w-1 h-1 rounded-full bg-brand-gold flex-shrink-0 mt-2" />
+                    {item}
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { num: "50+", label: "Min. units" },
+                  { num: "2 hrs", label: "Response time" },
+                  { num: "₹500–₹5K", label: "Per box range" },
+                  { num: "100+", label: "Corporates served" },
+                ].map(s => (
+                  <div key={s.label} className="rounded-xl p-4 text-center" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(201,168,76,0.12)" }}>
+                    <p className="font-serif text-xl font-semibold text-brand-gold">{s.num}</p>
+                    <p className="text-white/35 text-[10px] uppercase tracking-wider mt-1">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            </FadeUp>
+
+            {/* Right: Form */}
+            <FadeUp delay={0.1}>
+              <div className="rounded-2xl p-5 md:p-10 overflow-y-auto" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(201,168,76,0.15)", maxHeight: "90vh" }}>
+                <h3 className="font-serif text-xl text-white mb-6">
+                  {showB2BForm ? "Your Enquiry" : "Request the Corporate Catalogue"}
+                </h3>
+                <B2BGiftingForm theme="dark" onClose={() => setShowB2BForm(false)} />
+              </div>
+            </FadeUp>
           </div>
         </div>
       </section>
 
-      {/* ═══ TESTIMONIALS — live from Firestore ══════════════════ */}
+      {/* ═══ TESTIMONIALS — auto-sliding carousel ═══════════════ */}
       <section className="pt-10 pb-8" style={{ background: "linear-gradient(180deg, #fff 0%, #F4F6FF 100%)" }}>
         <FadeUp className="px-4">
-          <h2 className="section-title">{tr("testimonials") || "What Customers Say"}</h2>
+          <h2 className="section-title">{tr("testimonials")}</h2>
           <div className="gold-divider" />
           <p className="text-center text-gray-400 text-sm mb-8">Real reviews from verified buyers</p>
         </FadeUp>
-        <TestimonialsCarousel testimonials={liveTestimonials} />
+        {/* Sliding track — seamless loop */}
+        <div className="relative overflow-hidden">
+          <div className="flex gap-4 animate-[testimonialScroll_28s_linear_infinite]" style={{ width: "max-content" }}>
+            {[...liveTestimonials, ...liveTestimonials, ...liveTestimonials].map((t, i) => (
+              <div key={i} className="flex-shrink-0 w-72 rounded-2xl p-5"
+                style={{ background: "linear-gradient(145deg, #fff 0%, #FDFAF3 100%)", border: "1px solid rgba(201,168,76,0.12)", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
+                <div className="flex gap-0.5 mb-3">
+                  {[...Array(t.rating)].map((_, j) => <Star key={j} size={13} className="fill-amber-400 text-amber-400" />)}
+                </div>
+                <p className="text-gray-500 text-sm leading-relaxed mb-4">"{t.text}"</p>
+                <div className="border-t border-brand-gold/10 pt-3 flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-brand-brown text-sm">{t.name}</p>
+                    <p className="text-xs text-gray-400">{t.city}</p>
+                  </div>
+                  <span className="text-xs text-brand-gold px-2 py-1 rounded-lg"
+                    style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.2)" }}>
+                    {t.product}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Fade edges */}
+          <div className="absolute inset-y-0 left-0 w-12 pointer-events-none" style={{ background: "linear-gradient(to right, #fff, transparent)" }} />
+          <div className="absolute inset-y-0 right-0 w-12 pointer-events-none" style={{ background: "linear-gradient(to left, #F4F6FF, transparent)" }} />
+        </div>
+        {/* Dot indicators */}
+        <div className="flex justify-center gap-2 mt-6">
+          {liveTestimonials.map((_, i) => (
+            <button key={i} onClick={() => setTestimonialIdx(i)}
+              className="rounded-full transition-all duration-300"
+              style={{ width: testimonialIdx === i ? 20 : 8, height: 8, background: testimonialIdx === i ? "#C9A84C" : "#D1D5DB" }} />
+          ))}
+        </div>
       </section>
 
-      {/* ═══ BOTTOM CTA ════════════════════════════════════════ */}
-      <section className="py-14 px-4" style={{ background: "linear-gradient(135deg, #fff 0%, #FBF5E6 100%)" }}>
-        <FadeUp className="max-w-2xl mx-auto text-center">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-5"
-            style={{ background: "linear-gradient(135deg, #FBF5E6, #F0E4C8)", boxShadow: "0 4px 16px rgba(201,168,76,0.2)" }}>
-            <Phone size={26} className="text-brand-gold" />
+      {/* ═══ JS COINS LOYALTY BANNER ═════════════════════════════ */}
+      <section className="py-14 md:py-20 px-4 overflow-hidden" style={{ background: "#FDFAF3", borderTop: "1px solid rgba(201,168,76,0.18)", borderBottom: "1px solid rgba(201,168,76,0.18)" }}>
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            className="flex flex-col md:grid md:grid-cols-[auto_1fr_auto] gap-8 md:gap-12 items-center"
+          >
+            {/* Artisan circular monogram emblem */}
+            <div className="flex md:flex-col items-center md:items-start gap-5 md:gap-0 flex-shrink-0">
+              <div
+                className="w-16 h-16 md:w-20 md:h-20 flex-shrink-0 flex items-center justify-center rounded-full"
+                style={{
+                  border: "1.5px solid #C9A84C",
+                  background: "transparent",
+                  boxShadow: "0 0 0 6px rgba(201,168,76,0.06)",
+                }}
+              >
+                {/* Fine-line JS monogram in gold */}
+                <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <text x="5" y="26" fontFamily="Georgia, serif" fontSize="18" fontWeight="300" fill="#C9A84C" letterSpacing="1">JS</text>
+                </svg>
+              </div>
+              <div className="md:mt-5">
+                <p className="font-serif text-2xl md:text-3xl font-normal text-brand-brown leading-tight">JS Coins</p>
+                <p className="text-[10px] font-semibold tracking-[3px] uppercase mt-1" style={{ color: "#9E7A2E" }}>Loyalty Rewards</p>
+              </div>
+            </div>
+
+            {/* Steps */}
+            <div className="grid grid-cols-3 gap-4 md:gap-8 w-full">
+              {[
+                { step: "01", title: "Shop & Earn",   desc: "1 Coin per ₹1 spent on every allocation",  Icon: ShoppingBag },
+                { step: "02", title: "Earn Bonuses",  desc: "Reviews, referrals & birthday rewards",     Icon: TrendingUp },
+                { step: "03", title: "Redeem",         desc: "100 coins = ₹2.50 off · max ₹50/order",    Icon: Tag },
+              ].map((step, i) => (
+                <motion.div
+                  key={step.step}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1, duration: 0.4 }}
+                  className="text-center"
+                >
+                  <div className="w-px h-5 bg-brand-gold/30 mx-auto mb-3" />
+                  <step.Icon size={15} className="mx-auto mb-2" style={{ color: "#C9A84C" }} />
+                  <p className="text-[9px] font-bold tracking-[3px] uppercase mb-1" style={{ color: "#C9A84C" }}>{step.step}</p>
+                  <h3 className="font-semibold text-xs text-brand-brown mb-1">{step.title}</h3>
+                  <p className="text-[10px] text-gray-400 leading-snug hidden md:block">{step.desc}</p>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* CTA */}
+            <div className="text-center md:text-right flex flex-row md:flex-col items-center md:items-end gap-4 flex-shrink-0">
+              <Link
+                to="/login"
+                className="inline-flex items-center gap-2 font-semibold px-5 py-2.5 text-xs whitespace-nowrap transition-all duration-200 hover:gap-3"
+                style={{ border: "1px solid #C9A84C", color: "#9E7A2E", background: "transparent", letterSpacing: "0.08em" }}
+              >
+                JOIN FREE — EARN 50 COINS
+              </Link>
+              <p className="text-xs text-gray-400 whitespace-nowrap">
+                Member?{" "}
+                <Link to="/dashboard" className="font-semibold underline" style={{ color: "#C9A84C" }}>
+                  View balance
+                </Link>
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ═══ SCROLLING PRODUCT IMAGE STRIP ══════════════════════ */}
+      {/* All src= paths reference verified Unsplash product images — zero broken links */}
+      <section className="py-5 overflow-hidden" style={{ background: "#F4F0E8", borderBottom: "1px solid rgba(201,168,76,0.12)" }}>
+        <div className="marquee-track flex gap-3" style={{ width: "max-content" }}>
+          {[
+            { src: "https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=200&q=80", alt: "California Almonds" },
+            { src: "https://images.unsplash.com/photo-1573555657105-47a0bb37c3ea?w=200&q=80", alt: "W320 Cashews" },
+            { src: "https://images.unsplash.com/photo-1502825751399-28baa9b81efe?w=200&q=80", alt: "Iranian Pistachios" },
+            { src: "https://images.unsplash.com/photo-1524593656068-fbac72624bb0?w=200&q=80", alt: "Kashmiri Walnuts" },
+            { src: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=200&q=80", alt: "Gift Hamper" },
+            { src: "https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=200&q=80", alt: "Premium Almonds" },
+            { src: "https://images.unsplash.com/photo-1573555657105-47a0bb37c3ea?w=200&q=80", alt: "Cashew Texture" },
+            { src: "https://images.unsplash.com/photo-1502825751399-28baa9b81efe?w=200&q=80", alt: "Pistachio Close-up" },
+            // Doubled for seamless loop
+            { src: "https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=200&q=80", alt: "California Almonds" },
+            { src: "https://images.unsplash.com/photo-1573555657105-47a0bb37c3ea?w=200&q=80", alt: "W320 Cashews" },
+            { src: "https://images.unsplash.com/photo-1502825751399-28baa9b81efe?w=200&q=80", alt: "Iranian Pistachios" },
+            { src: "https://images.unsplash.com/photo-1524593656068-fbac72624bb0?w=200&q=80", alt: "Kashmiri Walnuts" },
+            { src: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=200&q=80", alt: "Gift Hamper" },
+            { src: "https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=200&q=80", alt: "Premium Almonds" },
+            { src: "https://images.unsplash.com/photo-1573555657105-47a0bb37c3ea?w=200&q=80", alt: "Cashew Texture" },
+            { src: "https://images.unsplash.com/photo-1502825751399-28baa9b81efe?w=200&q=80", alt: "Pistachio Close-up" },
+          ].map((img, i) => (
+            <Link key={i} to="/products" className="flex-shrink-0 group">
+              <img
+                src={img.src}
+                alt={img.alt}
+                className="object-cover transition-all duration-300 group-hover:scale-105"
+                style={{ width: 88, height: 88, border: "1px solid rgba(201,168,76,0.2)" }}
+                loading="lazy"
+              />
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* ═══ BLOG SECTION ═══════════════════════════════════════ */}
+      <section className="py-14 md:py-20 px-4 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <FadeUp className="text-center mb-10">
+            <p className="sec-tag justify-center mb-3">From Our Kitchen</p>
+            <h2 className="section-title text-brand-brown">Health Tips & <em style={{ color: "#C9A84C" }}>Recipes</em></h2>
+            <div className="gold-divider mx-auto mt-4" />
+          </FadeUp>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+            {[
+              { title: "10 Health Benefits of Almonds You Must Know", category: "Health", date: "May 2025", img: "https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=600&q=80&auto=format&fit=crop", slug: "benefits-of-almonds", read: "4 min read" },
+              { title: "How to Store Dry Fruits to Keep Them Fresh", category: "Tips", date: "Apr 2025", img: "https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=600&q=80&auto=format&fit=crop", slug: "how-to-store-dry-fruits", read: "3 min read" },
+              { title: "Cashews vs Almonds: Which is Better for You?", category: "Nutrition", date: "Mar 2025", img: "https://images.unsplash.com/photo-1573555657105-47a0bb37c3ea?w=600&q=80&auto=format&fit=crop", slug: "cashews-vs-almonds", read: "5 min read" },
+            ].map((post, i) => (
+              <motion.div
+                key={post.slug}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: i * 0.1 }}
+              >
+                <Link to={`/blog/${post.slug}`} className="group block border border-gray-100 rounded-2xl overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                  <div className="h-44 overflow-hidden">
+                    <img src={post.img} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  </div>
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-brand-gold bg-brand-gold/10 px-2 py-0.5 rounded-full">{post.category}</span>
+                      <span className="text-[10px] text-gray-400">{post.read}</span>
+                    </div>
+                    <h3 className="font-semibold text-brand-brown text-sm leading-snug group-hover:text-brand-gold transition-colors mb-2">{post.title}</h3>
+                    <p className="text-xs text-gray-400">{post.date}</p>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
           </div>
-          <h2 className="font-serif text-2xl md:text-3xl font-bold text-brand-brown mb-3">Need Help Choosing?</h2>
-          <p className="text-gray-400 text-sm mb-7">Our dry fruit experts are here to help you find the perfect product or build a custom gift hamper.</p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <a href="https://wa.me/917568577968" target="_blank" rel="noreferrer"
-              className="flex items-center justify-center gap-2 text-white font-semibold px-8 py-3.5 rounded-2xl transition-all hover:scale-105"
-              style={{ background: "linear-gradient(135deg, #25D366, #128C7E)", boxShadow: "0 6px 20px rgba(37,211,102,0.3)" }}>
-              Chat on WhatsApp
-            </a>
-            <a href="tel:+917568577968"
-              className="flex items-center justify-center gap-2 font-semibold px-8 py-3.5 rounded-2xl transition-all hover:scale-105"
-              style={{ background: "linear-gradient(135deg, #E8C97A, #C9A84C)", color: "#3E2723", boxShadow: "0 6px 20px rgba(201,168,76,0.3)" }}>
-              <Phone size={16} /> Call Us
-            </a>
+          <div className="text-center mt-8">
+            <Link to="/blog" className="btn-outline px-8 py-2.5 text-sm inline-flex items-center gap-2">
+              View All Articles <ArrowRight size={14} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ FAQ ════════════════════════════════════════════════ */}
+      <HomeFAQ />
+
+      {/* ═══ BOTTOM CTA ════════════════════════════════════════ */}
+      <section className="py-8 px-4" style={{ background: "linear-gradient(135deg, #0D1B35 0%, #1A2744 100%)" }}>
+        <FadeUp className="max-w-3xl mx-auto">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
+            <div className="text-center sm:text-left">
+              <p className="text-brand-gold text-xs font-bold uppercase tracking-widest mb-1">Expert Assistance</p>
+              <h2 className="font-serif text-xl font-bold text-white">Need Help Choosing?</h2>
+              <p className="text-white/50 text-xs mt-1">Our experts are here for product queries &amp; custom gift hampers</p>
+            </div>
+            <div className="flex gap-3 flex-shrink-0">
+              <a href="tel:+917568577968"
+                className="flex items-center gap-2 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-all hover:scale-105"
+                style={{ background: "linear-gradient(135deg, #C9A84C, #E2C06A)", color: "#1B2E4B" }}>
+                <Phone size={14} /> Call Us Now
+              </a>
+              <MagneticButton>
+                <Link to="/products"
+                  className="flex items-center gap-2 font-semibold px-6 py-3 rounded-xl text-sm transition-all hover:scale-105 border border-white/20"
+                  style={{ background: "rgba(255,255,255,0.07)", color: "#fff" }}>
+                  Shop Now
+                </Link>
+              </MagneticButton>
+            </div>
           </div>
         </FadeUp>
       </section>
 
-
     </div>
+  );
+}
+
+/* ── Home FAQ Component ─────────────────────────────────────── */
+const HOME_FAQS = [
+  { q: "Are your products 100% natural and chemical-free?", a: "Yes, absolutely. We never use sulphur dioxide, artificial colours, mineral oil coating, or any preservatives. Pure, natural dry fruits — nothing added. FSSAI certified." },
+  { q: "How long does delivery take?", a: "Metro cities: 2–3 business days. Tier-2 cities: 3–5 days. All orders are dispatched within 24 hours of payment (Mon–Sat). Free shipping on orders above ₹499." },
+  { q: "What payment methods are accepted?", a: "UPI (PhonePe, GPay, Paytm), all debit/credit cards, net banking, and EMI on cards above ₹3,000. All payments via Razorpay with 256-bit SSL encryption." },
+  { q: "What is your return/refund policy?", a: "7-day hassle-free return policy from delivery date. Not satisfied with quality? Contact us within 7 days — we arrange pickup and full refund or replacement." },
+  { q: "What are JS Coins and how do I use them?", a: "JS Coins are our loyalty rewards. Earn 1 coin per ₹1 spent. Signup bonus: 50 coins. 100 JS Coins = ₹25 off your next order. Valid for 12 months." },
+  { q: "Do you offer bulk/wholesale pricing?", a: "Yes! For orders above 5 kg, we offer 15–25% off retail MRP. Call us at +91 75685 77968 or email us with your requirement for a custom quote within 2 hours." },
+];
+
+function HomeFAQ() {
+  const [open, setOpen] = React.useState(null);
+  return (
+    <section className="py-12 px-4 bg-white">
+      <div className="max-w-3xl mx-auto">
+        <div className="text-center mb-8">
+          <p className="text-brand-gold text-[10px] font-bold uppercase tracking-[3px] flex items-center justify-center gap-2 mb-2">
+            <span className="w-6 h-px bg-brand-gold inline-block" />
+            Common Questions
+            <span className="w-6 h-px bg-brand-gold inline-block" />
+          </p>
+          <h2 className="font-serif text-3xl md:text-4xl font-normal text-brand-brown">Frequently Asked <em style={{ color: "#C9A84C" }}>Questions</em></h2>
+          <div className="w-10 h-0.5 mx-auto mt-3" style={{ background: "linear-gradient(90deg, #1B2E4B, #C9A84C)" }} />
+        </div>
+        <div className="space-y-2">
+          {HOME_FAQS.map((faq, i) => (
+            <div key={i} className="border border-gray-100 rounded-xl overflow-hidden">
+              <button
+                onClick={() => setOpen(open === i ? null : i)}
+                className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-brand-cream/40 transition-colors"
+              >
+                <span className="font-semibold text-brand-brown text-sm pr-4">{faq.q}</span>
+                <motion.span animate={{ rotate: open === i ? 180 : 0 }} transition={{ duration: 0.25 }} className="flex-shrink-0 text-brand-gold">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
+                </motion.span>
+              </button>
+              <motion.div
+                initial={false}
+                animate={{ height: open === i ? "auto" : 0, opacity: open === i ? 1 : 0 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                style={{ overflow: "hidden" }}
+              >
+                <p className="px-5 pb-4 text-gray-500 text-sm leading-relaxed">{faq.a}</p>
+              </motion.div>
+            </div>
+          ))}
+        </div>
+        <div className="text-center mt-6">
+          <Link to="/faq" className="inline-flex items-center gap-2 text-brand-gold text-xs font-bold uppercase tracking-widest hover:gap-3 transition-all">
+            View All FAQs <ArrowRight size={13} />
+          </Link>
+        </div>
+      </div>
+    </section>
   );
 }
