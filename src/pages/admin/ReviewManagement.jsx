@@ -1,161 +1,245 @@
 import React, { useState, useEffect } from "react";
-import { collection, getDocs, updateDoc, deleteDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, orderBy, query, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase/config";
-import { Star, Trash2, MessageCircle, CheckCircle, XCircle, Search } from "lucide-react";
-import { formatDate, DEMO_PRODUCTS } from "../../utils/helpers";
+import { Star, Plus, Edit2, Trash2, Check, X, MessageSquare, Search } from "lucide-react";
 import toast from "react-hot-toast";
 
-const DEMO_REVIEWS = [
-  { id: "r1", productId: "p1", productName: "Premium California Almonds", user: "Priya S.", email: "priya@email.com", rating: 5, title: "Absolutely fresh!", body: "Best quality almonds I've ever tasted.", date: new Date("2025-01-12"), verified: true, status: "approved", variant: "500g" },
-  { id: "r2", productId: "p2", productName: "Whole Cashews W320", user: "Rahul K.", email: "rahul@email.com", rating: 4, title: "Great product", body: "Very fresh and crunchy.", date: new Date("2025-01-05"), verified: true, status: "approved", variant: "250g" },
-  { id: "r3", productId: "p1", productName: "Premium California Almonds", user: "Ananya P.", email: "ananya@email.com", rating: 5, title: "Perfect!", body: "Love the quality.", date: new Date("2025-01-01"), verified: false, status: "pending", variant: "1kg" },
-  { id: "r4", productId: "p5", productName: "Royal Gift Hamper", user: "Deepak M.", email: "deepak@email.com", rating: 3, title: "Average packaging", body: "Product is good but packaging was damaged.", date: new Date("2024-12-25"), verified: true, status: "pending", variant: "1kg Assorted" },
-];
-
 export default function ReviewManagement() {
-  const [reviews, setReviews] = useState(DEMO_REVIEWS);
-  const [filter, setFilter] = useState("all");
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState(null);
   const [search, setSearch] = useState("");
-  const [replyingTo, setReplyingTo] = useState(null);
-  const [replyText, setReplyText] = useState("");
-
-  const filtered = reviews.filter((r) => {
-    const matchStatus = filter === "all" || r.status === filter;
-    const matchSearch = !search || r.user.toLowerCase().includes(search.toLowerCase()) || r.productName.toLowerCase().includes(search.toLowerCase());
-    return matchStatus && matchSearch;
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [form, setForm] = useState({
+    userName: "", userCity: "", userEmail: "", productName: "",
+    rating: 5, text: "", status: "approved", verified: true, adminReply: ""
   });
 
-  const setStatus = (id, status) => {
-    setReviews((prev) => prev.map((r) => r.id === id ? { ...r, status } : r));
-    toast.success(`Review ${status}`);
+  const load = async () => {
+    setLoading(true);
+    try {
+      const snap = await getDocs(query(collection(db, "reviews"), orderBy("createdAt", "desc")));
+      setReviews(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch { setReviews([]); }
+    setLoading(false);
   };
 
-  const handleDelete = (id) => {
+  useEffect(() => { load(); }, []);
+
+  const openAdd = () => {
+    setEditing(null);
+    setForm({ userName: "", userCity: "", userEmail: "", productName: "", rating: 5, text: "", status: "approved", verified: true, adminReply: "" });
+    setShowModal(true);
+  };
+
+  const openEdit = (r) => {
+    setEditing(r.id);
+    setForm({ userName: r.userName || "", userCity: r.userCity || "", userEmail: r.userEmail || "", productName: r.productName || "", rating: r.rating || 5, text: r.text || "", status: r.status || "approved", verified: r.verified || false, adminReply: r.adminReply || "" });
+    setShowModal(true);
+  };
+
+  const save = async () => {
+    try {
+      if (editing) {
+        await updateDoc(doc(db, "reviews", editing), { ...form, updatedAt: serverTimestamp() });
+        toast.success("Review updated");
+      } else {
+        await addDoc(collection(db, "reviews"), { ...form, createdAt: serverTimestamp() });
+        toast.success("Review added");
+      }
+      setShowModal(false);
+      load();
+    } catch { toast.error("Error saving review"); }
+  };
+
+  const remove = async (id) => {
     if (!window.confirm("Delete this review?")) return;
-    setReviews((prev) => prev.filter((r) => r.id !== id));
-    toast.success("Review deleted");
+    await deleteDoc(doc(db, "reviews", id));
+    toast.success("Deleted");
+    load();
   };
 
-  const sendReply = (id) => {
-    if (!replyText.trim()) return;
-    setReviews((prev) => prev.map((r) => r.id === id ? { ...r, adminReply: replyText, repliedAt: new Date() } : r));
-    setReplyingTo(null);
-    setReplyText("");
-    toast.success("Reply sent!");
+  const updateStatus = async (id, status) => {
+    await updateDoc(doc(db, "reviews", id), { status });
+    load();
+    toast.success(status === "approved" ? "Approved" : "Rejected");
+  };
+
+  const filtered = reviews.filter(r => {
+    const matchSearch = !search || (r.userName || "").toLowerCase().includes(search.toLowerCase()) || (r.productName || "").toLowerCase().includes(search.toLowerCase());
+    const matchStatus = filterStatus === "all" || r.status === filterStatus;
+    return matchSearch && matchStatus;
+  });
+
+  const stats = {
+    total: reviews.length,
+    approved: reviews.filter(r => r.status === "approved").length,
+    pending: reviews.filter(r => r.status === "pending").length,
+    rejected: reviews.filter(r => r.status === "rejected").length,
   };
 
   return (
-    <div className="space-y-5">
-      <h1 className="font-serif text-2xl font-bold text-brand-brown">Review Management</h1>
+    <div className="p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Review Management</h1>
+          <p className="text-gray-500 text-sm mt-1">Manage customer reviews from Firestore</p>
+        </div>
+        <button onClick={openAdd} className="flex items-center gap-2 bg-brand-gold text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-brand-gold-dark transition">
+          <Plus size={16} /> Add Review
+        </button>
+      </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-4 gap-4 mb-6">
         {[
-          { label: "Total", value: reviews.length, color: "bg-gray-100 text-gray-700" },
-          { label: "Approved", value: reviews.filter((r) => r.status === "approved").length, color: "bg-green-100 text-green-700" },
-          { label: "Pending", value: reviews.filter((r) => r.status === "pending").length, color: "bg-yellow-100 text-yellow-700" },
-          { label: "Avg Rating", value: (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) + "★", color: "bg-amber-100 text-amber-700" },
-        ].map((s) => (
-          <div key={s.label} className={`${s.color} rounded-xl p-3 text-center`}>
-            <p className="font-bold text-xl">{s.value}</p>
-            <p className="text-xs font-medium">{s.label}</p>
+          { label: "Total", val: stats.total, color: "blue" },
+          { label: "Approved", val: stats.approved, color: "green" },
+          { label: "Pending", val: stats.pending, color: "yellow" },
+          { label: "Rejected", val: stats.rejected, color: "red" },
+        ].map(s => (
+          <div key={s.label} className="bg-white rounded-xl p-4 border border-gray-100 text-center">
+            <p className="text-2xl font-bold text-gray-900">{s.val}</p>
+            <p className="text-sm text-gray-500">{s.label}</p>
           </div>
         ))}
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <div className="relative flex-1 min-w-48">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search reviews..." className="input-field pl-9" />
+      <div className="flex gap-3 mb-4">
+        <div className="relative flex-1 max-w-xs">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search reviews..." className="pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm w-full" />
         </div>
-        <div className="flex gap-2">
-          {["all", "pending", "approved", "rejected"].map((s) => (
-            <button key={s} onClick={() => setFilter(s)} className={`px-3 py-2 rounded-lg text-xs font-semibold capitalize transition-all ${filter === s ? "bg-brand-gold text-white" : "bg-white border border-gray-200 text-gray-600 hover:border-brand-gold"}`}>
-              {s}
-            </button>
-          ))}
-        </div>
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="border border-gray-200 rounded-lg px-3 py-2 text-sm">
+          <option value="all">All Status</option>
+          <option value="approved">Approved</option>
+          <option value="pending">Pending</option>
+          <option value="rejected">Rejected</option>
+        </select>
       </div>
 
-      {/* Reviews list */}
-      <div className="space-y-4">
-        {filtered.map((r) => (
-          <div key={r.id} className="bg-white rounded-2xl shadow-sm p-5">
-            <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 bg-brand-cream rounded-full flex items-center justify-center text-brand-gold font-bold flex-shrink-0">
-                  {r.user[0]}
+      {/* Table */}
+      {loading ? (
+        <div className="text-center py-12 text-gray-400">Loading reviews...</div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b border-gray-100">
+              <tr>
+                {["Customer", "Product", "Rating", "Review", "Status", "Actions"].map(h => (
+                  <th key={h} className="text-left px-4 py-3 font-semibold text-gray-600 text-xs uppercase tracking-wide">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(r => (
+                <tr key={r.id} className="border-b border-gray-50 hover:bg-gray-50 transition">
+                  <td className="px-4 py-3">
+                    <p className="font-medium text-gray-900">{r.userName}</p>
+                    <p className="text-xs text-gray-400">{r.userCity}</p>
+                    {r.verified && <span className="text-xs text-green-600 font-medium">✓ Verified</span>}
+                  </td>
+                  <td className="px-4 py-3 text-gray-600">{r.productName}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-0.5">
+                      {[...Array(5)].map((_, i) => (
+                        <Star key={i} size={12} className={i < r.rating ? "fill-amber-400 text-amber-400" : "text-gray-200"} />
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 max-w-xs">
+                    <p className="text-gray-600 text-xs line-clamp-2">{r.text}</p>
+                    {r.adminReply && <p className="text-xs text-blue-600 mt-1 italic">Reply: {r.adminReply}</p>}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold ${r.status === "approved" ? "bg-green-100 text-green-700" : r.status === "rejected" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700"}`}>
+                      {r.status || "pending"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1">
+                      {r.status !== "approved" && (
+                        <button onClick={() => updateStatus(r.id, "approved")} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg" title="Approve"><Check size={14} /></button>
+                      )}
+                      {r.status !== "rejected" && (
+                        <button onClick={() => updateStatus(r.id, "rejected")} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg" title="Reject"><X size={14} /></button>
+                      )}
+                      <button onClick={() => openEdit(r)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg" title="Edit"><Edit2 size={14} /></button>
+                      <button onClick={() => remove(r.id)} className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg" title="Delete"><Trash2 size={14} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr><td colSpan={6} className="px-4 py-12 text-center text-gray-400">No reviews found</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <h2 className="text-lg font-bold mb-4">{editing ? "Edit Review" : "Add Review"}</h2>
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-gray-600 block mb-1">Customer Name *</label>
+                  <input value={form.userName} onChange={e => setForm(f => ({...f, userName: e.target.value}))} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
                 </div>
                 <div>
-                  <p className="font-semibold text-brand-brown text-sm">{r.user}</p>
-                  <p className="text-xs text-gray-400">{r.email}</p>
-                  <div className="flex gap-0.5 mt-1">
-                    {[1,2,3,4,5].map((s) => <Star key={s} size={12} className={s <= r.rating ? "fill-amber-400 text-amber-400" : "text-gray-200 fill-gray-200"} />)}
-                  </div>
+                  <label className="text-xs font-medium text-gray-600 block mb-1">City</label>
+                  <input value={form.userCity} onChange={e => setForm(f => ({...f, userCity: e.target.value}))} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
                 </div>
               </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className={`text-xs px-2 py-1 rounded-full font-semibold ${r.status === "approved" ? "bg-green-100 text-green-700" : r.status === "pending" ? "bg-yellow-100 text-yellow-700" : "bg-red-100 text-red-700"}`}>
-                  {r.status}
-                </span>
-                {r.verified && <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full font-semibold">✓ Verified</span>}
-                <span className="text-xs text-gray-400">{r.date instanceof Date ? r.date.toLocaleDateString("en-IN") : ""}</span>
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Product Name</label>
+                <input value={form.productName} onChange={e => setForm(f => ({...f, productName: e.target.value}))} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm" />
               </div>
-            </div>
-
-            <div className="ml-13 mb-3">
-              <p className="text-xs text-brand-gold font-semibold mb-0.5">{r.productName} • {r.variant}</p>
-              <p className="font-semibold text-brand-brown text-sm">{r.title}</p>
-              <p className="text-gray-500 text-sm mt-1">{r.body}</p>
-            </div>
-
-            {/* Admin reply */}
-            {r.adminReply && (
-              <div className="ml-13 bg-brand-cream rounded-xl p-3 mb-3 border-l-4 border-brand-gold">
-                <p className="text-xs font-semibold text-brand-gold mb-1">JAI SHREE Team replied:</p>
-                <p className="text-sm text-gray-600">{r.adminReply}</p>
-              </div>
-            )}
-
-            {replyingTo === r.id && (
-              <div className="ml-13 mb-3">
-                <textarea
-                  value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  rows={2}
-                  placeholder="Write your reply..."
-                  className="input-field text-sm resize-none"
-                />
-                <div className="flex gap-2 mt-2">
-                  <button onClick={() => sendReply(r.id)} className="btn-primary py-1.5 px-4 text-sm">Send Reply</button>
-                  <button onClick={() => setReplyingTo(null)} className="btn-outline py-1.5 px-4 text-sm">Cancel</button>
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Rating</label>
+                <div className="flex gap-1">
+                  {[1,2,3,4,5].map(n => (
+                    <button key={n} onClick={() => setForm(f => ({...f, rating: n}))} className={`p-1 ${n <= form.rating ? "text-amber-400" : "text-gray-200"}`}>
+                      <Star size={20} className={n <= form.rating ? "fill-amber-400" : ""} />
+                    </button>
+                  ))}
                 </div>
               </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex gap-2 flex-wrap">
-              {r.status !== "approved" && (
-                <button onClick={() => setStatus(r.id, "approved")} className="flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-600 rounded-lg text-xs font-semibold hover:bg-green-100 transition-colors">
-                  <CheckCircle size={13} /> Approve
-                </button>
-              )}
-              {r.status !== "rejected" && (
-                <button onClick={() => setStatus(r.id, "rejected")} className="flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-500 rounded-lg text-xs font-semibold hover:bg-red-100 transition-colors">
-                  <XCircle size={13} /> Reject
-                </button>
-              )}
-              <button onClick={() => { setReplyingTo(r.id); setReplyText(r.adminReply || ""); }} className="flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-500 rounded-lg text-xs font-semibold hover:bg-blue-100 transition-colors">
-                <MessageCircle size={13} /> Reply
-              </button>
-              <button onClick={() => handleDelete(r.id)} className="flex items-center gap-1 px-3 py-1.5 bg-gray-50 text-gray-500 rounded-lg text-xs font-semibold hover:bg-gray-100 transition-colors ml-auto">
-                <Trash2 size={13} /> Delete
-              </button>
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Review Text *</label>
+                <textarea value={form.text} onChange={e => setForm(f => ({...f, text: e.target.value}))} rows={3} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium text-gray-600 block mb-1">Status</label>
+                  <select value={form.status} onChange={e => setForm(f => ({...f, status: e.target.value}))} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                    <option value="approved">Approved</option>
+                    <option value="pending">Pending</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2 pt-5">
+                  <input type="checkbox" id="verified" checked={form.verified} onChange={e => setForm(f => ({...f, verified: e.target.checked}))} />
+                  <label htmlFor="verified" className="text-sm text-gray-600">Verified Purchase</label>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-600 block mb-1">Admin Reply (optional)</label>
+                <textarea value={form.adminReply} onChange={e => setForm(f => ({...f, adminReply: e.target.value}))} rows={2} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm resize-none" />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button onClick={() => setShowModal(false)} className="flex-1 border border-gray-200 rounded-xl py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50">Cancel</button>
+              <button onClick={save} className="flex-1 bg-brand-gold text-white rounded-xl py-2.5 text-sm font-semibold hover:bg-brand-gold-dark">Save Review</button>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
