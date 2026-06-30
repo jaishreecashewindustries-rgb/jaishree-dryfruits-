@@ -23,30 +23,18 @@ function triggerGoogleTranslate(langCode) {
     return;
   }
 
-  // Set Google Translate cookie
+  // Set Google Translate cookie — used on both the root path and host so
+  // every route picks it up after reload.
   document.cookie = `googtrans=/en/${langCode}; path=/`;
   document.cookie = `googtrans=/en/${langCode}; path=/; domain=${window.location.hostname}`;
 
-  // Try select element approach first
-  const trySelect = () => {
-    const select = document.querySelector(".goog-te-combo") ||
-      document.querySelector("#google_translate_element select");
-    if (select) {
-      select.value = langCode;
-      select.dispatchEvent(new Event("change"));
-      return true;
-    }
-    return false;
-  };
-
-  if (!trySelect()) {
-    setTimeout(() => {
-      if (!trySelect()) {
-        // Widget not loaded yet — reload with cookie set (reliable fallback)
-        window.location.reload();
-      }
-    }, 1000);
-  }
+  // Always reload: Google Translate's MutationObserver can miss content that
+  // React mounts after the initial paint (route changes, lazy sections,
+  // animated-in elements), which is why only "some areas" were translating
+  // before. A full reload re-renders the whole DOM under the new language
+  // cookie, guaranteeing the entire page — not just visible-at-click-time
+  // nodes — gets translated.
+  window.location.reload();
 }
 
 export default function LanguageSwitcher({ mobile = false }) {

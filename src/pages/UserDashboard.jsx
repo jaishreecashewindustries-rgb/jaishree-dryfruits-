@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Navigate, Link } from "react-router-dom";
-import { Package, Heart, LogOut, Coins, Building2, CheckCircle2, Truck, Star, ChevronRight } from "lucide-react";
-import { collection, query, where, orderBy, getDocs, doc, getDoc, setDoc } from "firebase/firestore";
+import { Package, Heart, LogOut, Coins, Building2, CheckCircle2, Truck, Star, ChevronRight, RotateCcw } from "lucide-react";
+import { collection, query, where, orderBy, getDocs, doc, getDoc, setDoc, addDoc } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
 import { useCoins, COINS_RULES } from "../context/CoinsContext";
@@ -14,6 +14,15 @@ const TABS = [
   { id: "coins",     label: "JS Coins Vault",     icon: Coins },
   { id: "corporate", label: "Corporate Profile",  icon: Building2 },
   { id: "wishlist",  label: "Wishlist",           icon: Heart },
+  { id: "returns",   label: "Returns",            icon: RotateCcw },
+];
+
+const RETURN_REASONS = [
+  "Damaged or spoiled product",
+  "Wrong item received",
+  "Quality not as expected",
+  "Ordered by mistake",
+  "Other",
 ];
 
 // Tracking timeline stages
@@ -41,6 +50,12 @@ export default function UserDashboard() {
   const [corpSaving, setCorpSaving] = useState(false);
   const [gstinError, setGstinError] = useState("");
 
+  // Return requests state
+  const [returns, setReturns] = useState([]);
+  const [loadingReturns, setLoadingReturns] = useState(true);
+  const [returnForm, setReturnForm] = useState({ orderId: "", reason: RETURN_REASONS[0], details: "", resolution: "refund" });
+  const [submittingReturn, setSubmittingReturn] = useState(false);
+
   useEffect(() => {
     if (!user) return;
     const fetchOrders = async () => {
@@ -56,6 +71,23 @@ export default function UserDashboard() {
     };
     fetchOrders();
   }, [user?.uid]);
+
+  useEffect(() => {
+    if (!user || tab !== "returns") return;
+    const fetchReturns = async () => {
+      setLoadingReturns(true);
+      try {
+        const q = query(collection(db, "return_requests"), where("userId", "==", user.uid), orderBy("createdAt", "desc"));
+        const snap = await getDocs(q);
+        setReturns(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      } catch {
+        setReturns([]);
+      } finally {
+        setLoadingReturns(false);
+      }
+    };
+    fetchReturns();
+  }, [user?.uid, tab]);
 
   useEffect(() => {
     if (!user || tab !== "corporate") return;
@@ -92,6 +124,37 @@ export default function UserDashboard() {
       toast.error("Could not save profile");
     } finally {
       setCorpSaving(false);
+    }
+  };
+
+  const submitReturn = async () => {
+    if (!returnForm.orderId.trim()) {
+      toast.error("Please enter the Order ID");
+      return;
+    }
+    if (!returnForm.details.trim()) {
+      toast.error("Please describe the issue");
+      return;
+    }
+    setSubmittingReturn(true);
+    try {
+      const docRef = await addDoc(collection(db, "return_requests"), {
+        userId: user.uid,
+        userEmail: user.email,
+        orderId: returnForm.orderId.trim(),
+        reason: returnForm.reason,
+        details: returnForm.details.trim(),
+        resolution: returnForm.resolution,
+        status: "pending",
+        createdAt: new Date(),
+      });
+      setReturns((r) => [{ id: docRef.id, userId: user.uid, userEmail: user.email, orderId: returnForm.orderId.trim(), reason: returnForm.reason, details: returnForm.details.trim(), resolution: returnForm.resolution, status: "pending", createdAt: new Date() }, ...r]);
+      setReturnForm({ orderId: "", reason: RETURN_REASONS[0], details: "", resolution: "refund" });
+      toast.success("Return request submitted — we'll review it within 24 hours");
+    } catch {
+      toast.error("Could not submit return request");
+    } finally {
+      setSubmittingReturn(false);
     }
   };
 
@@ -473,6 +536,104 @@ export default function UserDashboard() {
                           </button>
                         </div>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── RETURNS ── */}
+          {tab === "returns" && (
+            <div>
+              <h2 className="font-serif text-2xl font-bold text-brand-brown mb-5">Return Requests</h2>
+
+              <div className="card-luxury p-5 mb-6">
+                <h3 className="font-semibold text-brand-brown text-sm mb-4">Request a Return / Refund</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Order ID</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. ORD-2026-00123"
+                      value={returnForm.orderId}
+                      onChange={(e) => setReturnForm((f) => ({ ...f, orderId: e.target.value }))}
+                      className="input-field w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Reason</label>
+                    <select
+                      value={returnForm.reason}
+                      onChange={(e) => setReturnForm((f) => ({ ...f, reason: e.target.value }))}
+                      className="input-field w-full"
+                    >
+                      {RETURN_REASONS.map((r) => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Details</label>
+                    <textarea
+                      rows={3}
+                      placeholder="Describe what went wrong..."
+                      value={returnForm.details}
+                      onChange={(e) => setReturnForm((f) => ({ ...f, details: e.target.value }))}
+                      className="input-field w-full resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-500 mb-1">Preferred Resolution</label>
+                    <div className="flex gap-3">
+                      {["refund", "replacement"].map((r) => (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => setReturnForm((f) => ({ ...f, resolution: r }))}
+                          className={`flex-1 py-2 text-xs font-semibold uppercase tracking-wide border transition-colors ${
+                            returnForm.resolution === r
+                              ? "bg-brand-brown text-white border-brand-brown"
+                              : "border-gray-200 text-gray-500 hover:border-brand-gold"
+                          }`}
+                        >
+                          {r === "refund" ? "Refund" : "Replacement"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    onClick={submitReturn}
+                    disabled={submittingReturn}
+                    className="btn-primary w-full mt-2"
+                  >
+                    {submittingReturn ? "Submitting..." : "Submit Return Request"}
+                  </button>
+                </div>
+              </div>
+
+              <h3 className="font-semibold text-brand-brown text-sm mb-3">Your Requests</h3>
+              {loadingReturns ? (
+                <p className="text-sm text-gray-400">Loading...</p>
+              ) : returns.length === 0 ? (
+                <div className="text-center py-10 bg-white border border-gray-100">
+                  <RotateCcw size={40} className="text-gray-200 mx-auto mb-3" />
+                  <p className="text-gray-400 text-sm">No return requests yet</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {returns.map((r) => (
+                    <div key={r.id} className="card-luxury p-4">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <p className="font-semibold text-brand-brown text-sm">Order {r.orderId}</p>
+                        <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full ${
+                          r.status === "approved" ? "bg-emerald-100 text-emerald-700" :
+                          r.status === "rejected" ? "bg-red-100 text-red-600" :
+                          "bg-amber-100 text-amber-700"
+                        }`}>
+                          {r.status}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500">{r.reason} — {r.resolution}</p>
+                      <p className="text-xs text-gray-400 mt-1">{r.details}</p>
                     </div>
                   ))}
                 </div>

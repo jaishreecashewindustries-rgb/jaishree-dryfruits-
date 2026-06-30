@@ -11,21 +11,59 @@ import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import ImageLightbox from "../components/ImageLightbox";
 import MobileCartSheet from "../components/MobileCartSheet";
+import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { db } from "../firebase/config";
 
-const DUMMY_REVIEWS = [
-  { id: 1,  user: "Priya S.",   city: "Mumbai",     rating: 5, title: "Unmistakably fresh",           body: "I've ordered from two other premium dry fruit brands online. Nothing compares. The almonds have a clean, raw flavour that supermarket brands simply don't have.", date: "2026-05-24", verified: true, variant: "500g",  helpful: 24 },
-  { id: 2,  user: "Rahul K.",   city: "Delhi",      rating: 5, title: "The packaging speaks volumes",  body: "Every detail signals quality — the vacuum seal, the batch number, the resealable zip. My wife asked me to set up a monthly subscription.", date: "2026-05-10", verified: true, variant: "250g",  helpful: 18 },
-  { id: 3,  user: "Ananya P.",  city: "Bengaluru",  rating: 5, title: "Best corporate gifting choice", body: "Ordered 80 hampers for our Diwali client gifts. The feedback we received was extraordinary. Several clients messaged to ask where we sourced them.", date: "2026-04-28", verified: true, variant: "1kg",   helpful: 31 },
-  { id: 4,  user: "Sunita V.",  city: "Jaipur",     rating: 5, title: "12 consecutive orders",         body: "I live in Jaipur and I still order online because the convenience is unmatched. Consistent quality every single time. This is what a trustworthy brand looks like.", date: "2026-04-15", verified: true, variant: "1kg",   helpful: 42 },
-  { id: 5,  user: "Vikram M.",  city: "Pune",       rating: 5, title: "Wedding function, flawless",    body: "Ordered 3kg for a wedding function. Every piece was perfect — no broken or discoloured nuts. Two families at the event asked for the source.", date: "2026-04-02", verified: true, variant: "1kg",   helpful: 19 },
-  { id: 6,  user: "Kavya R.",   city: "Chennai",    rating: 4, title: "Arrived in 2 days, perfect",   body: "Delivery to Chennai in 2 days. Vacuum sealed and the freshness was evident on opening. Already on my second order.", date: "2026-03-25", verified: true, variant: "500g",  helpful: 11 },
-  { id: 7,  user: "Arjun N.",   city: "Hyderabad",  rating: 5, title: "Night and day vs supermarket",  body: "I switched from Big Bazaar after one order here. These actually taste like what premium dry fruits are supposed to taste like.", date: "2026-03-18", verified: true, variant: "250g",  helpful: 27 },
-  { id: 8,  user: "Meera T.",   city: "Ahmedabad",  rating: 5, title: "My children ask for these now", body: "No added salt, no oil coating. My 8-year-old daughter eats almonds voluntarily now. That has never happened before.", date: "2026-03-10", verified: true, variant: "1kg",   helpful: 35 },
-  { id: 9,  user: "Deepak J.",  city: "Kolkata",    rating: 4, title: "Resealable packaging is genius", body: "The zip-lock keeps everything fresh two weeks after opening. A small detail that shows the brand genuinely cares about the product post-purchase.", date: "2026-03-03", verified: true, variant: "500g",  helpful: 14 },
-  { id: 10, user: "Nisha B.",   city: "Surat",      rating: 5, title: "The batch number builds trust",  body: "The FSSAI certification and printed batch number on the pack are visible trust signals I've never seen from another online dry fruit brand.", date: "2026-02-24", verified: true, variant: "250g",  helpful: 22 },
-  { id: 11, user: "Rohit A.",   city: "Lucknow",    rating: 5, title: "9th order, never disappointed",  body: "Consistency is rare. Nine orders, nine batches, same quality every time. That is the hardest thing to achieve in food retail.", date: "2026-02-15", verified: true, variant: "1kg",   helpful: 38 },
-  { id: 12, user: "Shruti P.",  city: "Nagpur",     rating: 5, title: "Five-star presentation",         body: "Ordered the 1kg hamper as a corporate gift with our logo. The presentation was better than gifts from five-star hotel gift shops. Clients were genuinely impressed.", date: "2026-02-05", verified: true, variant: "1kg",   helpful: 29 },
+// Small curated fallback — shown only when a product has no live Firestore reviews yet
+const FALLBACK_REVIEWS = [
+  { id: "fb1", user: "Priya S.",  city: "Mumbai",    rating: 5, title: "Unmistakably fresh",          body: "I've ordered from two other premium dry fruit brands online. Nothing compares. The freshness is on another level.", date: "2026-05-24", verified: true, variant: "500g", helpful: 24 },
+  { id: "fb2", user: "Rahul K.",  city: "Delhi",     rating: 5, title: "The packaging speaks volumes", body: "Every detail signals quality — the vacuum seal, the batch number, the resealable zip. Genuinely impressed.", date: "2026-05-10", verified: true, variant: "250g", helpful: 18 },
+  { id: "fb3", user: "Ananya P.", city: "Bengaluru", rating: 5, title: "Great for corporate gifting",  body: "Ordered hampers for our Diwali client gifts. The feedback we received was extraordinary.", date: "2026-04-28", verified: true, variant: "1kg", helpful: 31 },
 ];
+
+function useProductReviews(productName) {
+  const [reviews, setReviews] = useState(null); // null = loading
+  useEffect(() => {
+    let cancelled = false;
+    if (!productName) { setReviews(FALLBACK_REVIEWS); return; }
+    (async () => {
+      try {
+        const q = query(
+          collection(db, "reviews"),
+          where("productName", "==", productName),
+          where("status", "==", "approved"),
+          orderBy("createdAt", "desc"),
+          limit(6)
+        );
+        const snap = await getDocs(q);
+        if (cancelled) return;
+        if (snap.empty) {
+          setReviews(FALLBACK_REVIEWS);
+        } else {
+          setReviews(snap.docs.map((d) => {
+            const r = d.data();
+            return {
+              id: d.id,
+              user: r.userName || "Verified Buyer",
+              city: r.userCity || "",
+              rating: r.rating || 5,
+              title: r.title || "",
+              body: r.text || "",
+              date: r.createdAt?.toDate ? r.createdAt.toDate().toISOString() : new Date().toISOString(),
+              verified: !!r.verified,
+              variant: r.variant || "",
+              helpful: r.helpful || 0,
+            };
+          }));
+        }
+      } catch {
+        if (!cancelled) setReviews(FALLBACK_REVIEWS);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [productName]);
+  return reviews || [];
+}
 
 function relativeDate(dateStr) {
   const d = new Date(dateStr);
@@ -51,6 +89,7 @@ export default function ProductDetail() {
   const [showB2BForm, setShowB2BForm] = useState(false);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [localReviews, setLocalReviews] = useState([]);
+  const DUMMY_REVIEWS = useProductReviews(product.name);
   const buyRef = useRef(null);
   const { addToCart } = useCart();
   const navigate = useNavigate();

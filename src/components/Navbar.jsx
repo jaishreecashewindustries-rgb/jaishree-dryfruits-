@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useLanguage } from "../context/LanguageContext";
 import { PRODUCT_CATEGORIES } from "../utils/helpers";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -145,10 +146,15 @@ export default function Navbar() {
 
               {/* Wishlist (desktop) */}
               {user && (
-                <Link to="/dashboard/wishlist" className="hidden md:block p-2 hover:bg-brand-cream rounded-lg transition-colors">
+                <Link to="/wishlist" className="hidden md:block p-2 hover:bg-brand-cream rounded-lg transition-colors">
                   <Heart size={20} className="text-brand-brown" />
                 </Link>
               )}
+
+              {/* Language switcher (desktop) */}
+              <div className="hidden md:block">
+                <LanguageSwitcher />
+              </div>
 
               {/* Cart */}
               <button onClick={toggleCart} className="relative p-2 hover:bg-brand-cream rounded-lg transition-colors">
@@ -237,6 +243,16 @@ export default function Navbar() {
               <Link to="/products?category=Gift Hampers" className="block py-2 text-sm font-medium text-brand-brown">Gift Hampers</Link>
               <Link to="/about" className="block py-2 text-sm font-medium text-brand-brown">About</Link>
               <Link to="/contact" className="block py-2 text-sm font-medium text-brand-brown">Contact</Link>
+              {user && (
+                <Link to="/wishlist" className="block py-2 text-sm font-medium text-brand-brown">Wishlist</Link>
+              )}
+              <Link to="/track-order" className="block py-2 text-sm font-medium text-brand-brown">Track Order</Link>
+
+              <div className="pt-3 mt-2 border-t border-gray-100">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Language / भाषा</p>
+                <LanguageSwitcher mobile />
+              </div>
+
               {!user && (
                 <Link to="/login" className="block mt-3 btn-primary text-center">Login / Register</Link>
               )}
