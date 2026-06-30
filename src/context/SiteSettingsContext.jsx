@@ -80,6 +80,66 @@ export const DEFAULT_ORIGINS = [
   { place: "Saudi Arabia", product: "Dates & Figs",          flag: "🇸🇦" },
 ];
 
+// Mirrors admin/ContentManagement.jsx's DEFAULTS — kept in sync so the
+// /admin/content editor and the live site always agree on field shapes.
+export const DEFAULT_SITE_CONTENT = {
+  hero: {
+    headline: "Premium Dry Fruits,\nDelivered Fresh",
+    subheadline: "Sourced from the world's finest farms. Freshness guaranteed.",
+    backgroundImage: "",
+    ctaText: "Shop Premium Collection",
+    ctaSecondary: "Our Story",
+  },
+  about: {
+    storyTitle: "Our Story",
+    storyText: "Founded with a passion for purity, Jai Shree Dry Fruits sources the finest nuts and dry fruits from trusted farms around the world.",
+    missionTitle: "Our Mission",
+    missionText: "To bring premium-quality, authentic dry fruits to every Indian home — fresh, pure, and fairly priced.",
+    bannerImage: "",
+    values: [
+      { title: "Pure & Natural", desc: "No artificial preservatives or additives" },
+      { title: "Ethically Sourced", desc: "Direct farm partnerships for fair pricing" },
+      { title: "Quality Assured", desc: "Triple-tested for freshness and purity" },
+    ],
+  },
+  team: {
+    members: [
+      { name: "Jitesh Pansari", title: "Co-Founder & CEO", bio: "", photo: "" },
+      { name: "Praveen Pansari", title: "Co-Founder & COO", bio: "", photo: "" },
+    ],
+  },
+  sourcing: {
+    title: "From Farm to Your Table",
+    text: "We travel to the source — California almonds, Iranian pistachios, Kashmiri walnuts — building direct relationships with farmers who share our commitment to quality.",
+    image: "",
+    highlights: [
+      { label: "Farm Partners", value: "50+" },
+      { label: "Countries Sourced", value: "12" },
+      { label: "Quality Checks", value: "3-Stage" },
+      { label: "Years Experience", value: "15+" },
+    ],
+  },
+  contact: {
+    phone: "+91 75685 77968",
+    email: "info@jaishreedryfruits.com",
+    address: "41, Barah Ji Ki Gali, Gangauri Bazar, Jaipur - 302001",
+    whatsapp: "+91 75685 77968",
+    footerTagline: "Finest quality dry fruits and nuts sourced from the best farms in Kashmir, California and Iran. Delivered fresh to your door since 1999.",
+    socialInstagram: "",
+    socialFacebook: "",
+    socialTwitter: "",
+  },
+  trust: {
+    items: [
+      { icon: "🌿", text: "100% Natural" },
+      { icon: "🚚", text: "Free Delivery ₹499+" },
+      { icon: "⭐", text: "4.9 Rated" },
+      { icon: "🔒", text: "Secure Payments" },
+      { icon: "↩️", text: "Easy Returns" },
+    ],
+  },
+};
+
 const SiteSettingsContext = createContext(null);
 export const useSiteSettings = () => useContext(SiteSettingsContext);
 
@@ -92,15 +152,17 @@ export function SiteSettingsProvider({ children }) {
   const [combos, setCombos] = useState(DEFAULT_COMBOS);
   const [whyUs, setWhyUs] = useState(DEFAULT_WHY_US);
   const [origins, setOrigins] = useState(DEFAULT_ORIGINS);
+  const [siteContent, setSiteContent] = useState(DEFAULT_SITE_CONTENT);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
       try {
-        const [homepageSnap, coinsSnap] = await Promise.all([
+        const [homepageSnap, coinsSnap, contentSnap] = await Promise.all([
           getDoc(doc(db, "settings", "homepage")),
           getDoc(doc(db, "settings", "coins")),
+          getDoc(doc(db, "settings", "siteContent")),
         ]);
         if (!cancelled) {
           if (homepageSnap.exists()) {
@@ -116,6 +178,17 @@ export function SiteSettingsProvider({ children }) {
           if (coinsSnap.exists()) {
             setCoinsRules(r => ({ ...r, ...coinsSnap.data() }));
           }
+          if (contentSnap.exists()) {
+            const c = contentSnap.data();
+            setSiteContent(prev => ({
+              hero: { ...prev.hero, ...c.hero },
+              about: { ...prev.about, ...c.about },
+              team: c.team?.members?.length ? c.team : prev.team,
+              sourcing: { ...prev.sourcing, ...c.sourcing },
+              contact: { ...prev.contact, ...c.contact },
+              trust: c.trust?.items?.length ? c.trust : prev.trust,
+            }));
+          }
         }
       } catch (e) {
         console.warn("SiteSettings load error:", e);
@@ -128,7 +201,7 @@ export function SiteSettingsProvider({ children }) {
   }, []);
 
   return (
-    <SiteSettingsContext.Provider value={{ coinsRules, hero, announcement, categories, healthGoals, combos, whyUs, origins, loaded }}>
+    <SiteSettingsContext.Provider value={{ coinsRules, hero, announcement, categories, healthGoals, combos, whyUs, origins, siteContent, loaded }}>
       {children}
     </SiteSettingsContext.Provider>
   );

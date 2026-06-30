@@ -2,6 +2,12 @@ import React from "react";
 import { MapPin, ArrowRight, Microscope, FileCheck, Factory, PackageCheck, Sprout, CheckCircle2, Award, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useSiteSettings } from "../context/SiteSettingsContext";
+
+const FALLBACK_TEAM_PHOTOS = [
+  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80",
+  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600&q=80",
+];
 
 const ORIGINS = [
   {
@@ -77,6 +83,14 @@ function CountryCode({ code }) {
 }
 
 export default function SourcingStory() {
+  const { siteContent } = useSiteSettings() || {};
+  const teamMembers = siteContent?.team?.members?.length
+    ? siteContent.team.members
+    : [
+        { name: "Jitesh Pansari", title: "Co-Founder & CEO", photo: "" },
+        { name: "Praveen Pansari", title: "Co-Founder & COO", photo: "" },
+      ];
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero */}
@@ -255,16 +269,13 @@ export default function SourcingStory() {
             </Link>
           </div>
           <div className="grid grid-cols-2">
-            {[
-              { img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80", name: "Jitesh Pansari", role: "Co-Founder & CEO" },
-              { img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=600&q=80", name: "Praveen Pansari", role: "Co-Founder & COO" },
-            ].map(f => (
+            {teamMembers.map((f, i) => (
               <div key={f.name} className="relative overflow-hidden group" style={{ minHeight: 280 }}>
-                <img src={f.img} alt={f.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" style={{ minHeight: 280 }} />
+                <img src={f.photo || FALLBACK_TEAM_PHOTOS[i % FALLBACK_TEAM_PHOTOS.length]} alt={f.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" style={{ minHeight: 280 }} />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(13,27,42,0.85), transparent 50%)" }} />
                 <div className="absolute bottom-0 left-0 right-0 p-4">
                   <p className="text-white text-xs font-semibold">{f.name}</p>
-                  <p className="text-white/45 text-xs mt-0.5">{f.role}</p>
+                  <p className="text-white/45 text-xs mt-0.5">{f.title || f.role}</p>
                 </div>
               </div>
             ))}

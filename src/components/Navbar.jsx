@@ -4,6 +4,7 @@ import { ShoppingCart, User, Search, Menu, X, Heart, ChevronDown, LogOut, Layout
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useLanguage } from "../context/LanguageContext";
+import { useSiteSettings } from "../context/SiteSettingsContext";
 import { PRODUCT_CATEGORIES } from "../utils/helpers";
 import LanguageSwitcher from "./LanguageSwitcher";
 
@@ -17,6 +18,8 @@ export default function Navbar() {
   const { user, userProfile, isAdmin, logout } = useAuth();
   const { totalItems, toggleCart } = useCart();
   const { tr } = useLanguage();
+  const { siteContent } = useSiteSettings() || {};
+  const trustItems = siteContent?.trust?.items || [];
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -84,6 +87,22 @@ export default function Navbar() {
         </div>
       </div>
 
+      {/* ── Trust Bar — rotating short trust badges, admin-editable ── */}
+      {trustItems.length > 0 && (
+        <div className="overflow-hidden bg-brand-cream border-b border-brand-gold/15">
+          <div
+            className="marquee-track flex items-center whitespace-nowrap py-1.5"
+            style={{ width: "max-content" }}
+          >
+            {[...trustItems, ...trustItems].map((t, i) => (
+              <span key={i} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-brown/70 px-5">
+                <span>{t.icon}</span> {t.text}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Main navbar */}
       <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-md" : "bg-white/95 backdrop-blur-sm"}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
@@ -93,22 +112,14 @@ export default function Navbar() {
               {menuOpen ? <X size={24} className="text-brand-brown" /> : <Menu size={24} className="text-brand-brown" />}
             </button>
 
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 group">
+            {/* Logo — image only, brand name is baked into the artwork */}
+            <Link to="/" className="flex items-center group">
               <img
                 src="/logo.png"
                 alt="Jai Shree Dry Fruits"
-                style={{ width: 40, height: 40, objectFit: "contain" }}
+                style={{ height: 52, width: "auto" }}
                 className="flex-shrink-0 transition-transform duration-300 group-hover:scale-105"
               />
-              <div className="flex flex-col items-start">
-                <span className="font-serif text-xl md:text-2xl font-bold text-brand-brown tracking-wide leading-none group-hover:text-brand-gold transition-colors">
-                  JAI SHREE
-                </span>
-                <span className="text-[10px] md:text-xs font-semibold text-brand-gold tracking-[0.25em] uppercase">
-                  Dryfruits
-                </span>
-              </div>
             </Link>
 
             {/* Desktop nav */}
@@ -239,7 +250,7 @@ export default function Navbar() {
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="md:hidden border-t border-gray-100 bg-white animate-slide-up">
+          <div className="md:hidden border-t border-gray-100 bg-white animate-slide-up overflow-y-auto overscroll-contain" style={{ maxHeight: "calc(100dvh - 64px)" }}>
             <div className="px-4 py-4 space-y-1">
               <Link to="/" className="block py-2 text-sm font-medium text-brand-brown">Home</Link>
               <Link to="/products" className="block py-2 text-sm font-medium text-brand-brown">All Products</Link>

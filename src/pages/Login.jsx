@@ -117,6 +117,21 @@ export default function Login() {
       style={{ background: "linear-gradient(160deg, #F4F6FF 0%, #E8ECF8 50%, #F4F6FF 100%)" }}
     >
       <div className="w-full max-w-md">
+        {/* Back to home */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4 }}
+          className="mb-4"
+        >
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-brown/60 hover:text-brand-gold transition-colors"
+          >
+            <ArrowLeft size={14} /> Back to Home
+          </Link>
+        </motion.div>
+
         {/* Logo */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -349,6 +364,8 @@ export default function Login() {
           </AnimatePresence>
         </motion.div>
       </div>
+      {/* Invisible reCAPTCHA host for Firebase Phone OTP — required by sendPhoneOTP */}
+      <div id="recaptcha-container" />
     </div>
   );
 }

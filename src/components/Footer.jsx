@@ -1,8 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Phone, Mail, MapPin, Instagram, Facebook, Youtube, Lock, Truck, ShieldCheck } from "lucide-react";
+import { useSiteSettings } from "../context/SiteSettingsContext";
 
 export default function Footer() {
+  const { siteContent } = useSiteSettings() || {};
+  const contact = siteContent?.contact || {};
+  const phoneDigits = (contact.phone || "+91 75685 77968").replace(/\D/g, "");
+
   return (
     <footer style={{ background: "linear-gradient(160deg, #0D1B35 0%, #1A2744 40%, #080F1E 100%)" }} className="text-white">
 
@@ -88,13 +93,13 @@ export default function Footer() {
             </div>
           </div>
           <p className="text-sm leading-relaxed mb-7" style={{ color: "rgba(255,255,255,0.38)", lineHeight: 1.75 }}>
-            Finest quality dry fruits and nuts sourced from the best farms in Kashmir, California and Iran. Delivered fresh to your door since 1999.
+            {contact.footerTagline || "Finest quality dry fruits and nuts sourced from the best farms in Kashmir, California and Iran. Delivered fresh to your door since 1999."}
           </p>
           <div className="flex gap-3">
             {[
-              { href: "https://instagram.com", icon: <Instagram size={14} /> },
-              { href: "https://facebook.com",  icon: <Facebook size={14} /> },
-              { href: "https://youtube.com",   icon: <Youtube size={14} /> },
+              { href: contact.socialInstagram || "https://instagram.com", icon: <Instagram size={14} /> },
+              { href: contact.socialFacebook || "https://facebook.com",  icon: <Facebook size={14} /> },
+              { href: contact.socialTwitter || "https://youtube.com",   icon: <Youtube size={14} /> },
             ].map((s, i) => (
               <a
                 key={i}
@@ -193,25 +198,25 @@ export default function Footer() {
             <li className="flex gap-3.5 items-start">
               <Phone size={13} className="flex-shrink-0 mt-0.5" style={{ color: "rgba(201,168,76,0.6)" }} />
               <div>
-                <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>+91 75685 77968</p>
+                <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>{contact.phone || "+91 75685 77968"}</p>
                 <p className="mt-0.5" style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", letterSpacing: "0.04em" }}>Mon – Sat  ·  9 am – 7 pm</p>
               </div>
             </li>
             <li className="flex gap-3.5 items-start">
               <Mail size={13} className="flex-shrink-0 mt-0.5" style={{ color: "rgba(201,168,76,0.6)" }} />
-              <span style={{ color: "rgba(255,255,255,0.42)", fontSize: 13 }}>info@jaishreegryfruits.com</span>
+              <span style={{ color: "rgba(255,255,255,0.42)", fontSize: 13 }}>{contact.email || "info@jaishreedryfruits.com"}</span>
             </li>
             <li className="flex gap-3.5 items-start">
               <MapPin size={13} className="flex-shrink-0 mt-0.5" style={{ color: "rgba(201,168,76,0.6)" }} />
               <div style={{ color: "rgba(255,255,255,0.42)", fontSize: 13, lineHeight: 1.65 }}>
-                <p>41, Barah Ji Ki Gali</p>
-                <p>Gangauri Bazar</p>
-                <p>Jaipur – 302001</p>
+                {(contact.address || "41, Barah Ji Ki Gali, Gangauri Bazar, Jaipur – 302001").split(",").map((line, i) => (
+                  <p key={i}>{line.trim()}</p>
+                ))}
               </div>
             </li>
           </ul>
           <a
-            href="tel:+917568577968"
+            href={`tel:+91${phoneDigits.slice(-10)}`}
             className="mt-6 inline-flex items-center gap-2 text-xs font-semibold px-4 py-2.5 transition-all hover:scale-105"
             style={{ background: "rgba(201,168,76,0.12)", color: "#C9A84C", border: "1px solid rgba(201,168,76,0.3)" }}
           >

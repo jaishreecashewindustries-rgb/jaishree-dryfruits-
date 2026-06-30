@@ -21,7 +21,7 @@ export default function CartSidebar() {
       )}
 
       {/* Sidebar — z-[60] sits above mobile bottom nav (z-50) */}
-      <div className={`fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white z-[60] shadow-2xl flex flex-col transition-transform duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"}`}>
+      <div className={`fixed top-0 right-0 h-dvh w-full sm:w-[420px] bg-white z-[60] shadow-2xl flex flex-col transition-transform duration-300 ${isOpen ? "translate-x-0" : "translate-x-full"}`}>
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-brand-brown">
           <div className="flex items-center gap-2 text-white">
@@ -57,7 +57,7 @@ export default function CartSidebar() {
         )}
 
         {/* Items */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4 space-y-4">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-12">
               <ShoppingBag size={56} className="text-gray-200 mb-4" />

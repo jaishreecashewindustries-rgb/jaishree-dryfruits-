@@ -59,6 +59,9 @@ img { display: block; max-width: 100%; }
     box-shadow: 0 6px 24px rgba(201,168,76,0.35);
     transform: translateY(-1px);
   }
+  .btn-primary:active {
+    transform: translateY(0) scale(0.97);
+  }
   .btn-gold {
     @apply inline-flex items-center justify-center gap-2 font-semibold py-3 px-6 transition-all duration-300;
     background: var(--gold);
@@ -72,6 +75,9 @@ img { display: block; max-width: 100%; }
     transform: translateY(-2px);
     box-shadow: 0 8px 28px rgba(201,168,76,.4);
   }
+  .btn-gold:active {
+    transform: translateY(0) scale(0.97);
+  }
   .btn-outline {
     @apply inline-flex items-center justify-center gap-2 font-semibold py-3 px-6 transition-all duration-300;
     border: 1.5px solid var(--navy);
@@ -83,8 +89,19 @@ img { display: block; max-width: 100%; }
     color: white;
     transform: translateY(-1px);
   }
+  .btn-outline:active {
+    transform: translateY(0) scale(0.97);
+  }
   .btn-brown {
     @apply bg-brand-brown text-white font-semibold py-3 px-6 transition-all duration-200;
+  }
+  .btn-brown:hover {
+    background: var(--gold);
+    color: var(--navy);
+    transform: translateY(-1px);
+  }
+  .btn-brown:active {
+    transform: translateY(0) scale(0.97);
   }
   .card-luxury {
     @apply bg-white transition-all duration-300;

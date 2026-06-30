@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -7,6 +7,8 @@ import {
   onAuthStateChanged,
   updateProfile,
   sendPasswordResetEmail,
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, googleProvider } from "../firebase/config";
@@ -79,6 +81,27 @@ export const AuthProvider = ({ children }) => {
     toast.success("Password reset email sent!");
   };
 
+  // ── Phone OTP ──────────────────────────────────────────────────────────
+  const recaptchaVerifierRef = useRef(null);
+  const confirmationResultRef = useRef(null);
+
+  const sendPhoneOTP = async (phoneNumber) => {
+    if (!recaptchaVerifierRef.current) {
+      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, "recaptcha-container", { size: "invisible" });
+    }
+    confirmationResultRef.current = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifierRef.current);
+  };
+
+  const verifyPhoneOTP = async (code) => {
+    if (!confirmationResultRef.current) {
+      throw new Error("Your OTP session expired — please request a new code");
+    }
+    const res = await confirmationResultRef.current.confirm(code);
+    await createUserDoc(res.user, { phone: res.user.phoneNumber || "" });
+    toast.success("Phone verified — welcome!");
+    return res;
+  };
+
   const isAdmin = userProfile?.role === "admin";
 
   useEffect(() => {
@@ -107,6 +130,8 @@ export const AuthProvider = ({ children }) => {
         loginWithGoogle,
         logout,
         resetPassword,
+        sendPhoneOTP,
+        verifyPhoneOTP,
       }}
     >
       {!loading && children}
