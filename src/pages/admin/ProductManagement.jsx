@@ -244,7 +244,7 @@ export default function ProductManagement() {
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {form.images.map((img, i) => (
-                      <div key={i} className="relative">
+                      <div key={`${i}-${img || "empty"}`} className="relative">
                         <ImageUpload
                           value={img}
                           onChange={(url) => handleImage(i, url)}
