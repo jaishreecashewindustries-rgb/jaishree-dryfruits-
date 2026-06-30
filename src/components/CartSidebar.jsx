@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { X, ShoppingBag, Minus, Plus, Trash2, ArrowRight } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { formatPrice } from "../utils/helpers";
@@ -81,17 +82,28 @@ export default function CartSidebar() {
                   <p className="text-brand-gold font-bold text-sm mt-1">{formatPrice(item.price)}</p>
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center gap-2">
-                      <button className="qty-btn w-7 h-7 text-base" onClick={() => updateQty(item.id, item.variantId, item.qty - 1)}>
+                      <motion.button whileTap={{ scale: 0.85 }} className="qty-btn w-7 h-7 text-base" onClick={() => updateQty(item.id, item.variantId, item.qty - 1)}>
                         <Minus size={14} />
-                      </button>
-                      <span className="text-sm font-semibold w-6 text-center">{item.qty}</span>
-                      <button className="qty-btn w-7 h-7 text-base" onClick={() => updateQty(item.id, item.variantId, item.qty + 1)}>
+                      </motion.button>
+                      <AnimatePresence mode="wait">
+                        <motion.span
+                          key={item.qty}
+                          initial={{ scale: 0.6, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0.6, opacity: 0 }}
+                          transition={{ duration: 0.15 }}
+                          className="text-sm font-semibold w-6 text-center inline-block"
+                        >
+                          {item.qty}
+                        </motion.span>
+                      </AnimatePresence>
+                      <motion.button whileTap={{ scale: 0.85 }} className="qty-btn w-7 h-7 text-base" onClick={() => updateQty(item.id, item.variantId, item.qty + 1)}>
                         <Plus size={14} />
-                      </button>
+                      </motion.button>
                     </div>
-                    <button onClick={() => removeFromCart(item.id, item.variantId)} className="text-red-400 hover:text-red-600 transition-colors p-1">
+                    <motion.button whileTap={{ scale: 0.85 }} onClick={() => removeFromCart(item.id, item.variantId)} className="text-red-400 hover:text-red-600 transition-colors p-1">
                       <Trash2 size={16} />
-                    </button>
+                    </motion.button>
                   </div>
                 </div>
               </div>

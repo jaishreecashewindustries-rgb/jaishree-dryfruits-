@@ -233,8 +233,20 @@ export default function ProductDetail() {
           </div>
 
           {/* Price */}
-          <div className="flex items-baseline gap-3 py-3 border-y border-gray-100">
-            <span className="font-serif font-semibold text-3xl text-brand-brown">{formatPrice(selectedVariant.price)}</span>
+          <div className="flex items-baseline gap-3 py-3 border-y border-gray-100" style={{ perspective: 400 }}>
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={selectedVariant.id}
+                initial={{ rotateX: -90, opacity: 0 }}
+                animate={{ rotateX: 0, opacity: 1 }}
+                exit={{ rotateX: 90, opacity: 0 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                className="font-serif font-semibold text-3xl text-brand-brown inline-block"
+                style={{ transformOrigin: "center" }}
+              >
+                {formatPrice(selectedVariant.price)}
+              </motion.span>
+            </AnimatePresence>
           </div>
 
           {/* Variants */}
@@ -459,8 +471,15 @@ export default function ProductDetail() {
                   </div>
                 </motion.div>
               ))}
-              {DUMMY_REVIEWS.map((r) => (
-                <div key={r.id} className="p-5 border border-gray-100 rounded-xl">
+              {DUMMY_REVIEWS.map((r, i) => (
+                <motion.div
+                  key={r.id}
+                  initial={{ opacity: 0, y: 18 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-40px" }}
+                  transition={{ duration: 0.4, delay: Math.min(i, 6) * 0.06, ease: [0.22, 1, 0.36, 1] }}
+                  className="p-5 border border-gray-100 rounded-xl"
+                >
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <div className="flex gap-0.5 mb-1">
@@ -480,13 +499,14 @@ export default function ProductDetail() {
                       </span>
                     )}
                     <span className="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-full">{r.variant}</span>
-                    <button
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
                       className="ml-auto text-xs text-gray-400 hover:text-brand-gold transition-colors flex items-center gap-1"
                       onClick={() => setHelpfulVotes(v => ({ ...v, [r.id]: !v[r.id] }))}>
-                      <ThumbsUp size={11} /> Helpful ({(helpfulVotes[r.id] ? 1 : 0) + r.helpful})
-                    </button>
+                      <ThumbsUp size={11} className={helpfulVotes[r.id] ? "fill-brand-gold text-brand-gold" : ""} /> Helpful ({(helpfulVotes[r.id] ? 1 : 0) + r.helpful})
+                    </motion.button>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </div>

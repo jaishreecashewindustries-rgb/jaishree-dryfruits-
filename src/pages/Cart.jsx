@@ -218,9 +218,20 @@ export default function Cart() {
                 </div>
                 <p className="font-bold text-brand-gold mt-1">{formatPrice(item.price)}</p>
                 <div className="flex items-center gap-2 mt-2">
-                  <button className="qty-btn" onClick={() => updateQty(item.id, item.variantId, item.qty - 1)}><Minus size={12} /></button>
-                  <span className="w-8 text-center font-semibold text-sm">{item.qty}</span>
-                  <button className="qty-btn" onClick={() => updateQty(item.id, item.variantId, item.qty + 1)}><Plus size={12} /></button>
+                  <motion.button whileTap={{ scale: 0.85 }} className="qty-btn" onClick={() => updateQty(item.id, item.variantId, item.qty - 1)}><Minus size={12} /></motion.button>
+                  <AnimatePresence mode="wait">
+                    <motion.span
+                      key={item.qty}
+                      initial={{ scale: 0.6, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.6, opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                      className="w-8 text-center font-semibold text-sm inline-block"
+                    >
+                      {item.qty}
+                    </motion.span>
+                  </AnimatePresence>
+                  <motion.button whileTap={{ scale: 0.85 }} className="qty-btn" onClick={() => updateQty(item.id, item.variantId, item.qty + 1)}><Plus size={12} /></motion.button>
                   <span className="ml-auto text-sm font-bold text-brand-brown">{formatPrice(item.price * item.qty)}</span>
                 </div>
               </div>

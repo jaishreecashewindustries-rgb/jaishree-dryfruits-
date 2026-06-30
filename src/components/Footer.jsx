@@ -1,12 +1,48 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Phone, Mail, MapPin, Instagram, Facebook, Youtube, Lock, Truck, ShieldCheck } from "lucide-react";
+import { motion } from "framer-motion";
+import { Phone, Mail, MapPin, Instagram, Facebook, Youtube, Lock, Truck, ShieldCheck, Send, CreditCard } from "lucide-react";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../firebase/config";
 import { useSiteSettings } from "../context/SiteSettingsContext";
+import toast from "react-hot-toast";
+
+const FadeIn = ({ children, delay = 0, className = "" }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: "-60px" }}
+    transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
+    className={className}
+  >
+    {children}
+  </motion.div>
+);
 
 export default function Footer() {
   const { siteContent } = useSiteSettings() || {};
   const contact = siteContent?.contact || {};
   const phoneDigits = (contact.phone || "+91 75685 77968").replace(/\D/g, "");
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
+
+  const handleNewsletterSubmit = async (e) => {
+    e.preventDefault();
+    if (!newsletterEmail.trim()) return;
+    setSubscribing(true);
+    try {
+      await addDoc(collection(db, "newsletter"), {
+        email: newsletterEmail.trim(),
+        createdAt: serverTimestamp(),
+      });
+      toast.success("Subscribed! Welcome to the Premium Club.");
+      setNewsletterEmail("");
+    } catch {
+      toast.error("Could not subscribe — please try again");
+    } finally {
+      setSubscribing(false);
+    }
+  };
 
   return (
     <footer style={{ background: "linear-gradient(160deg, #0D1B35 0%, #1A2744 40%, #080F1E 100%)" }} className="text-white">
@@ -25,12 +61,15 @@ export default function Footer() {
           </div>
           <form
             className="flex items-end gap-6 w-full md:w-auto"
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={handleNewsletterSubmit}
           >
             {/* Borderless — only bottom 1px line, no fill */}
             <div className="flex-1 md:w-72 relative">
               <input
                 type="email"
+                required
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
                 placeholder="Your email address"
                 className="w-full bg-transparent text-white text-sm pb-2.5 focus:outline-none transition-colors"
                 style={{
@@ -45,9 +84,11 @@ export default function Footer() {
               />
               <style>{`input::placeholder{color:rgba(255,255,255,0.28)}`}</style>
             </div>
-            <button
+            <motion.button
+              whileTap={{ scale: 0.95 }}
               type="submit"
-              className="text-[11px] font-bold uppercase tracking-[3px] pb-2.5 transition-colors whitespace-nowrap"
+              disabled={subscribing}
+              className="text-[11px] font-bold uppercase tracking-[3px] pb-2.5 transition-colors whitespace-nowrap flex items-center gap-1.5"
               style={{
                 background: "none",
                 border: "none",
@@ -58,8 +99,8 @@ export default function Footer() {
               onMouseEnter={e => { e.currentTarget.style.color = "#E8C97A"; e.currentTarget.style.borderBottomColor = "#E8C97A"; }}
               onMouseLeave={e => { e.currentTarget.style.color = "#C9A84C"; e.currentTarget.style.borderBottomColor = "#C9A84C"; }}
             >
-              Subscribe
-            </button>
+              {subscribing ? "Subscribing..." : "Subscribe"} <Send size={11} />
+            </motion.button>
           </form>
         </div>
       </div>
@@ -68,7 +109,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 py-16 grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-12">
 
         {/* Brand — clean typographic mark, no coloured badge */}
-        <div className="col-span-2 md:col-span-1">
+        <FadeIn className="col-span-2 md:col-span-1">
           {/* Logo + typographic mark */}
           <div className="mb-6 flex items-center gap-3">
             <img
@@ -118,10 +159,10 @@ export default function Footer() {
               </a>
             ))}
           </div>
-        </div>
+        </FadeIn>
 
         {/* Quick Links */}
-        <div>
+        <FadeIn delay={0.05}>
           <h4
             className="mb-6 uppercase"
             style={{ color: "rgba(201,168,76,0.7)", fontSize: 9, letterSpacing: "3.5px", fontWeight: 600 }}
@@ -152,10 +193,10 @@ export default function Footer() {
               </li>
             ))}
           </ul>
-        </div>
+        </FadeIn>
 
         {/* Support */}
-        <div>
+        <FadeIn delay={0.1}>
           <h4
             className="mb-6 uppercase"
             style={{ color: "rgba(201,168,76,0.7)", fontSize: 9, letterSpacing: "3.5px", fontWeight: 600 }}
@@ -169,7 +210,7 @@ export default function Footer() {
               { to: "/returns",  label: "Return & Refund" },
               { to: "/privacy",  label: "Privacy Policy" },
               { to: "/terms",    label: "Terms & Conditions" },
-              { to: "/dashboard",label: "Track Order" },
+              { to: "/track-order", label: "Track Order" },
             ].map((l) => (
               <li key={l.to}>
                 <Link
@@ -184,10 +225,10 @@ export default function Footer() {
               </li>
             ))}
           </ul>
-        </div>
+        </FadeIn>
 
         {/* Contact — clean coordinate layout */}
-        <div>
+        <FadeIn delay={0.15}>
           <h4
             className="mb-6 uppercase"
             style={{ color: "rgba(201,168,76,0.7)", fontSize: 9, letterSpacing: "3.5px", fontWeight: 600 }}
@@ -222,7 +263,7 @@ export default function Footer() {
           >
             <Phone size={12} /> Call Us Now
           </a>
-        </div>
+        </FadeIn>
       </div>
 
       {/* Gold separator */}
@@ -230,6 +271,26 @@ export default function Footer() {
         className="mx-4 md:mx-auto max-w-7xl h-px"
         style={{ background: "linear-gradient(90deg, transparent, rgba(201,168,76,0.3), rgba(232,201,122,0.5), rgba(201,168,76,0.3), transparent)" }}
       />
+
+      {/* Payment methods strip */}
+      <FadeIn className="px-4 py-5 border-t" style={{ borderColor: "rgba(201,168,76,0.08)" }}>
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <span className="text-[10px] uppercase tracking-[2.5px]" style={{ color: "rgba(255,255,255,0.3)" }}>
+            We Accept
+          </span>
+          <div className="flex items-center gap-2.5 flex-wrap justify-center">
+            {["UPI", "Visa", "Mastercard", "RuPay", "Net Banking", "COD"].map((m) => (
+              <span
+                key={m}
+                className="flex items-center gap-1 text-[10px] font-semibold px-3 py-1.5 rounded-md"
+                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.55)" }}
+              >
+                <CreditCard size={11} style={{ color: "rgba(201,168,76,0.6)" }} /> {m}
+              </span>
+            ))}
+          </div>
+        </div>
+      </FadeIn>
 
       {/* Bottom bar */}
       <div className="py-6 px-4">

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { Star, Heart, ShoppingCart, BellRing, CheckCircle2 } from "lucide-react";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase/config";
@@ -194,13 +195,20 @@ export default function ProductCard({ product }) {
 
         {/* Price */}
         <div className="mt-auto">
-          <div className="flex items-baseline gap-2 flex-wrap">
-            <span
-              key={selectedVariant?.id}
-              className="price-fade font-serif text-brand-brown font-semibold text-lg inline-block"
-            >
-              {formatPrice(selectedVariant?.price)}
-            </span>
+          <div className="flex items-baseline gap-2 flex-wrap" style={{ perspective: 400 }}>
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={selectedVariant?.id}
+                initial={{ rotateX: -90, opacity: 0 }}
+                animate={{ rotateX: 0, opacity: 1 }}
+                exit={{ rotateX: 90, opacity: 0 }}
+                transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                className="font-serif text-brand-brown font-semibold text-lg inline-block"
+                style={{ transformOrigin: "center", display: "inline-block" }}
+              >
+                {formatPrice(selectedVariant?.price)}
+              </motion.span>
+            </AnimatePresence>
             {selectedVariant?.originalPrice > selectedVariant?.price && (
               <span className="text-xs text-gray-400 line-through">{formatPrice(selectedVariant.originalPrice)}</span>
             )}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { ShoppingCart, User, Search, Menu, X, Heart, ChevronDown, LogOut, LayoutDashboard, Package } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ShoppingCart, User, Search, Menu, X, Heart, ChevronDown, LogOut, LayoutDashboard, Package, Compass, BookOpen, MapPin, HelpCircle, Truck } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -14,6 +15,7 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [shopMenuOpen, setShopMenuOpen] = useState(false);
+  const [exploreMenuOpen, setExploreMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { user, userProfile, isAdmin, logout } = useAuth();
   const { totalItems, toggleCart } = useCart();
@@ -81,7 +83,13 @@ export default function Navbar() {
               >
                 {msg}
               </span>
-              <span style={{ color: "rgba(201,168,76,0.4)", fontSize: 8 }}>✦</span>
+              <motion.span
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+                style={{ color: "#C9A84C", fontSize: 8 }}
+              >
+                ✦
+              </motion.span>
             </span>
           ))}
         </div>
@@ -129,26 +137,67 @@ export default function Navbar() {
               {/* Shop dropdown */}
               <div className="relative" onMouseEnter={() => setShopMenuOpen(true)} onMouseLeave={() => setShopMenuOpen(false)}>
                 <button className="nav-link text-sm flex items-center gap-1">
-                  Shop <ChevronDown size={14} className={`transition-transform ${shopMenuOpen ? "rotate-180" : ""}`} />
+                  Shop <ChevronDown size={14} className={`transition-transform duration-300 ${shopMenuOpen ? "rotate-180" : ""}`} />
                 </button>
-                {shopMenuOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 animate-fade-in z-50">
-                    <Link to="/products" className="block text-sm font-semibold text-brand-gold mb-3 hover:underline">
-                      {tr("products")}
-                    </Link>
-                    <div className="grid grid-cols-2 gap-1">
-                      {PRODUCT_CATEGORIES.slice(0, 8).map((c) => (
-                        <Link key={c} to={`/products?category=${c}`} className="text-xs text-gray-600 hover:text-brand-gold hover:bg-brand-cream px-2 py-1 rounded transition-all">
-                          {c}
+                <AnimatePresence>
+                  {shopMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                      className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 p-4 z-50"
+                    >
+                      <Link to="/products" className="block text-sm font-semibold text-brand-gold mb-3 hover:underline">
+                        {tr("products")}
+                      </Link>
+                      <div className="grid grid-cols-2 gap-1">
+                        {PRODUCT_CATEGORIES.slice(0, 8).map((c) => (
+                          <Link key={c} to={`/products?category=${c}`} className="text-xs text-gray-600 hover:text-brand-gold hover:bg-brand-cream px-2 py-1 rounded transition-all">
+                            {c}
+                          </Link>
+                        ))}
+                      </div>
+                      <div className="border-t border-gray-100 mt-3 pt-3">
+                        <Link to="/products?badge=Best Seller" className="text-xs text-brand-warm font-semibold hover:underline block mb-1">🔥 Best Sellers</Link>
+                        <Link to="/products?badge=New" className="text-xs text-green-600 font-semibold hover:underline block">✨ New Arrivals</Link>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Explore dropdown */}
+              <div className="relative" onMouseEnter={() => setExploreMenuOpen(true)} onMouseLeave={() => setExploreMenuOpen(false)}>
+                <button className="nav-link text-sm flex items-center gap-1">
+                  Explore <ChevronDown size={14} className={`transition-transform duration-300 ${exploreMenuOpen ? "rotate-180" : ""}`} />
+                </button>
+                <AnimatePresence>
+                  {exploreMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -8, scale: 0.97 }}
+                      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                      className="absolute top-full left-0 mt-2 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50"
+                    >
+                      {[
+                        { to: "/sourcing", label: "Sourcing Story", icon: <MapPin size={14} /> },
+                        { to: "/blog", label: "Our Blog", icon: <BookOpen size={14} /> },
+                        { to: "/track-order", label: "Track Order", icon: <Truck size={14} /> },
+                        { to: "/faq", label: "FAQs", icon: <HelpCircle size={14} /> },
+                      ].map((item) => (
+                        <Link
+                          key={item.to}
+                          to={item.to}
+                          className="flex items-center gap-2.5 px-4 py-2 text-sm text-gray-600 hover:text-brand-gold hover:bg-brand-cream transition-all"
+                        >
+                          {item.icon} {item.label}
                         </Link>
                       ))}
-                    </div>
-                    <div className="border-t border-gray-100 mt-3 pt-3">
-                      <Link to="/products?badge=Best Seller" className="text-xs text-brand-warm font-semibold hover:underline block mb-1">🔥 Best Sellers</Link>
-                      <Link to="/products?badge=New" className="text-xs text-green-600 font-semibold hover:underline block">✨ New Arrivals</Link>
-                    </div>
-                  </div>
-                )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               <Link to="/products?category=Gift Hampers" className="nav-link text-sm">Gift Hampers</Link>
@@ -266,6 +315,9 @@ export default function Navbar() {
                 <Link to="/wishlist" className="block py-2 text-sm font-medium text-brand-brown">Wishlist</Link>
               )}
               <Link to="/track-order" className="block py-2 text-sm font-medium text-brand-brown">Track Order</Link>
+              <Link to="/sourcing" className="block py-2 text-sm font-medium text-brand-brown">Sourcing Story</Link>
+              <Link to="/blog" className="block py-2 text-sm font-medium text-brand-brown">Our Blog</Link>
+              <Link to="/faq" className="block py-2 text-sm font-medium text-brand-brown">FAQs</Link>
 
               <div className="pt-3 mt-2 border-t border-gray-100">
                 <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Language / भाषा</p>
