@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from "firebase/firestore";
 import { db } from "../../firebase/config";
-import { Plus, Trash2, Edit2, Check, X } from "lucide-react";
+import { Plus, Trash2, Edit2, Check, X, Tag } from "lucide-react";
 import toast from "react-hot-toast";
 
 const EMPTY = { code: "", discount: "", minOrder: "", maxUses: "", active: true, expiry: "" };
@@ -112,8 +112,8 @@ export default function CouponManagement() {
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Status</label>
               <select className="input-field text-sm" value={form.active} onChange={e => setForm(f => ({ ...f, active: e.target.value === "true" }))}>
-                <option value="true">✓ Active</option>
-                <option value="false">✕ Inactive</option>
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
               </select>
             </div>
           </div>
@@ -130,7 +130,7 @@ export default function CouponManagement() {
           <div className="text-center py-12 text-gray-400">Loading coupons...</div>
         ) : coupons.length === 0 ? (
           <div className="text-center py-12 text-gray-400">
-            <p className="text-3xl mb-2">🎟️</p>
+            <Tag size={32} className="mx-auto mb-2 text-gray-300" />
             <p className="text-sm">No coupons yet. Create your first one!</p>
           </div>
         ) : (
@@ -152,8 +152,8 @@ export default function CouponManagement() {
                     <td>{c.uses || 0}{c.maxUses ? ` / ${c.maxUses}` : " / ∞"}</td>
                     <td className="text-xs">{c.expiry?.toDate ? c.expiry.toDate().toLocaleDateString("en-IN") : "No expiry"}</td>
                     <td>
-                      <span className={`text-xs px-2 py-1 font-semibold ${c.active ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>
-                        {c.active ? "✓ Active" : "✕ Off"}
+                      <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 font-semibold ${c.active ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>
+                        {c.active ? <Check size={12} /> : <X size={12} />} {c.active ? "Active" : "Off"}
                       </span>
                     </td>
                     <td>

@@ -4,6 +4,7 @@ import { db } from "../../firebase/config";
 import { Plus, Edit2, Trash2, Search, X, Image, Save } from "lucide-react";
 import { DEMO_PRODUCTS, PRODUCT_CATEGORIES, formatPrice } from "../../utils/helpers";
 import { useProducts } from "../../context/ProductsContext";
+import ImageUpload from "../../components/ImageUpload";
 import toast from "react-hot-toast";
 
 const EMPTY_PRODUCT = {
@@ -236,18 +237,28 @@ export default function ProductManagement() {
                 {/* Images */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-semibold text-gray-500 uppercase">Product Images (URLs)</label>
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Product Images</label>
                     <button type="button" onClick={addImage} className="text-xs text-brand-gold flex items-center gap-1 hover:underline">
-                      <Image size={12} /> Add Image
+                      <Image size={12} /> Add Image Slot
                     </button>
                   </div>
-                  <div className="space-y-2">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {form.images.map((img, i) => (
-                      <div key={i} className="flex gap-2 items-center">
-                        <input value={img} onChange={(e) => handleImage(i, e.target.value)} className="input-field flex-1 text-xs py-2" placeholder="https://..." />
-                        {img && <img src={img} alt="" className="w-10 h-10 rounded-lg object-cover" />}
+                      <div key={i} className="relative">
+                        <ImageUpload
+                          value={img}
+                          onChange={(url) => handleImage(i, url)}
+                          folder="products"
+                          compact
+                        />
                         {form.images.length > 1 && (
-                          <button type="button" onClick={() => removeImage(i)} className="text-red-400 hover:text-red-600 p-1"><X size={14} /></button>
+                          <button
+                            type="button"
+                            onClick={() => removeImage(i)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600 z-10"
+                          >
+                            <X size={12} />
+                          </button>
                         )}
                       </div>
                     ))}
