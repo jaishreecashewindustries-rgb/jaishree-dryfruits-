@@ -17,9 +17,35 @@
     <title>Jai Shree Dryfruits - Premium Dry Fruits & Nuts</title>
     <!-- Razorpay Checkout SDK — loaded async, used only at checkout -->
     <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+
+    <!-- Google Translate — full-site auto-translation -->
+    <script>
+      function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+          pageLanguage: 'en',
+          includedLanguages: 'en,hi,mr,gu,pa,bn,ta,te,kn,ml,ur',
+          layout: google.translate.TranslateElement.InlineLayout.SIMPLE,
+          autoDisplay: false
+        }, 'google_translate_element');
+      }
+    </script>
+    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async></script>
+
+    <style>
+      /* Hide Google's default banner/toolbar — we use our own UI */
+      .goog-te-banner-frame, #goog-gt-tt, .goog-te-balloon-frame { display: none !important; }
+      body { top: 0 !important; }
+      .goog-te-gadget { font-size: 0 !important; }
+      .goog-te-gadget .goog-te-combo { font-size: 13px !important; }
+      #google_translate_element { display: none; }
+      /* Prevent translation of logo/brand name */
+      .notranslate { translate: no; }
+    </style>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    <!-- Hidden Google Translate widget — controlled programmatically -->
+    <div id="google_translate_element"></div>
   </body>
 </html>

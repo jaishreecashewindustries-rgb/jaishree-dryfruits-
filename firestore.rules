@@ -2,32 +2,100 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users: only the user themselves can read/write their own doc
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-      allow read: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    // ── Helpers ──────────────────────────────────────────────────────────────
+    function isAdmin() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'admin';
+    }
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
     }
 
-    // Products: anyone can read, only admin can write
+    // ── USERS ────────────────────────────────────────────────────────────────
+    // FIX: Users can update their own doc but CANNOT set the 'role' field.
+    // Set role: "admin" only via Firebase Console (bypasses these rules).
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+
+      allow create: if isOwner(userId)
+        && !('role' in request.resource.data);
+
+      allow update: if (
+        isOwner(userId)
+        && request.resource.data.get('role', '') == resource.data.get('role', '')
+      ) || isAdmin();
+
+      allow delete: if isAdmin();
+    }
+
+    // ── PRODUCTS ─────────────────────────────────────────────────────────────
     match /products/{productId} {
       allow read: if true;
-      allow write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow write: if isAdmin();
     }
 
-    // Orders: user can read their own, admin can read/write all
+    // ── ORDERS ───────────────────────────────────────────────────────────────
     match /orders/{orderId} {
-      allow create: if request.auth != null;
-      allow read, update: if request.auth != null && (
-        request.auth.uid == resource.data.userId ||
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
-      );
+      allow create: if true;
+      allow read: if isOwner(resource.data.userId) || isAdmin();
+      allow update, delete: if isAdmin();
     }
 
-    // Reviews: anyone can read approved reviews, auth users can create, admin can manage
+    // ── REVIEWS ──────────────────────────────────────────────────────────────
     match /reviews/{reviewId} {
-      allow read: if resource.data.status == 'approved' || (request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      allow read: if resource.data.get('status', '') == 'approved' || isAdmin();
       allow create: if request.auth != null;
-      allow update, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      allow update, delete: if isAdmin();
+    }
+
+    // ── COINS ────────────────────────────────────────────────────────────────
+    match /coins/{userId} {
+      allow read, write: if isOwner(userId) || isAdmin();
+    }
+
+    match /coin_transactions/{txId} {
+      allow read: if request.auth != null &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if request.auth != null;
+      allow update, delete: if isAdmin();
+    }
+
+    // ── COUPONS ──────────────────────────────────────────────────────────────
+    match /coupons/{couponId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    // ── BLOG ─────────────────────────────────────────────────────────────────
+    match /blog/{postId} {
+      allow read: if resource.data.get('published', false) == true || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // ── INQUIRIES / CONTACT ───────────────────────────────────────────────────
+    match /inquiries/{inquiryId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ── RETURN REQUESTS ──────────────────────────────────────────────────────
+    match /return_requests/{reqId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+      allow update, delete: if isAdmin();
+    }
+
+    // ── NEWSLETTER / LEADS ───────────────────────────────────────────────────
+    match /newsletter/{docId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ── SITE SETTINGS ────────────────────────────────────────────────────────
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
   }
 }

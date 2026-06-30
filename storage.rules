@@ -1,0 +1,23 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Products images — only admin can upload
+    match /products/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.get('role','') == 'admin';
+    }
+    // Content images (about, team, hero, etc.) — only admin
+    match /content/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.get('role','') == 'admin';
+    }
+    // Blog images — only admin
+    match /blog/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.get('role','') == 'admin';
+    }
+  }
+}
