@@ -1,17 +1,25 @@
 import React, { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-import { CheckCircle, ChevronRight, Lock, Package, CreditCard, Banknote, MapPin, Loader2, AlertCircle, CheckCircle2, ShoppingCart, ChevronDown } from "lucide-react";
+import { CheckCircle, ChevronRight, Lock, Package, CreditCard, Banknote, MapPin, Loader2, AlertCircle, CheckCircle2, ShoppingCart, ChevronDown, Tag, Coins, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
 import emailjs from "@emailjs/browser";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
-import { useCoins } from "../context/CoinsContext";
+import { useCoins, COINS_RULES } from "../context/CoinsContext";
 import { formatPrice } from "../utils/helpers";
 import toast from "react-hot-toast";
 
 const STEPS = ["Address", "Payment", "Confirm"];
+
+// Fallback hardcoded coupons (used if Firestore is empty) — mirrors Cart.jsx
+const FALLBACK_COUPONS = [
+  { code: "WELCOME15", type: "percent", value: 15, minOrder: 299, maxUses: 1 },
+  { code: "CASHEW10",  type: "percent", value: 10, minOrder: 199, maxUses: null },
+  { code: "MONSOON20", type: "percent", value: 20, minOrder: 499, maxUses: null },
+  { code: "FLAT50",    type: "flat",    value: 50, minOrder: 499, maxUses: null },
+];
 
 const PAY_METHODS = [
   { id: "razorpay", label: "UPI / Cards / Net Banking", desc: "Powered by Razorpay — GPay, PhonePe, Visa, Mastercard, EMI", Icon: CreditCard },
@@ -45,7 +53,12 @@ const INDIAN_STATES = [
 
 export default function Checkout() {
   const location = useLocation();
-  const { discount = 0, appliedCoupon = null, coinsDiscount = 0, coinsRedeemed: coinsRedeemedFromCart = 0 } = location.state || {};
+  const {
+    discount: discountFromCart = 0,
+    appliedCoupon: couponFromCart = null,
+    coinsDiscount: coinsDiscountFromCart = 0,
+    coinsRedeemed: coinsRedeemedFromCart = 0,
+  } = location.state || {};
 
   const [step, setStep] = useState(0);
   const [gstinOpen, setGstinOpen] = useState(false);
@@ -64,9 +77,87 @@ export default function Checkout() {
   const [orderId, setOrderId] = useState(null);
   const [coinsEarned, setCoinsEarned] = useState(0);
 
+  // Coupon — applicable directly from Checkout, pre-filled if already applied on Cart
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(couponFromCart);
+  const [couponLoading, setCouponLoading] = useState(false);
+
+  // JS Coins — applicable directly from Checkout, pre-filled if already applied on Cart
+  const [coinsApplied, setCoinsApplied] = useState(coinsRedeemedFromCart > 0);
+  const [coinsDiscount, setCoinsDiscount] = useState(coinsDiscountFromCart);
+  const [coinsRedeemed, setCoinsRedeemed] = useState(coinsRedeemedFromCart);
+  const [coinsLoading, setCoinsLoading] = useState(false);
+
   const { items, subtotal, shipping, total, clearCart } = useCart();
   const { user, userProfile } = useAuth();
-  const { earnCoinsForOrder } = useCoins();
+  const { coins, coinsWorth, earnCoinsForOrder, redeemCoins } = useCoins();
+
+  const discount = appliedCoupon
+    ? appliedCoupon.type === "percent"
+      ? Math.floor(subtotal * appliedCoupon.value / 100)
+      : appliedCoupon.value
+    : discountFromCart;
+
+  const coinsUnlocked = subtotal >= COINS_RULES.minCartValue && !appliedCoupon && !!user && (coins || 0) >= COINS_RULES.minRedeem;
+  const maxCoinsToRedeem = Math.min(coins || 0, Math.ceil(COINS_RULES.maxRedeemValue / COINS_RULES.redeemRate));
+  const coinsPotentialValue = parseFloat((maxCoinsToRedeem * COINS_RULES.redeemRate).toFixed(2));
+
+  const handleApplyCoupon = async () => {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) return;
+    if (appliedCoupon) { toast.error("Remove current coupon first"); return; }
+    setCouponLoading(true);
+    try {
+      const q = query(collection(db, "coupons"), where("code", "==", code), where("active", "==", true));
+      const snap = await getDocs(q);
+      let coupon = null;
+      if (!snap.empty) {
+        const data = snap.docs[0].data();
+        if (data.expiry && new Date(data.expiry) < new Date()) {
+          toast.error("This coupon has expired"); setCouponLoading(false); return;
+        }
+        if (data.maxUses && (data.usedCount || 0) >= data.maxUses) {
+          toast.error("This coupon has reached its usage limit"); setCouponLoading(false); return;
+        }
+        coupon = { code: data.code, type: data.discountType || "percent", value: data.discountValue || data.discount || 10, minOrder: data.minOrder || 0 };
+      } else {
+        coupon = FALLBACK_COUPONS.find(c => c.code === code) || null;
+      }
+      if (!coupon) { toast.error("Invalid coupon code"); setCouponLoading(false); return; }
+      if (subtotal < coupon.minOrder) { toast.error(`Minimum order ₹${coupon.minOrder} required for this coupon`); setCouponLoading(false); return; }
+      setAppliedCoupon(coupon);
+      toast.success(`Coupon applied — ${coupon.type === "percent" ? `${coupon.value}% off` : `₹${coupon.value} off`}!`);
+    } catch {
+      const coupon = FALLBACK_COUPONS.find(c => c.code === code);
+      if (coupon) {
+        if (subtotal < coupon.minOrder) toast.error(`Minimum order ₹${coupon.minOrder} required`);
+        else { setAppliedCoupon(coupon); toast.success(`Coupon applied — ${coupon.value}${coupon.type === "percent" ? "%" : "₹"} off!`); }
+      } else {
+        toast.error("Invalid coupon code");
+      }
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => { setAppliedCoupon(null); setCouponInput(""); toast("Coupon removed"); };
+
+  const handleApplyCoins = async () => {
+    if (!coinsUnlocked || coinsApplied) return;
+    setCoinsLoading(true);
+    const result = await redeemCoins(maxCoinsToRedeem);
+    if (result?.success) {
+      setCoinsApplied(true);
+      setCoinsDiscount(result.discount);
+      setCoinsRedeemed(result.coinsUsed);
+      toast.success(`${result.coinsUsed} JS Coins applied — ₹${result.discount} off!`);
+    } else {
+      toast.error(result?.message || "Could not apply coins");
+    }
+    setCoinsLoading(false);
+  };
+
+  const handleRemoveCoins = () => { setCoinsApplied(false); setCoinsDiscount(0); setCoinsRedeemed(0); toast("JS Coins removed"); };
 
   const finalTotal = Math.max(0, total - discount - coinsDiscount);
 
@@ -122,7 +213,7 @@ export default function Checkout() {
       paymentId: paymentId || null,
       coupon: appliedCoupon || null,
       discount,
-      coinsRedeemed: coinsRedeemedFromCart || 0,
+      coinsRedeemed: coinsRedeemed || 0,
       coinsDiscount: coinsDiscount || 0,
       subtotal,
       shipping,
@@ -670,6 +761,60 @@ export default function Checkout() {
         {/* ── Order Summary Sidebar ── */}
         <div className="card-luxury p-5 h-fit sticky top-24">
           <h3 className="font-serif font-normal text-brand-brown mb-4 text-base border-b border-gray-100 pb-3">Order Summary</h3>
+
+          {/* Coupon */}
+          <div className="mb-4">
+            {appliedCoupon ? (
+              <div className="flex items-center justify-between bg-green-50 border border-green-200 px-3 py-2 rounded-lg text-xs">
+                <span className="flex items-center gap-1.5 text-green-700 font-semibold">
+                  <Tag size={12} /> {appliedCoupon.code} applied
+                </span>
+                <button onClick={handleRemoveCoupon} className="text-green-600 hover:text-red-500"><X size={13} /></button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
+                  placeholder="Coupon code"
+                  className="input-field flex-1 text-xs py-2"
+                />
+                <button onClick={handleApplyCoupon} disabled={couponLoading || !couponInput.trim()} className="btn-outline text-xs px-3 py-2 whitespace-nowrap disabled:opacity-50">
+                  {couponLoading ? "..." : "Apply"}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* JS Coins */}
+          {user && (
+            <div className="mb-4">
+              {coinsApplied ? (
+                <div className="flex items-center justify-between bg-amber-50 border border-brand-gold/30 px-3 py-2 rounded-lg text-xs">
+                  <span className="flex items-center gap-1.5 text-brand-gold font-semibold">
+                    <Coins size={12} /> {coinsRedeemed} JS Coins applied
+                  </span>
+                  <button onClick={handleRemoveCoins} className="text-brand-gold hover:text-red-500"><X size={13} /></button>
+                </div>
+              ) : coinsUnlocked ? (
+                <button
+                  onClick={handleApplyCoins}
+                  disabled={coinsLoading}
+                  className="w-full flex items-center justify-between bg-amber-50 border border-brand-gold/30 px-3 py-2 rounded-lg text-xs hover:bg-amber-100 transition-colors disabled:opacity-50"
+                >
+                  <span className="flex items-center gap-1.5 text-brand-gold font-semibold">
+                    <Coins size={12} /> {coinsLoading ? "Applying..." : `Use ${maxCoinsToRedeem} Coins — Save ₹${coinsPotentialValue}`}
+                  </span>
+                </button>
+              ) : (coins || 0) > 0 ? (
+                <p className="text-[11px] text-gray-400 flex items-center gap-1.5">
+                  <Coins size={11} /> You have {coins} coins (worth ₹{coinsWorth || 0}) — {appliedCoupon ? "remove coupon to use coins" : `min ₹${COINS_RULES.minCartValue} cart & ${COINS_RULES.minRedeem} coins required`}
+                </p>
+              ) : null}
+            </div>
+          )}
+
           <div className="space-y-2 text-sm">
             {items.map((item) => (
               <div key={`${item.id}-${item.variantId}`} className="flex justify-between text-gray-500">
@@ -686,8 +831,14 @@ export default function Checkout() {
             </div>
             {discount > 0 && (
               <div className="flex justify-between text-green-600 font-medium">
-                <span>Coupon ({appliedCoupon})</span>
+                <span>Coupon ({appliedCoupon?.code})</span>
                 <span>− {formatPrice(discount)}</span>
+              </div>
+            )}
+            {coinsDiscount > 0 && (
+              <div className="flex justify-between text-brand-gold font-medium">
+                <span>JS Coins</span>
+                <span>− {formatPrice(coinsDiscount)}</span>
               </div>
             )}
             <div className="border-t border-gray-100 pt-2 flex justify-between font-bold text-brand-brown text-base mt-1">
