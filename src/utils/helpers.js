@@ -10,6 +10,14 @@ export const formatDate = (ts) => {
 export const discountPercent = (original, sale) =>
   Math.round(((original - sale) / original) * 100);
 
+// Price per 100g — used for cross-product comparison (Compare page, product cards)
+export const per100g = (price, weight) => {
+  const grams = typeof weight === "number" ? weight : parseFloat(weight);
+  if (!grams) return null;
+  const unit = String(weight).toLowerCase().includes("kg") ? grams * 1000 : grams;
+  return Math.round((price / unit) * 100);
+};
+
 export const truncate = (str, n = 80) =>
   str.length > n ? str.slice(0, n) + "…" : str;
 

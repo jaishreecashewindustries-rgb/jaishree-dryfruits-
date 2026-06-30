@@ -16,7 +16,8 @@ import AnimatedCounter from "../components/AnimatedCounter";
 import MagneticButton from "../components/MagneticButton";
 import SEO from "../components/SEO";
 import B2BGiftingForm from "../components/B2BGiftingForm";
-import { DEMO_PRODUCTS, formatPrice } from "../utils/helpers";
+import { formatPrice } from "../utils/helpers";
+import { useProducts } from "../context/ProductsContext";
 
 /* ── Framer helpers ─────────────────────────────────────────── */
 function FadeUp({ children, delay = 0, className = "" }) {
@@ -156,6 +157,7 @@ function useLiveTestimonials() {
 
 /* ── Main component ─────────────────────────────────────────── */
 export default function Home() {
+  const { products: DEMO_PRODUCTS } = useProducts();
   const featured = DEMO_PRODUCTS.filter((p) => p.featured).slice(0, 8);
   const [testimonialIdx, setTestimonialIdx] = useState(0);
   const [showB2BForm, setShowB2BForm] = useState(false);

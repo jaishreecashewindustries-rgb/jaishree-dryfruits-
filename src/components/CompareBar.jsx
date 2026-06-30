@@ -3,9 +3,10 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, GitCompare, Trash2 } from "lucide-react";
 import { useCompare } from "../context/CompareContext";
-import { DEMO_PRODUCTS } from "../utils/helpers";
+import { useProducts } from "../context/ProductsContext";
 
 export default function CompareBar() {
+  const { products: DEMO_PRODUCTS } = useProducts();
   const { compareIds, removeFromCompare, clearCompare } = useCompare();
   if (compareIds.length === 0) return null;
 

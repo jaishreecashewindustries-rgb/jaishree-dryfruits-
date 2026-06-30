@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { CheckCircle, ChevronRight, Lock, Package, CreditCard, Banknote, MapPin, Loader2, AlertCircle, CheckCircle2, ShoppingCart, ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useCart } from "../context/CartContext";
@@ -151,6 +152,36 @@ export default function Checkout() {
     return ref.id;
   };
 
+  // Writes to the Firestore "mail" collection — picked up by the Firebase
+  // "Trigger Email" extension (if installed on the project) to actually
+  // send the email. Safe no-op if the extension isn't installed yet.
+  const sendOrderConfirmationEmail = async (orderId, paymentId) => {
+    const to = address.email || user?.email;
+    if (!to) return;
+    try {
+      const itemRows = items.map(i => `${i.name} (${i.variant}) × ${i.qty} — ₹${i.price * i.qty}`).join("<br/>");
+      await addDoc(collection(db, "mail"), {
+        to: [to],
+        message: {
+          subject: `Order Confirmed — #${orderId.slice(0, 8).toUpperCase()} | Jai Shree Dry Fruits`,
+          html: `
+            <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#1B2E4B">
+              <h2 style="color:#1B2E4B">Thank you, ${address.name}!</h2>
+              <p>Your order <strong>#${orderId.slice(0, 8).toUpperCase()}</strong> has been ${paymentId ? "paid and confirmed" : "placed"}.</p>
+              <p style="margin:16px 0">${itemRows}</p>
+              <p><strong>Total: ₹${finalTotal}</strong></p>
+              <p>Shipping to: ${address.address}, ${address.city}, ${address.state} - ${address.pincode}</p>
+              <p style="margin-top:24px;color:#777">We'll notify you again once your order ships. Track it anytime at /track-order.</p>
+            </div>
+          `,
+        },
+        createdAt: serverTimestamp(),
+      });
+    } catch {
+      // non-critical — never block checkout on email failure
+    }
+  };
+
   const handleRazorpay = () => {
     const key = process.env.REACT_APP_RAZORPAY_KEY;
     if (!key || key.includes("REPLACE")) {
@@ -163,7 +194,7 @@ export default function Checkout() {
       currency: "INR",
       name: "Jai Shree Dry Fruits",
       description: `Order — ${items.length} item${items.length > 1 ? "s" : ""}`,
-      image: "/logo192.png",
+      image: "/logo.png",
       prefill: { name: address.name, contact: address.phone, email: user?.email || address.email || "" },
       notes: { address: `${address.address}, ${address.city}, ${address.state} - ${address.pincode}`, coupon: appliedCoupon || "none" },
       theme: { color: "#C9A84C" },
@@ -176,6 +207,7 @@ export default function Checkout() {
           setOrderId(oid);
           clearCart();
           sendAdminWhatsApp({ orderId: oid, customerName: address.name, phone: address.phone, items, total: finalTotal, address, paymentMethod: "Online" });
+          sendOrderConfirmationEmail(oid, response.razorpay_payment_id);
           setStep(3);
         } catch (err) {
           toast.error("Order save failed. Contact support with payment ID: " + response.razorpay_payment_id);
@@ -204,6 +236,7 @@ export default function Checkout() {
       setOrderId(oid);
       clearCart();
       sendAdminWhatsApp({ orderId: oid, customerName: address.name, phone: address.phone, items, total: finalTotal, address, paymentMethod: "COD" });
+      sendOrderConfirmationEmail(oid, null);
       setStep(3);
     } catch (err) {
       toast.error("Failed to place order. Please try again.");
@@ -357,10 +390,11 @@ export default function Checkout() {
 
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
+        <AnimatePresence mode="wait">
 
           {/* ── Step 0: Address ── */}
           {step === 0 && (
-            <div className="card-luxury p-6">
+            <motion.div key="step0" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.25 }} className="card-luxury p-6">
               <h2 className="font-serif text-xl font-normal text-brand-brown mb-6">Delivery Address</h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -561,12 +595,12 @@ export default function Checkout() {
                 className="btn-primary mt-6 flex items-center gap-2">
                 Continue to Payment <ChevronRight size={16} />
               </button>
-            </div>
+            </motion.div>
           )}
 
           {/* ── Step 1: Payment ── */}
           {step === 1 && (
-            <div className="card-luxury p-6">
+            <motion.div key="step1" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.25 }} className="card-luxury p-6">
               <h2 className="font-serif text-xl font-normal text-brand-brown mb-5">Payment Method</h2>
               <div className="space-y-3">
                 {PAY_METHODS.map((m) => (
@@ -598,12 +632,12 @@ export default function Checkout() {
                   Review Order <ChevronRight size={16} />
                 </button>
               </div>
-            </div>
+            </motion.div>
           )}
 
           {/* ── Step 2: Review & Place Order ── */}
           {step === 2 && (
-            <div className="card-luxury p-6">
+            <motion.div key="step2" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.25 }} className="card-luxury p-6">
               <h2 className="font-serif text-xl font-normal text-brand-brown mb-5">Review Your Order</h2>
               <div className="space-y-3 mb-5">
                 {items.map((item) => (
@@ -648,8 +682,9 @@ export default function Checkout() {
                     : <><Lock size={15} /> {payMethod === "razorpay" ? "Pay" : "Place Order"} — {formatPrice(finalTotal)}</>}
                 </button>
               </div>
-            </div>
+            </motion.div>
           )}
+        </AnimatePresence>
         </div>
 
         {/* ── Order Summary Sidebar ── */}

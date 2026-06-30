@@ -4,14 +4,20 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "AIzaSyB99uqHkQkG87qN89mFr65pW2vG8Q3GuN4",
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "jaishreedryfruits-973dd.firebaseapp.com",
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "jaishreedryfruits-973dd",
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "jaishreedryfruits-973dd.firebasestorage.app",
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "341935442574",
-  appId: process.env.REACT_APP_FIREBASE_APP_ID || "1:341935442574:web:9b46c9578302e20db357df",
-  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID || "G-FQ4730WZ17",
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID,
 };
+
+if (!firebaseConfig.apiKey || !firebaseConfig.projectId) {
+  throw new Error(
+    "Firebase config is missing. Create a .env file (see .env.example) with REACT_APP_FIREBASE_* values before running the build."
+  );
+}
 
 const app = initializeApp(firebaseConfig);
 

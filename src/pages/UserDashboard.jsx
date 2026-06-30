@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Navigate, Link } from "react-router-dom";
 import { Package, Heart, LogOut, Coins, Building2, CheckCircle2, Truck, Star, ChevronRight, RotateCcw } from "lucide-react";
+import { motion } from "framer-motion";
 import { collection, query, where, orderBy, getDocs, doc, getDoc, setDoc, addDoc } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useAuth } from "../context/AuthContext";
 import { useCoins, COINS_RULES } from "../context/CoinsContext";
 import { useWishlist } from "../context/WishlistContext";
-import { DEMO_PRODUCTS, formatPrice, formatDate, getStatusStyle, ORDER_STATUSES } from "../utils/helpers";
+import { formatPrice, formatDate, getStatusStyle, ORDER_STATUSES } from "../utils/helpers";
+import { useProducts } from "../context/ProductsContext";
 import toast from "react-hot-toast";
 
 const TABS = [
@@ -36,6 +38,7 @@ const TIMELINE_STAGES = [
 const GSTIN_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 
 export default function UserDashboard() {
+  const { products: DEMO_PRODUCTS } = useProducts();
   const { user, userProfile, logout } = useAuth();
   const { coins: balance, coinsWorth, history: transactions, loading: coinsLoading } = useCoins() || {};
   const { wishlistIds, removeFromWishlist } = useWishlist();
@@ -164,7 +167,12 @@ export default function UserDashboard() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10 min-h-screen pb-36 md:pb-10">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="max-w-6xl mx-auto px-4 py-10 min-h-screen pb-36 md:pb-10"
+    >
       {/* Header */}
       <div className="text-white rounded-none p-6 mb-8 flex items-center gap-4"
         style={{ background: "linear-gradient(135deg, #1B2E4B 0%, #0B3D2E 100%)" }}>
@@ -642,6 +650,6 @@ export default function UserDashboard() {
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

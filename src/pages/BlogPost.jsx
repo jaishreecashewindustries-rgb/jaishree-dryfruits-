@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { doc, getDoc, collection, getDocs, query, where, limit } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { ArrowLeft, Clock, User, Tag, Calendar } from "lucide-react";
+import { motion } from "framer-motion";
 import { SEED_POSTS } from "./Blog";
 
 export default function BlogPost() {
@@ -70,7 +71,12 @@ export default function BlogPost() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+      className="min-h-screen bg-white"
+    >
       {/* Hero */}
       <div className="relative" style={{ background: "linear-gradient(135deg, #0D1B2A 0%, #1B2E4B 100%)" }}>
         {post.image && (
@@ -223,6 +229,6 @@ export default function BlogPost() {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

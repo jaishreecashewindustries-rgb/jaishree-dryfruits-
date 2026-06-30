@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Minus, Plus, Trash2, ArrowRight, ShoppingBag, Tag, Truck, Lock, Package, RotateCcw, CheckCircle2, X, Coins } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useCart } from "../context/CartContext";
@@ -191,8 +192,17 @@ export default function Cart() {
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Items */}
         <div className="lg:col-span-2 space-y-4">
+          <AnimatePresence initial={false}>
           {items.map((item) => (
-            <div key={`${item.id}-${item.variantId}`} className="card-luxury p-4 flex gap-4">
+            <motion.div
+              key={`${item.id}-${item.variantId}`}
+              layout
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, x: -40, transition: { duration: 0.2 } }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="card-luxury p-4 flex gap-4"
+            >
               <Link to={`/product/${item.id}`}>
                 <img src={item.image} alt={item.name} className="w-24 h-24 object-cover flex-shrink-0" />
               </Link>
@@ -214,8 +224,9 @@ export default function Cart() {
                   <span className="ml-auto text-sm font-bold text-brand-brown">{formatPrice(item.price * item.qty)}</span>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
+          </AnimatePresence>
         </div>
 
         {/* Summary */}

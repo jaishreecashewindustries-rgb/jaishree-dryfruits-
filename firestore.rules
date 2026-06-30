@@ -97,5 +97,19 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    // ── STOCK NOTIFICATIONS (Notify Me) ─────────────────────────────────────
+    match /stock_notifications/{docId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // ── MAIL (Firebase "Trigger Email" extension contract) ──────────────────
+    // Documents written here are picked up by the Trigger Email extension
+    // (if installed) to send transactional emails. Client only ever creates.
+    match /mail/{docId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
   }
 }

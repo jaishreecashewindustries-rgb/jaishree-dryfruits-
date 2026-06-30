@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc, deleteDoc, doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase/config";
 import { Plus, Edit2, Trash2, Search, X, Image, Save } from "lucide-react";
 import { DEMO_PRODUCTS, PRODUCT_CATEGORIES, formatPrice } from "../../utils/helpers";
+import { useProducts } from "../../context/ProductsContext";
 import toast from "react-hot-toast";
 
 const EMPTY_PRODUCT = {
@@ -12,12 +13,20 @@ const EMPTY_PRODUCT = {
 };
 
 export default function ProductManagement() {
+  const { products: liveProducts, loading: liveLoading, refresh: refreshLiveProducts } = useProducts();
   const [products, setProducts] = useState(DEMO_PRODUCTS);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(EMPTY_PRODUCT);
   const [saving, setSaving] = useState(false);
+
+  // Keep this page's working list in sync with the shared live catalogue
+  // (Firestore products merged with any un-overridden demo products) so
+  // products added/edited here actually persist across reloads.
+  useEffect(() => {
+    if (!liveLoading) setProducts(liveProducts);
+  }, [liveProducts, liveLoading]);
 
   const filtered = products.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase())
@@ -76,20 +85,20 @@ export default function ProductManagement() {
         reviewCount: form.reviewCount || 0,
         updatedAt: serverTimestamp(),
       };
-      if (editingId && !DEMO_PRODUCTS.find((p) => p.id === editingId)) {
-        await updateDoc(doc(db, "products", editingId), data);
+      if (editingId) {
+        // Works for both real Firestore products and built-in demo products —
+        // setDoc-with-merge creates a Firestore override using the same id,
+        // so the live catalogue picks it up in place of the static demo entry.
+        await setDoc(doc(db, "products", editingId), data, { merge: true });
         setProducts((prev) => prev.map((p) => p.id === editingId ? { ...data, id: editingId } : p));
         toast.success("Product updated!");
-      } else if (!editingId) {
+      } else {
         const ref = await addDoc(collection(db, "products"), { ...data, createdAt: serverTimestamp() });
         setProducts((prev) => [...prev, { ...data, id: ref.id }]);
         toast.success("Product added!");
-      } else {
-        // demo product — just update local state
-        setProducts((prev) => prev.map((p) => p.id === editingId ? { ...data, id: editingId } : p));
-        toast.success("Product updated (demo mode)!");
       }
       setShowForm(false);
+      refreshLiveProducts();
     } catch (e) {
       toast.error("Failed to save product");
     } finally {
@@ -100,9 +109,10 @@ export default function ProductManagement() {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this product?")) return;
     try {
-      if (!DEMO_PRODUCTS.find((p) => p.id === id)) await deleteDoc(doc(db, "products", id));
+      await deleteDoc(doc(db, "products", id));
       setProducts((prev) => prev.filter((p) => p.id !== id));
       toast.success("Product deleted");
+      refreshLiveProducts();
     } catch { toast.error("Failed to delete"); }
   };
 

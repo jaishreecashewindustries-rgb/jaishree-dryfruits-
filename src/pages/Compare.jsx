@@ -2,10 +2,9 @@ import React from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { ArrowLeft, Check, X, ShoppingCart, Star } from "lucide-react";
 import { motion } from "framer-motion";
-import { DEMO_PRODUCTS, formatPrice } from "../utils/helpers";
+import { formatPrice, per100g } from "../utils/helpers";
+import { useProducts } from "../context/ProductsContext";
 import { useCart } from "../context/CartContext";
-
-const per100g = (price, weight) => { const g = parseFloat(weight); return g ? Math.round(price / g * 100) : null; };
 
 const COMPARE_ROWS = [
   { label: "Category",     key: (p) => p.category || "—" },
@@ -21,6 +20,7 @@ const COMPARE_ROWS = [
 ];
 
 export default function Compare() {
+  const { products: DEMO_PRODUCTS } = useProducts();
   const [params] = useSearchParams();
   const ids = (params.get("ids") || "").split(",").filter(Boolean);
   const { addToCart } = useCart();

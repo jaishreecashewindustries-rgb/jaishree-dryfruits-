@@ -94,13 +94,21 @@ export default function Navbar() {
             </button>
 
             {/* Logo */}
-            <Link to="/" className="flex flex-col items-center group">
-              <span className="font-serif text-xl md:text-2xl font-bold text-brand-brown tracking-wide group-hover:text-brand-gold transition-colors">
-                JAI SHREE
-              </span>
-              <span className="text-[10px] md:text-xs font-semibold text-brand-gold tracking-[0.25em] uppercase">
-                Dryfruits
-              </span>
+            <Link to="/" className="flex items-center gap-2 group">
+              <img
+                src="/logo.png"
+                alt="Jai Shree Dry Fruits"
+                style={{ width: 40, height: 40, objectFit: "contain" }}
+                className="flex-shrink-0 transition-transform duration-300 group-hover:scale-105"
+              />
+              <div className="flex flex-col items-start">
+                <span className="font-serif text-xl md:text-2xl font-bold text-brand-brown tracking-wide leading-none group-hover:text-brand-gold transition-colors">
+                  JAI SHREE
+                </span>
+                <span className="text-[10px] md:text-xs font-semibold text-brand-gold tracking-[0.25em] uppercase">
+                  Dryfruits
+                </span>
+              </div>
             </Link>
 
             {/* Desktop nav */}

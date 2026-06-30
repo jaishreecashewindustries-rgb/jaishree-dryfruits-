@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { SlidersHorizontal, X, ChevronDown } from "lucide-react";
+import { motion } from "framer-motion";
 import ProductCard from "../components/ProductCard";
 import SEO from "../components/SEO";
-import { DEMO_PRODUCTS, PRODUCT_CATEGORIES } from "../utils/helpers";
+import { PRODUCT_CATEGORIES } from "../utils/helpers";
+import { useProducts } from "../context/ProductsContext";
 
 const SORT_OPTIONS = [
   { value: "featured", label: "Featured" },
@@ -14,6 +16,7 @@ const SORT_OPTIONS = [
 ];
 
 export default function Products() {
+  const { products: DEMO_PRODUCTS } = useProducts();
   const [params, setParams] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sort, setSort] = useState("featured");
@@ -46,7 +49,7 @@ export default function Products() {
       case "rating": return [...list].sort((a, b) => b.rating - a.rating);
       default: return list;
     }
-  }, [activeCategory, activeBadge, activeGoal, search, priceRange, sort]);
+  }, [DEMO_PRODUCTS, activeCategory, activeBadge, activeGoal, search, priceRange, sort]);
 
   const GOAL_LABELS = { heart: "Heart Health", brain: "Brain Power", energy: "Energy Boost", immunity: "Immunity", weight: "Weight Loss", bones: "Bone Strength", skin: "Skin & Hair", kids: "Kids" };
   const pageTitle = activeCategory || (activeGoal ? GOAL_LABELS[activeGoal] || activeGoal : "") || activeBadge || (search ? `"${search}"` : "All Products");
@@ -180,7 +183,16 @@ export default function Products() {
           {/* Grid */}
           {filtered.length > 0 ? (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-5">
-              {filtered.map((p) => <ProductCard key={p.id} product={p} />)}
+              {filtered.map((p, i) => (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: Math.min(i, 8) * 0.04, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <ProductCard product={p} />
+                </motion.div>
+              ))}
             </div>
           ) : (
             <div className="text-center py-20">

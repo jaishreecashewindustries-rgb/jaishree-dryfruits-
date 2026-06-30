@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./context/AuthContext";
@@ -8,6 +8,7 @@ import { CoinsProvider } from "./context/CoinsContext";
 import { WishlistProvider } from "./context/WishlistContext";
 import { CompareProvider } from "./context/CompareContext";
 import { SiteSettingsProvider } from "./context/SiteSettingsContext";
+import { ProductsProvider } from "./context/ProductsContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import CartSidebar from "./components/CartSidebar";
@@ -19,36 +20,47 @@ import MobileBottomNav from "./components/MobileBottomNav";
 import ScrollToTop from "./components/ScrollToTop";
 import AbandonedCartReminder from "./components/AbandonedCartReminder";
 
+// Home is eager — it's the most common landing route, no point delaying first paint
 import Home from "./pages/Home";
-import Products from "./pages/Products";
-import ProductDetail from "./pages/ProductDetail";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import Login from "./pages/Login";
-import UserDashboard from "./pages/UserDashboard";
-import Wishlist from "./pages/Wishlist";
-import TrackOrder from "./pages/TrackOrder";
-import SearchResults from "./pages/SearchResults";
-import Compare from "./pages/Compare";
-import NotFound from "./pages/NotFound";
-import FAQ from "./pages/FAQ";
-import Blog from "./pages/Blog";
-import BlogPost from "./pages/BlogPost";
-import SourcingStory from "./pages/SourcingStory";
 
-import AdminLayout from "./pages/admin/AdminLayout";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import ProductManagement from "./pages/admin/ProductManagement";
-import OrderManagement from "./pages/admin/OrderManagement";
-import CustomerManagement from "./pages/admin/CustomerManagement";
-import ReviewManagement from "./pages/admin/ReviewManagement";
-import ColorManagement from "./pages/admin/ColorManagement";
-import CouponManagement from "./pages/admin/CouponManagement";
-import BlogManagement from "./pages/admin/BlogManagement";
-import InquiryManagement from "./pages/admin/InquiryManagement";
-import CoinsManagement from "./pages/admin/CoinsManagement";
-import ContentManagement from "./pages/admin/ContentManagement";
-import LoginSettings from "./pages/admin/LoginSettings";
+// Everything else loads on demand to keep the initial bundle small
+const Products = lazy(() => import("./pages/Products"));
+const ProductDetail = lazy(() => import("./pages/ProductDetail"));
+const Cart = lazy(() => import("./pages/Cart"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const Login = lazy(() => import("./pages/Login"));
+const UserDashboard = lazy(() => import("./pages/UserDashboard"));
+const Wishlist = lazy(() => import("./pages/Wishlist"));
+const TrackOrder = lazy(() => import("./pages/TrackOrder"));
+const SearchResults = lazy(() => import("./pages/SearchResults"));
+const Compare = lazy(() => import("./pages/Compare"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const SourcingStory = lazy(() => import("./pages/SourcingStory"));
+
+const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const ProductManagement = lazy(() => import("./pages/admin/ProductManagement"));
+const OrderManagement = lazy(() => import("./pages/admin/OrderManagement"));
+const CustomerManagement = lazy(() => import("./pages/admin/CustomerManagement"));
+const ReviewManagement = lazy(() => import("./pages/admin/ReviewManagement"));
+const ColorManagement = lazy(() => import("./pages/admin/ColorManagement"));
+const CouponManagement = lazy(() => import("./pages/admin/CouponManagement"));
+const BlogManagement = lazy(() => import("./pages/admin/BlogManagement"));
+const InquiryManagement = lazy(() => import("./pages/admin/InquiryManagement"));
+const CoinsManagement = lazy(() => import("./pages/admin/CoinsManagement"));
+const ContentManagement = lazy(() => import("./pages/admin/ContentManagement"));
+const LoginSettings = lazy(() => import("./pages/admin/LoginSettings"));
+
+function RouteLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-brand-gold border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 function MainLayout({ children }) {
   return (
@@ -71,6 +83,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <SiteSettingsProvider>
+        <ProductsProvider>
         <AuthProvider>
           <LanguageProvider>
             <CoinsProvider>
@@ -85,6 +98,7 @@ export default function App() {
                       }}
                     />
                     <ScrollToTop />
+                    <Suspense fallback={<RouteLoader />}>
                     <Routes>
                       {/* Public routes */}
                       <Route path="/" element={<MainLayout><Home /></MainLayout>} />
@@ -130,12 +144,14 @@ export default function App() {
                       {/* 404 */}
                       <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
                     </Routes>
+                    </Suspense>
                   </CompareProvider>
                 </WishlistProvider>
               </CartProvider>
             </CoinsProvider>
           </LanguageProvider>
         </AuthProvider>
+        </ProductsProvider>
       </SiteSettingsProvider>
     </BrowserRouter>
   );

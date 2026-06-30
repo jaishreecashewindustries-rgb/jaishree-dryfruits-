@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Clock, User, ArrowRight, Tag } from "lucide-react";
+import { motion } from "framer-motion";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "../firebase/config";
 
@@ -157,21 +158,29 @@ export default function Blog() {
 
         {/* Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(search || activeTag !== "All" ? filtered : rest).map(post => (
-            <Link key={post.id} to={`/blog/${post.id}`} className="group card-luxury overflow-hidden block">
-              <div className="relative overflow-hidden" style={{ height: 200 }}>
-                <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                <span className="absolute top-3 left-3 bg-white text-brand-brown text-xs font-semibold px-2 py-1">{post.category}</span>
-              </div>
-              <div className="p-5">
-                <h3 className="font-serif text-lg text-brand-brown font-normal leading-snug mb-3 group-hover:text-brand-gold transition-colors line-clamp-2">{post.title}</h3>
-                <p className="text-brand-text-soft text-xs leading-relaxed mb-4 line-clamp-3">{post.excerpt}</p>
-                <div className="flex items-center justify-between text-xs text-gray-400 border-t border-gray-100 pt-3">
-                  <span className="flex items-center gap-1.5"><User size={11} />{post.author}</span>
-                  <span className="flex items-center gap-1.5"><Clock size={11} />{post.readTime} read</span>
+          {(search || activeTag !== "All" ? filtered : rest).map((post, i) => (
+            <motion.div
+              key={post.id}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-60px" }}
+              transition={{ duration: 0.35, delay: Math.min(i, 6) * 0.04, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <Link to={`/blog/${post.id}`} className="group card-luxury overflow-hidden block">
+                <div className="relative overflow-hidden" style={{ height: 200 }}>
+                  <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+                  <span className="absolute top-3 left-3 bg-white text-brand-brown text-xs font-semibold px-2 py-1">{post.category}</span>
                 </div>
-              </div>
-            </Link>
+                <div className="p-5">
+                  <h3 className="font-serif text-lg text-brand-brown font-normal leading-snug mb-3 group-hover:text-brand-gold transition-colors line-clamp-2">{post.title}</h3>
+                  <p className="text-brand-text-soft text-xs leading-relaxed mb-4 line-clamp-3">{post.excerpt}</p>
+                  <div className="flex items-center justify-between text-xs text-gray-400 border-t border-gray-100 pt-3">
+                    <span className="flex items-center gap-1.5"><User size={11} />{post.author}</span>
+                    <span className="flex items-center gap-1.5"><Clock size={11} />{post.readTime} read</span>
+                  </div>
+                </div>
+              </Link>
+            </motion.div>
           ))}
         </div>
 

@@ -4,9 +4,11 @@ import { Heart, ShoppingBag, Trash2, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWishlist } from "../context/WishlistContext";
 import { useCart } from "../context/CartContext";
-import { DEMO_PRODUCTS, formatPrice } from "../utils/helpers";
+import { formatPrice } from "../utils/helpers";
+import { useProducts } from "../context/ProductsContext";
 
 export default function Wishlist() {
+  const { products: DEMO_PRODUCTS } = useProducts();
   const { wishlistIds, removeFromWishlist } = useWishlist();
   const { addToCart } = useCart();
 

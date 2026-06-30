@@ -1,21 +1,31 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Star, Heart, ShoppingCart } from "lucide-react";
+import { Star, Heart, ShoppingCart, BellRing, CheckCircle2 } from "lucide-react";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../firebase/config";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { useLanguage } from "../context/LanguageContext";
-import { formatPrice, discountPercent } from "../utils/helpers";
+import { useAuth } from "../context/AuthContext";
+import { formatPrice, discountPercent, per100g } from "../utils/helpers";
+import toast from "react-hot-toast";
 
 export default function ProductCard({ product }) {
   const { addToCart } = useCart();
   const { isWishlisted, toggleWishlist } = useWishlist();
   const { tr } = useLanguage();
+  const { user } = useAuth();
   const [selectedVariant, setSelectedVariant] = useState(product.variants?.[0]);
   const [justAdded, setJustAdded] = useState(false);
+  const [notifying, setNotifying] = useState(false);
+  const [notified, setNotified] = useState(false);
   const wishlisted = isWishlisted(product.id);
+
+  const outOfStock = (selectedVariant?.stock ?? 1) <= 0;
 
   const handleAddToCart = (e) => {
     e.stopPropagation();
+    if (outOfStock) return;
     addToCart({
       id: product.id,
       variantId: selectedVariant.id,
@@ -28,9 +38,35 @@ export default function ProductCard({ product }) {
     setTimeout(() => setJustAdded(false), 1400);
   };
 
+  const handleNotifyMe = async (e) => {
+    e.stopPropagation();
+    if (notifying || notified) return;
+    const email = user?.email || window.prompt("Enter your email — we'll let you know when this is back in stock:");
+    if (!email) return;
+    setNotifying(true);
+    try {
+      await addDoc(collection(db, "stock_notifications"), {
+        email,
+        productId: product.id,
+        productName: product.name,
+        variant: selectedVariant?.weight || "",
+        notified: false,
+        createdAt: serverTimestamp(),
+      });
+      setNotified(true);
+      toast.success("We'll email you when it's back!");
+    } catch {
+      toast.error("Could not save your request — please try again");
+    } finally {
+      setNotifying(false);
+    }
+  };
+
   const discount = selectedVariant?.originalPrice
     ? discountPercent(selectedVariant.originalPrice, selectedVariant.price)
     : 0;
+
+  const per100gValue = selectedVariant ? per100g(selectedVariant.price, selectedVariant.weight) : null;
 
   const badgeColors = {
     "Best Seller": "badge-gold",
@@ -63,6 +99,11 @@ export default function ProductCard({ product }) {
         <div className="absolute top-3 left-3 flex flex-col gap-1.5 pointer-events-none">
           {product.badge && <span className={badgeColors[product.badge] || "badge-gold"}>{product.badge}</span>}
           {discount >= 5 && <span className="badge-sale">-{discount}%</span>}
+          {outOfStock && (
+            <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-full bg-gray-700 text-white">
+              Out of Stock
+            </span>
+          )}
         </div>
 
         {/* Wishlist — standalone button, never inside <a> */}
@@ -80,15 +121,28 @@ export default function ProductCard({ product }) {
           className="absolute inset-x-0 bottom-0 p-2.5 translate-y-full group-hover:translate-y-0 transition-transform duration-300 z-10"
           style={{ background: "linear-gradient(to top, rgba(11,61,46,0.92), rgba(11,61,46,0.7))" }}
         >
-          <button
-            type="button"
-            onClick={handleAddToCart}
-            className="w-full flex items-center justify-center gap-1.5 text-white font-semibold py-2 rounded-lg text-xs transition-all duration-300"
-            style={{ background: justAdded ? "#22C55E" : "rgba(255,255,255,0.15)" }}
-          >
-            <ShoppingCart size={13} />
-            {justAdded ? "Added ✓" : tr("addToCart")}
-          </button>
+          {outOfStock ? (
+            <button
+              type="button"
+              onClick={handleNotifyMe}
+              disabled={notifying || notified}
+              className="w-full flex items-center justify-center gap-1.5 text-white font-semibold py-2 rounded-lg text-xs transition-all duration-300"
+              style={{ background: notified ? "#22C55E" : "rgba(255,255,255,0.15)" }}
+            >
+              {notified ? <CheckCircle2 size={13} /> : <BellRing size={13} />}
+              {notified ? "We'll notify you" : notifying ? "Saving..." : "Notify Me"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              className="w-full flex items-center justify-center gap-1.5 text-white font-semibold py-2 rounded-lg text-xs transition-all duration-300"
+              style={{ background: justAdded ? "#22C55E" : "rgba(255,255,255,0.15)" }}
+            >
+              <ShoppingCart size={13} />
+              {justAdded ? "Added ✓" : tr("addToCart")}
+            </button>
+          )}
         </div>
       </div>
 
@@ -140,12 +194,20 @@ export default function ProductCard({ product }) {
 
         {/* Price */}
         <div className="mt-auto">
-          <span
-            key={selectedVariant?.id}
-            className="price-fade font-serif text-brand-brown font-semibold text-lg inline-block"
-          >
-            {formatPrice(selectedVariant?.price)}
-          </span>
+          <div className="flex items-baseline gap-2 flex-wrap">
+            <span
+              key={selectedVariant?.id}
+              className="price-fade font-serif text-brand-brown font-semibold text-lg inline-block"
+            >
+              {formatPrice(selectedVariant?.price)}
+            </span>
+            {selectedVariant?.originalPrice > selectedVariant?.price && (
+              <span className="text-xs text-gray-400 line-through">{formatPrice(selectedVariant.originalPrice)}</span>
+            )}
+          </div>
+          {per100gValue != null && (
+            <p className="text-[11px] text-gray-400 mt-0.5">₹{per100gValue} / 100g</p>
+          )}
         </div>
       </div>
     </div>

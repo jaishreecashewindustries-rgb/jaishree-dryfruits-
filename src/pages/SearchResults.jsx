@@ -2,10 +2,12 @@ import React, { useMemo } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { Search, ArrowLeft, SlidersHorizontal } from "lucide-react";
 import { motion } from "framer-motion";
-import { DEMO_PRODUCTS, formatPrice } from "../utils/helpers";
+import { formatPrice } from "../utils/helpers";
+import { useProducts } from "../context/ProductsContext";
 import ProductCard from "../components/ProductCard";
 
 export default function SearchResults() {
+  const { products: DEMO_PRODUCTS } = useProducts();
   const [params] = useSearchParams();
   const q = (params.get("q") || "").trim();
 
@@ -18,7 +20,7 @@ export default function SearchResults() {
       p.description?.toLowerCase().includes(lower) ||
       p.tags?.some((t) => t.toLowerCase().includes(lower))
     );
-  }, [q]);
+  }, [DEMO_PRODUCTS, q]);
 
   // Popular suggestions if no results
   const suggestions = ["Almonds", "Cashews", "Pistachios", "Walnuts", "Dates", "Gift Hampers"];

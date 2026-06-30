@@ -6,13 +6,14 @@ import { useWishlist } from "../context/WishlistContext";
 import ProductCard from "../components/ProductCard";
 import SEO from "../components/SEO";
 import B2BGiftingForm from "../components/B2BGiftingForm";
-import { DEMO_PRODUCTS, formatPrice, discountPercent, whatsappProductLink, per100g } from "../utils/helpers";
+import { formatPrice, discountPercent, whatsappProductLink, per100g } from "../utils/helpers";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import ImageLightbox from "../components/ImageLightbox";
 import MobileCartSheet from "../components/MobileCartSheet";
-import { collection, query, where, orderBy, limit, getDocs } from "firebase/firestore";
+import { collection, query, where, orderBy, limit, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase/config";
+import { useProducts } from "../context/ProductsContext";
 
 // Small curated fallback — shown only when a product has no live Firestore reviews yet
 const FALLBACK_REVIEWS = [
@@ -78,6 +79,7 @@ function relativeDate(dateStr) {
 
 export default function ProductDetail() {
   const { id } = useParams();
+  const { products: DEMO_PRODUCTS } = useProducts();
   const product = DEMO_PRODUCTS.find((p) => p.id === id) || DEMO_PRODUCTS[0];
   const [selectedImg, setSelectedImg] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState(product.variants[0]);
@@ -89,6 +91,8 @@ export default function ProductDetail() {
   const [showB2BForm, setShowB2BForm] = useState(false);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [localReviews, setLocalReviews] = useState([]);
+  const [notifying, setNotifying] = useState(false);
+  const [notified, setNotified] = useState(false);
   const DUMMY_REVIEWS = useProductReviews(product.name);
   const buyRef = useRef(null);
   const { addToCart } = useCart();
@@ -123,6 +127,29 @@ export default function ProductDetail() {
 
   const handleAddToCart = () => {
     addToCart({ id: product.id, variantId: selectedVariant.id, name: product.name, variant: selectedVariant.weight, price: selectedVariant.price, image: product.images[0], qty });
+  };
+
+  const handleNotifyMe = async () => {
+    if (notifying || notified) return;
+    const email = window.prompt("Enter your email — we'll let you know when this is back in stock:");
+    if (!email) return;
+    setNotifying(true);
+    try {
+      await addDoc(collection(db, "stock_notifications"), {
+        email,
+        productId: product.id,
+        productName: product.name,
+        variant: selectedVariant?.weight || "",
+        notified: false,
+        createdAt: serverTimestamp(),
+      });
+      setNotified(true);
+      toast.success("We'll email you when it's back!");
+    } catch {
+      toast.error("Could not save your request — please try again");
+    } finally {
+      setNotifying(false);
+    }
   };
 
   const handleBuyNow = () => {
@@ -236,12 +263,20 @@ export default function ProductDetail() {
 
           {/* CTAs */}
           <div ref={buyRef} className="flex gap-3 flex-wrap">
-            <button onClick={handleAddToCart} className="flex-1 btn-brown flex items-center justify-center gap-2 py-3.5">
-              <ShoppingCart size={18} /> Add to Cart
-            </button>
-            <button onClick={handleBuyNow} className="flex-1 btn-primary flex items-center justify-center gap-2 py-3.5">
-              <Zap size={18} /> Buy Now
-            </button>
+            {selectedVariant.stock > 0 ? (
+              <>
+                <button onClick={handleAddToCart} className="flex-1 btn-brown flex items-center justify-center gap-2 py-3.5">
+                  <ShoppingCart size={18} /> Add to Cart
+                </button>
+                <button onClick={handleBuyNow} className="flex-1 btn-primary flex items-center justify-center gap-2 py-3.5">
+                  <Zap size={18} /> Buy Now
+                </button>
+              </>
+            ) : (
+              <button onClick={handleNotifyMe} disabled={notifying || notified} className="flex-1 btn-brown flex items-center justify-center gap-2 py-3.5">
+                {notified ? "We'll notify you" : notifying ? "Saving..." : "Notify Me When Available"}
+              </button>
+            )}
             <button
               onClick={() => toggleWishlist(product.id)}
               className={`w-12 h-12 border-2 rounded-xl flex items-center justify-center transition-all ${wishlisted ? "border-red-400 bg-red-50" : "border-gray-200 hover:border-brand-gold"}`}

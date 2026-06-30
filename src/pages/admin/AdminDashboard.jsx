@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Package, Building2, Layers, ChevronDown, RefreshCw, Save } from "lucide-react";
 import { collection, getDocs, doc, updateDoc, query, orderBy, serverTimestamp, setDoc } from "firebase/firestore";
 import { db } from "../../firebase/config";
-import { formatPrice, formatDate, getStatusStyle, ORDER_STATUSES, DEMO_PRODUCTS } from "../../utils/helpers";
+import { formatPrice, formatDate, getStatusStyle, ORDER_STATUSES } from "../../utils/helpers";
+import { useProducts } from "../../context/ProductsContext";
 import toast from "react-hot-toast";
 
 const VIEWS = [
@@ -14,6 +15,7 @@ const VIEWS = [
 const STATUS_FLOW = ["pending", "processing", "shipped", "delivered", "cancelled"];
 
 export default function AdminDashboard() {
+  const { products: DEMO_PRODUCTS } = useProducts();
   const [view, setView] = useState("pipeline");
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
