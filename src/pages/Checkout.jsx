@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
-import { CheckCircle, ChevronRight, Lock, Package, CreditCard, Banknote, MapPin, Loader2, AlertCircle, CheckCircle2, ShoppingCart, ChevronDown, Tag, Coins, X } from "lucide-react";
+import { CheckCircle, ChevronRight, Lock, Package, CreditCard, Banknote, MapPin, Loader2, AlertCircle, CheckCircle2, ShoppingCart, ChevronDown, Tag, Coins, X, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
-import { db } from "../firebase/config";
+import { db, verifyAuth } from "../firebase/config";
+import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import emailjs from "@emailjs/browser";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
@@ -76,6 +77,16 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [orderId, setOrderId] = useState(null);
   const [coinsEarned, setCoinsEarned] = useState(0);
+
+  // Phone OTP verification — uses a secondary Firebase Auth instance so it
+  // never disturbs an already-logged-in user's session
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [verifiedPhone, setVerifiedPhone] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const recaptchaVerifierRef = useRef(null);
+  const confirmationResultRef = useRef(null);
 
   // Coupon — applicable directly from Checkout, pre-filled if already applied on Cart
   const [couponInput, setCouponInput] = useState("");
@@ -166,6 +177,13 @@ export default function Checkout() {
     setAddress(prev => ({ ...prev, [name]: value }));
     if (fieldErrors[name]) setFieldErrors(prev => ({ ...prev, [name]: "" }));
 
+    // Changing the phone number invalidates any previous OTP verification
+    if (name === "phone") {
+      setPhoneVerified(false);
+      setOtpSent(false);
+      setOtp(["", "", "", "", "", ""]);
+    }
+
     // Pincode auto-fill
     if (name === "pincode") {
       setPinVerified(false);
@@ -185,11 +203,65 @@ export default function Checkout() {
     }
   };
 
+  const handleSendCheckoutOTP = async () => {
+    const digits = address.phone.replace(/\D/g, "");
+    if (!/^[6-9]\d{9}$/.test(digits)) {
+      setFieldErrors(prev => ({ ...prev, phone: "Enter a valid 10-digit Indian mobile number" }));
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      if (!recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current = new RecaptchaVerifier(verifyAuth, "checkout-recaptcha-container", { size: "invisible" });
+      }
+      confirmationResultRef.current = await signInWithPhoneNumber(verifyAuth, `+91${digits}`, recaptchaVerifierRef.current);
+      setOtpSent(true);
+      toast.success("OTP sent to your mobile number");
+    } catch (err) {
+      toast.error(err.message?.replace("Firebase: ", "").split(" (auth/")[0] || "Failed to send OTP");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleOtpDigit = (i, val) => {
+    if (!/^\d?$/.test(val)) return;
+    const next = [...otp];
+    next[i] = val;
+    setOtp(next);
+    if (val && i < 5) document.getElementById(`checkout-otp-${i + 1}`)?.focus();
+  };
+
+  const handleOtpKeyDown = (i, e) => {
+    if (e.key === "Backspace" && !otp[i] && i > 0) document.getElementById(`checkout-otp-${i - 1}`)?.focus();
+  };
+
+  const handleVerifyCheckoutOTP = async () => {
+    const code = otp.join("");
+    if (code.length !== 6) { toast.error("Enter the 6-digit OTP"); return; }
+    setOtpLoading(true);
+    try {
+      await confirmationResultRef.current.confirm(code);
+      // Discard this throwaway session immediately — it only existed to
+      // prove the customer has access to this number, not to log them in.
+      await verifyAuth.signOut();
+      setPhoneVerified(true);
+      setVerifiedPhone(address.phone.replace(/\D/g, ""));
+      toast.success("Phone number verified!");
+    } catch (err) {
+      toast.error(err.message?.replace("Firebase: ", "").split(" (auth/")[0] || "Invalid OTP");
+      setOtp(["", "", "", "", "", ""]);
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
   const validateAddress = () => {
     const errors = {};
     if (!address.name.trim()) errors.name = "Full name is required";
     if (!address.phone.trim()) errors.phone = "Phone number is required";
     else if (!/^[6-9]\d{9}$/.test(address.phone.replace(/\s/g, ""))) errors.phone = "Enter a valid 10-digit Indian mobile number";
+    else if (!phoneVerified || verifiedPhone !== address.phone.replace(/\D/g, "")) errors.phone = "Please verify your mobile number with OTP";
     if (user === null && !address.email.trim()) errors.email = "Email is required for order updates";
     else if (address.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address.email)) errors.email = "Enter a valid email address";
     if (!address.address.trim()) errors.address = "Street address is required";
@@ -481,19 +553,70 @@ export default function Checkout() {
                   {fieldErrors.name && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle size={11} />{fieldErrors.name}</p>}
                 </div>
 
-                {/* Phone — Required */}
+                {/* Phone — Required, OTP-verified */}
                 <div>
                   <label className="text-xs font-semibold text-gray-600 block mb-1.5">
                     Mobile Number <span className="text-red-400">*</span>
                   </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">+91</span>
-                    <input name="phone" value={address.phone} onChange={handleAddr}
-                      type="tel" maxLength={10} placeholder="10-digit mobile"
-                      className={`input-field pl-10 ${fieldErrors.phone ? "border-red-400" : ""}`} />
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">+91</span>
+                      <input name="phone" value={address.phone} onChange={handleAddr}
+                        type="tel" maxLength={10} placeholder="10-digit mobile"
+                        disabled={phoneVerified}
+                        className={`input-field pl-10 ${fieldErrors.phone ? "border-red-400" : ""} ${phoneVerified ? "bg-green-50" : ""}`} />
+                    </div>
+                    {phoneVerified ? (
+                      <span className="flex items-center gap-1.5 px-3 text-xs font-semibold text-green-600 whitespace-nowrap">
+                        <ShieldCheck size={15} /> Verified
+                      </span>
+                    ) : !otpSent ? (
+                      <button
+                        type="button"
+                        onClick={handleSendCheckoutOTP}
+                        disabled={otpLoading || !/^[6-9]\d{9}$/.test(address.phone.replace(/\D/g, ""))}
+                        className="btn-outline text-xs px-4 whitespace-nowrap disabled:opacity-40"
+                      >
+                        {otpLoading ? "Sending..." : "Send OTP"}
+                      </button>
+                    ) : null}
                   </div>
                   {fieldErrors.phone && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle size={11} />{fieldErrors.phone}</p>}
+
+                  {otpSent && !phoneVerified && (
+                    <div className="mt-3 p-3 bg-brand-cream/60 rounded-xl">
+                      <p className="text-xs text-gray-600 mb-2">Enter the 6-digit OTP sent to +91{address.phone}</p>
+                      <div className="flex items-center gap-2">
+                        <div className="flex gap-1.5">
+                          {otp.map((d, i) => (
+                            <input
+                              key={i}
+                              id={`checkout-otp-${i}`}
+                              value={d}
+                              onChange={(e) => handleOtpDigit(i, e.target.value)}
+                              onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                              maxLength={1}
+                              inputMode="numeric"
+                              className="w-9 h-10 text-center border border-gray-200 rounded-lg text-sm font-semibold focus:border-brand-gold focus:outline-none"
+                            />
+                          ))}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleVerifyCheckoutOTP}
+                          disabled={otpLoading || otp.join("").length !== 6}
+                          className="btn-primary text-xs px-4 py-2.5 whitespace-nowrap disabled:opacity-40"
+                        >
+                          {otpLoading ? "..." : "Verify"}
+                        </button>
+                      </div>
+                      <button type="button" onClick={handleSendCheckoutOTP} disabled={otpLoading} className="text-[11px] text-brand-gold hover:underline mt-2">
+                        Resend OTP
+                      </button>
+                    </div>
+                  )}
                 </div>
+                <div id="checkout-recaptcha-container" />
 
                 {/* Email — Required for guests, optional for logged in */}
                 <div>

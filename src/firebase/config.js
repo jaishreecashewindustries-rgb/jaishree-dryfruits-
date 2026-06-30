@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
@@ -26,5 +26,13 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
+
+// Secondary app instance — used only for one-off phone OTP verification
+// (e.g. confirming a checkout phone number) so it never touches or
+// replaces the main `auth` session of an already-logged-in user.
+const verifyApp = getApps().some(a => a.name === "phone-verify")
+  ? getApps().find(a => a.name === "phone-verify")
+  : initializeApp(firebaseConfig, "phone-verify");
+export const verifyAuth = getAuth(verifyApp);
 
 export default app;
