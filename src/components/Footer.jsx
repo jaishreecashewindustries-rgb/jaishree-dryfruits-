@@ -257,11 +257,13 @@ export default function Footer() {
             </li>
           </ul>
           <a
-            href={`tel:+91${phoneDigits.slice(-10)}`}
+            href={`https://wa.me/91${phoneDigits.slice(-10)}`}
+            target="_blank"
+            rel="noreferrer"
             className="mt-6 inline-flex items-center gap-2 text-xs font-semibold px-4 py-2.5 transition-all hover:scale-105"
             style={{ background: "rgba(201,168,76,0.12)", color: "#C9A84C", border: "1px solid rgba(201,168,76,0.3)" }}
           >
-            <Phone size={12} /> Call Us Now
+            <Phone size={12} /> Chat on WhatsApp
           </a>
         </FadeIn>
       </div>

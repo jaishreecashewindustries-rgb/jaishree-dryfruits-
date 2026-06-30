@@ -21,6 +21,8 @@ import ScrollToTop from "./components/ScrollToTop";
 import AbandonedCartReminder from "./components/AbandonedCartReminder";
 import LiveSocialProof from "./components/LiveSocialProof";
 import LeadCapturePopup from "./components/LeadCapturePopup";
+import CustomCursor from "./components/CustomCursor";
+import PageTransition from "./components/PageTransition";
 
 // Home is eager — it's the most common landing route, no point delaying first paint
 import Home from "./pages/Home";
@@ -70,7 +72,7 @@ function MainLayout({ children }) {
       <ScrollProgress />
       <Navbar />
       <CartSidebar />
-      <main>{children}</main>
+      <main><PageTransition>{children}</PageTransition></main>
       <Footer />
       <WhatsAppButton />
       <StickyCTA />
@@ -86,6 +88,7 @@ function MainLayout({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <CustomCursor />
       <SiteSettingsProvider>
         <ProductsProvider>
         <AuthProvider>

@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ImageLightbox from "../components/ImageLightbox";
 import MobileCartSheet from "../components/MobileCartSheet";
 import PincodeEstimator from "../components/PincodeEstimator";
+import MagneticButton from "../components/MagneticButton";
 import { collection, query, where, orderBy, limit, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useProducts } from "../context/ProductsContext";
@@ -310,9 +311,11 @@ export default function ProductDetail() {
           <div ref={buyRef} className="flex gap-3 flex-wrap">
             {selectedVariant.stock > 0 ? (
               <>
-                <button onClick={handleAddToCart} className="flex-1 btn-brown flex items-center justify-center gap-2 py-3.5">
-                  <ShoppingCart size={18} /> Add to Cart
-                </button>
+                <MagneticButton className="flex-1" strength={0.25} onClick={handleAddToCart}>
+                  <span className="btn-brown flex items-center justify-center gap-2 py-3.5 w-full">
+                    <ShoppingCart size={18} /> Add to Cart
+                  </span>
+                </MagneticButton>
                 <button onClick={handleBuyNow} className="flex-1 btn-primary flex items-center justify-center gap-2 py-3.5">
                   <Zap size={18} /> Buy Now
                 </button>

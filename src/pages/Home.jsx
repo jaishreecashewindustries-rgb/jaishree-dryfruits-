@@ -7,7 +7,7 @@ import {
   ArrowRight, Shield, Truck, Award, RefreshCw, Star,
   Leaf, Package, Zap, Gift, CheckCircle, Phone, ChevronLeft, ChevronRight,
   Heart, Activity, Flame, ShieldCheck, Scale, Dumbbell, Sparkles, Users,
-  ShoppingBag, Tag, Coins, TrendingUp, BookOpen,
+  ShoppingBag, Tag, Coins, TrendingUp, BookOpen, MessageCircle,
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 import ProductCard from "../components/ProductCard";
@@ -16,6 +16,7 @@ import AnimatedCounter from "../components/AnimatedCounter";
 import MagneticButton from "../components/MagneticButton";
 import SEO from "../components/SEO";
 import B2BGiftingForm from "../components/B2BGiftingForm";
+import TestimonialsCarousel from "../components/TestimonialsCarousel";
 import { formatPrice } from "../utils/helpers";
 import { useProducts } from "../context/ProductsContext";
 
@@ -159,7 +160,6 @@ function useLiveTestimonials() {
 export default function Home() {
   const { products: DEMO_PRODUCTS } = useProducts();
   const featured = DEMO_PRODUCTS.filter((p) => p.featured).slice(0, 8);
-  const [testimonialIdx, setTestimonialIdx] = useState(0);
   const [showB2BForm, setShowB2BForm] = useState(false);
   const [productsReady, setProductsReady] = useState(false);
 
@@ -174,11 +174,6 @@ export default function Home() {
   const heroContentOpacity = useTransform(heroScroll, [0, 0.65], [1, 0]);
   const liveTestimonials = useLiveTestimonials();
   const { tr } = useLanguage();
-
-  useEffect(() => {
-    const t = setInterval(() => setTestimonialIdx(i => (i + 1) % liveTestimonials.length), 4000);
-    return () => clearInterval(t);
-  }, [liveTestimonials.length]);
 
   return (
     <div className="min-h-screen overflow-x-hidden">
@@ -232,24 +227,24 @@ export default function Home() {
           <motion.h1
             initial="hidden"
             animate="visible"
-            variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
+            variants={{ visible: { transition: { staggerChildren: 0.025 } } }}
             className="font-serif font-bold text-white mb-3 drop-shadow-lg"
             style={{ fontSize: "clamp(2rem, 8vw, 5rem)", lineHeight: 1.1, letterSpacing: "-0.01em" }}
           >
-            {["India's", "Finest"].map((word) => (
+            {"India's Finest".split("").map((ch, i) => (
               <motion.span
-                key={word}
-                variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } } }}
-                style={{ display: "inline-block", marginRight: "0.25em" }}
-              >{word}</motion.span>
+                key={i}
+                variants={{ hidden: { opacity: 0, y: 24, rotateX: -40 }, visible: { opacity: 1, y: 0, rotateX: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } } }}
+                style={{ display: "inline-block" }}
+              >{ch === " " ? " " : ch}</motion.span>
             ))}
             <br />
-            {["Dry", "Fruits"].map((word) => (
+            {"Dry Fruits".split("").map((ch, i) => (
               <motion.span
-                key={word}
-                variants={{ hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } } }}
-                style={{ display: "inline-block", marginRight: "0.25em", color: "#E8C97A" }}
-              >{word}</motion.span>
+                key={i}
+                variants={{ hidden: { opacity: 0, y: 24, rotateX: -40 }, visible: { opacity: 1, y: 0, rotateX: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } } }}
+                style={{ display: "inline-block", color: "#E8C97A" }}
+              >{ch === " " ? " " : ch}</motion.span>
             ))}
           </motion.h1>
 
@@ -268,7 +263,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.25, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="flex items-center gap-3"
+            className="flex items-center justify-center gap-3 flex-wrap"
           >
             <Link
               to="/products"
@@ -793,48 +788,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══ TESTIMONIALS — auto-sliding carousel ═══════════════ */}
+      {/* ═══ TESTIMONIALS — glass 3D carousel ═══════════════════ */}
       <section className="pt-10 pb-8" style={{ background: "linear-gradient(180deg, #fff 0%, #F4F6FF 100%)" }}>
         <FadeUp className="px-4">
           <h2 className="section-title">{tr("testimonials")}</h2>
           <div className="gold-divider" />
           <p className="text-center text-gray-400 text-sm mb-8">Real reviews from verified buyers</p>
         </FadeUp>
-        {/* Sliding track — seamless loop */}
-        <div className="relative overflow-hidden">
-          <div className="flex gap-4 animate-[testimonialScroll_28s_linear_infinite]" style={{ width: "max-content" }}>
-            {[...liveTestimonials, ...liveTestimonials, ...liveTestimonials].map((t, i) => (
-              <div key={i} className="flex-shrink-0 w-72 rounded-2xl p-5"
-                style={{ background: "linear-gradient(145deg, #fff 0%, #FDFAF3 100%)", border: "1px solid rgba(201,168,76,0.12)", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}>
-                <div className="flex gap-0.5 mb-3">
-                  {[...Array(t.rating)].map((_, j) => <Star key={j} size={13} className="fill-amber-400 text-amber-400" />)}
-                </div>
-                <p className="text-gray-500 text-sm leading-relaxed mb-4">"{t.text}"</p>
-                <div className="border-t border-brand-gold/10 pt-3 flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-brand-brown text-sm">{t.name}</p>
-                    <p className="text-xs text-gray-400">{t.city}</p>
-                  </div>
-                  <span className="text-xs text-brand-gold px-2 py-1 rounded-lg"
-                    style={{ background: "rgba(201,168,76,0.1)", border: "1px solid rgba(201,168,76,0.2)" }}>
-                    {t.product}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-          {/* Fade edges */}
-          <div className="absolute inset-y-0 left-0 w-12 pointer-events-none" style={{ background: "linear-gradient(to right, #fff, transparent)" }} />
-          <div className="absolute inset-y-0 right-0 w-12 pointer-events-none" style={{ background: "linear-gradient(to left, #F4F6FF, transparent)" }} />
-        </div>
-        {/* Dot indicators */}
-        <div className="flex justify-center gap-2 mt-6">
-          {liveTestimonials.map((_, i) => (
-            <button key={i} onClick={() => setTestimonialIdx(i)}
-              className="rounded-full transition-all duration-300"
-              style={{ width: testimonialIdx === i ? 20 : 8, height: 8, background: testimonialIdx === i ? "#C9A84C" : "#D1D5DB" }} />
-          ))}
-        </div>
+        <TestimonialsCarousel testimonials={liveTestimonials} />
       </section>
 
       {/* ═══ JS COINS LOYALTY BANNER ═════════════════════════════ */}
@@ -1006,11 +967,13 @@ export default function Home() {
               <p className="text-white/50 text-xs mt-1">Our experts are here for product queries &amp; custom gift hampers</p>
             </div>
             <div className="flex gap-3 flex-shrink-0">
-              <a href="tel:+917568577968"
-                className="flex items-center gap-2 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-all hover:scale-105"
-                style={{ background: "linear-gradient(135deg, #C9A84C, #E2C06A)", color: "#1B2E4B" }}>
-                <Phone size={14} /> Call Us Now
-              </a>
+              <MagneticButton>
+                <a href="https://wa.me/917568577968" target="_blank" rel="noreferrer"
+                  className="flex items-center gap-2 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-all hover:scale-105"
+                  style={{ background: "linear-gradient(135deg, #C9A84C, #E2C06A)", color: "#1B2E4B" }}>
+                  <MessageCircle size={14} /> Chat on WhatsApp
+                </a>
+              </MagneticButton>
               <MagneticButton>
                 <Link to="/products"
                   className="flex items-center gap-2 font-semibold px-6 py-3 rounded-xl text-sm transition-all hover:scale-105 border border-white/20"
