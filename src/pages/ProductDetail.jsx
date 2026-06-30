@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import ImageLightbox from "../components/ImageLightbox";
 import MobileCartSheet from "../components/MobileCartSheet";
+import PincodeEstimator from "../components/PincodeEstimator";
 import { collection, query, where, orderBy, limit, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useProducts } from "../context/ProductsContext";
@@ -93,6 +94,7 @@ export default function ProductDetail() {
   const [localReviews, setLocalReviews] = useState([]);
   const [notifying, setNotifying] = useState(false);
   const [notified, setNotified] = useState(false);
+  const [viewerCount, setViewerCount] = useState(() => 8 + (product.id.charCodeAt(0) % 18));
   const DUMMY_REVIEWS = useProductReviews(product.name);
   const buyRef = useRef(null);
   const { addToCart } = useCart();
@@ -107,6 +109,14 @@ export default function ProductDetail() {
     if (buyRef.current) observer.observe(buyRef.current);
     return () => observer.disconnect();
   }, []);
+
+  // Gentle viewer-count fluctuation — urgency signal, resets per product
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setViewerCount((c) => Math.max(5, c + (Math.random() > 0.5 ? 1 : -1)));
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [product.id]);
 
   // Track recently viewed
   useEffect(() => {
@@ -213,6 +223,13 @@ export default function ProductDetail() {
               <span className="text-xs text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full font-medium flex items-center gap-1"><Flame size={10} /> Popular</span>
               <span className="text-sm text-green-600 font-medium flex items-center gap-1"><CheckCircle size={13} /> In Stock</span>
             </div>
+            <p className="text-xs text-orange-500 font-medium mt-2 flex items-center gap-1.5">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500" />
+              </span>
+              {viewerCount} people viewing now
+            </p>
           </div>
 
           {/* Price */}
@@ -222,18 +239,34 @@ export default function ProductDetail() {
 
           {/* Variants */}
           <div>
-            <p className="text-xs font-bold uppercase tracking-[2.5px] text-brand-brown mb-3">Size / Weight</p>
+            <p className="text-xs font-bold uppercase tracking-[2.5px] text-brand-brown mb-3">Size / Weight — <span className="font-normal normal-case text-gray-400">larger packs save more</span></p>
             <div className="flex gap-2 flex-wrap">
-              {product.variants.map((v) => (
-                <button
-                  key={v.id}
-                  onClick={() => setSelectedVariant(v)}
-                  className={`px-4 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${selectedVariant.id === v.id ? "border-brand-gold bg-brand-cream text-brand-brown font-bold" : "border-gray-200 text-gray-600 hover:border-brand-gold"}`}
-                >
-                  <div className="font-serif">{v.weight}</div>
-                  <div className="text-xs text-gray-500 font-sans">{formatPrice(v.price)}</div>
-                </button>
-              ))}
+              {(() => {
+                const best = product.variants.reduce((min, v) => {
+                  const pp = per100g(v.price, v.weight);
+                  return pp != null && (min == null || pp < min) ? pp : min;
+                }, null);
+                return product.variants.map((v) => {
+                  const pp = per100g(v.price, v.weight);
+                  const isBest = pp != null && pp === best && product.variants.length > 1;
+                  return (
+                    <button
+                      key={v.id}
+                      onClick={() => setSelectedVariant(v)}
+                      className={`relative px-4 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${selectedVariant.id === v.id ? "border-brand-gold bg-brand-cream text-brand-brown font-bold" : "border-gray-200 text-gray-600 hover:border-brand-gold"}`}
+                    >
+                      {isBest && (
+                        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-brand-gold text-white whitespace-nowrap">
+                          Best Value
+                        </span>
+                      )}
+                      <div className="font-serif">{v.weight}</div>
+                      <div className="text-xs text-gray-500 font-sans">{formatPrice(v.price)}</div>
+                      {pp != null && <div className="text-[10px] text-gray-400 font-sans">₹{pp}/100g</div>}
+                    </button>
+                  );
+                });
+              })()}
             </div>
             {selectedVariant.perDay && (
               <p className="text-[11px] text-gray-400 italic mt-2.5 font-serif">{selectedVariant.perDay}</p>
@@ -297,7 +330,7 @@ export default function ProductDetail() {
           {/* Trust badges */}
           <div className="grid grid-cols-3 gap-3 py-4 border-t border-gray-100">
             {[
-              { icon: <Truck size={18} />, text: "Free shipping ₹999+" },
+              { icon: <Truck size={18} />, text: "Free shipping ₹499+" },
               { icon: <Shield size={18} />, text: "100% Authentic" },
               { icon: <Share2 size={18} />, text: "Easy Returns" },
             ].map((b) => (
@@ -306,6 +339,11 @@ export default function ProductDetail() {
                 <span className="text-xs text-gray-500">{b.text}</span>
               </div>
             ))}
+          </div>
+
+          {/* Delivery estimate by pincode */}
+          <div className="mt-4">
+            <PincodeEstimator />
           </div>
         </div>
       </motion.div>

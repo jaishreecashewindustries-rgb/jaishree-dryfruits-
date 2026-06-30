@@ -19,6 +19,8 @@ import StickyCTA from "./components/StickyCTA";
 import MobileBottomNav from "./components/MobileBottomNav";
 import ScrollToTop from "./components/ScrollToTop";
 import AbandonedCartReminder from "./components/AbandonedCartReminder";
+import LiveSocialProof from "./components/LiveSocialProof";
+import LeadCapturePopup from "./components/LeadCapturePopup";
 
 // Home is eager — it's the most common landing route, no point delaying first paint
 import Home from "./pages/Home";
@@ -75,6 +77,8 @@ function MainLayout({ children }) {
       <CompareBar />
       <MobileBottomNav />
       <AbandonedCartReminder />
+      <LiveSocialProof />
+      <LeadCapturePopup />
     </>
   );
 }

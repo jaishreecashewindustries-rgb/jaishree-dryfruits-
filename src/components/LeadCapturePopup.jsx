@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Gift, Tag } from "lucide-react";
 import toast from "react-hot-toast";
+
+const HIDDEN_PATHS = ["/checkout", "/cart", "/login", "/admin"];
 
 export default function LeadCapturePopup() {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const location = useLocation();
+  const isHidden = HIDDEN_PATHS.some(p => location.pathname.startsWith(p));
 
   useEffect(() => {
+    if (isHidden) return;
     const dismissed = sessionStorage.getItem("lead_popup_dismissed");
     if (dismissed) return;
     // Show after 18 seconds
@@ -24,7 +30,8 @@ export default function LeadCapturePopup() {
       clearTimeout(timer);
       document.removeEventListener("mouseleave", handleMouseLeave);
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isHidden]);
 
   const dismiss = () => {
     setOpen(false);
@@ -40,6 +47,8 @@ export default function LeadCapturePopup() {
       dismiss();
     }, 2500);
   };
+
+  if (isHidden) return null;
 
   return (
     <AnimatePresence>

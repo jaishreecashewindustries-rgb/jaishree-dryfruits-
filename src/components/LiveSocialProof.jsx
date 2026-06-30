@@ -113,7 +113,6 @@ export default function LiveSocialProof() {
           {/* Pulse progress bar */}
           <motion.div
             className="h-[2px]"
-            style={{ background: "linear-gradient(90deg, #C9A84C, #E2C06A)" }}
             initial={{ scaleX: 1 }}
             animate={{ scaleX: 0 }}
             transition={{ duration: DISPLAY_MS / 1000, ease: "linear" }}
