@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from "firebase/storage";
 import { storage } from "../firebase/config";
 import { Upload, X, Image, Loader2, Link as LinkIcon } from "lucide-react";
@@ -17,7 +17,15 @@ export default function ImageUpload({ value, onChange, folder = "content", label
   const [progress, setProgress] = useState(0);
   const [urlMode, setUrlMode] = useState(false);
   const [urlInput, setUrlInput] = useState("");
+  const [broken, setBroken] = useState(false);
   const inputRef = useRef(null);
+
+  // Treat whitespace-only / previously-broken values as empty so the box
+  // never renders blank with no upload affordance
+  const hasValue = !!(value && value.trim()) && !broken;
+
+  // Re-test a new value (e.g. parent swapped in a different URL/slot)
+  useEffect(() => { setBroken(false); }, [value]);
 
   const handleFile = (file) => {
     if (!file) return;
@@ -38,6 +46,7 @@ export default function ImageUpload({ value, onChange, folder = "content", label
       (err) => { console.error(err); setUploading(false); alert("Upload failed: " + err.message); },
       async () => {
         const url = await getDownloadURL(task.snapshot.ref);
+        setBroken(false);
         onChange(url);
         setUploading(false);
         setProgress(0);
@@ -51,7 +60,7 @@ export default function ImageUpload({ value, onChange, folder = "content", label
     if (file) handleFile(file);
   };
 
-  const handleRemove = () => onChange("");
+  const handleRemove = () => { setBroken(false); onChange(""); };
 
   const handleUrlSave = () => {
     if (urlInput.trim()) { onChange(urlInput.trim()); setUrlInput(""); }
@@ -61,9 +70,9 @@ export default function ImageUpload({ value, onChange, folder = "content", label
   if (compact) {
     return (
       <div className="flex items-center gap-2">
-        {value ? (
+        {hasValue ? (
           <div className="relative">
-            <img src={value} alt="" className="w-16 h-16 rounded-xl object-cover border border-gray-200" />
+            <img src={value} alt="" onError={() => setBroken(true)} className="w-16 h-16 rounded-xl object-cover border border-gray-200" />
             <button
               type="button"
               onClick={handleRemove}
@@ -92,9 +101,9 @@ export default function ImageUpload({ value, onChange, folder = "content", label
     <div>
       {label && <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">{label}</p>}
 
-      {value ? (
+      {hasValue ? (
         <div className="relative rounded-2xl overflow-hidden border border-gray-100 group">
-          <img src={value} alt="upload" className="w-full max-h-48 object-cover" />
+          <img src={value} alt="upload" onError={() => setBroken(true)} className="w-full max-h-48 object-cover" />
           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
             <button
               type="button"
