@@ -4,6 +4,7 @@ import { CheckCircle, ChevronRight, Lock, Package, CreditCard, Banknote, MapPin,
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase/config";
+import emailjs from "@emailjs/browser";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useCoins } from "../context/CoinsContext";
@@ -152,32 +153,30 @@ export default function Checkout() {
     return ref.id;
   };
 
-  // Writes to the Firestore "mail" collection — picked up by the Firebase
-  // "Trigger Email" extension (if installed on the project) to actually
-  // send the email. Safe no-op if the extension isn't installed yet.
+  // Sent client-side via EmailJS — no Cloud Functions/Eventarc involved,
+  // so it isn't affected by the asia-south1 Firestore-trigger region
+  // limitation. Template variables match the EmailJS "Order Confirmation"
+  // template: email, order_id, orders[] (name/units/price), cost.shipping/tax
   const sendOrderConfirmationEmail = async (orderId, paymentId) => {
     const to = address.email || user?.email;
     if (!to) return;
+    const serviceId = process.env.REACT_APP_EMAILJS_SERVICE_ID;
+    const templateId = process.env.REACT_APP_EMAILJS_TEMPLATE_ID;
+    const publicKey = process.env.REACT_APP_EMAILJS_PUBLIC_KEY;
+    if (!serviceId || !templateId || !publicKey) return;
     try {
-      const itemRows = items.map(i => `${i.name} (${i.variant}) × ${i.qty} — ₹${i.price * i.qty}`).join("<br/>");
-      await addDoc(collection(db, "mail"), {
-        to: [to],
-        message: {
-          subject: `Order Confirmed — #${orderId.slice(0, 8).toUpperCase()} | Jai Shree Dry Fruits`,
-          html: `
-            <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#1B2E4B">
-              <h2 style="color:#1B2E4B">Thank you, ${address.name}!</h2>
-              <p>Your order <strong>#${orderId.slice(0, 8).toUpperCase()}</strong> has been ${paymentId ? "paid and confirmed" : "placed"}.</p>
-              <p style="margin:16px 0">${itemRows}</p>
-              <p><strong>Total: ₹${finalTotal}</strong></p>
-              <p>Shipping to: ${address.address}, ${address.city}, ${address.state} - ${address.pincode}</p>
-              <p style="margin-top:24px;color:#777">We'll notify you again once your order ships. Track it anytime at /track-order.</p>
-            </div>
-          `,
-        },
-        createdAt: serverTimestamp(),
-      });
-    } catch {
+      await emailjs.send(serviceId, templateId, {
+        email: to,
+        to_name: address.name,
+        order_id: orderId.slice(0, 8).toUpperCase(),
+        orders: items.map(i => ({ name: `${i.name} (${i.variant})`, units: i.qty, price: i.price * i.qty })),
+        cost: { shipping: shipping || 0, tax: 0 },
+        order_total: finalTotal,
+        shipping_address: `${address.address}, ${address.city}, ${address.state} - ${address.pincode}`,
+        payment_status: paymentId ? "Paid and confirmed" : "Placed (Cash on Delivery)",
+      }, { publicKey });
+    } catch (err) {
+      console.warn("Order confirmation email failed:", err);
       // non-critical — never block checkout on email failure
     }
   };
