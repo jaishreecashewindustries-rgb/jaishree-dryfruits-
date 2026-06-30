@@ -13,6 +13,7 @@ import ImageLightbox from "../components/ImageLightbox";
 import MobileCartSheet from "../components/MobileCartSheet";
 import PincodeEstimator from "../components/PincodeEstimator";
 import MagneticButton from "../components/MagneticButton";
+import SlotCounter from "../components/SlotCounter";
 import { collection, query, where, orderBy, limit, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useProducts } from "../context/ProductsContext";
@@ -229,7 +230,7 @@ export default function ProductDetail() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500" />
               </span>
-              {viewerCount} people viewing now
+              <SlotCounter value={viewerCount} /> people viewing now
             </p>
           </div>
 

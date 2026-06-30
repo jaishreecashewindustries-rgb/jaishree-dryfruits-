@@ -17,6 +17,8 @@ import MagneticButton from "../components/MagneticButton";
 import SEO from "../components/SEO";
 import B2BGiftingForm from "../components/B2BGiftingForm";
 import TestimonialsCarousel from "../components/TestimonialsCarousel";
+import BulkCalculator from "../components/BulkCalculator";
+import TrustMarquee from "../components/TrustMarquee";
 import { formatPrice } from "../utils/helpers";
 import { useProducts } from "../context/ProductsContext";
 
@@ -297,6 +299,8 @@ export default function Home() {
           </motion.div>
         </motion.div>
       </section>
+
+      <TrustMarquee />
 
       {/* ═══ FEATURES BAR ═══════════════════════════════════════ */}
       <section style={{ background: "linear-gradient(135deg, #fff 0%, #F4F6FF 100%)", borderBottom: "1px solid #dde3f5" }}>
@@ -787,6 +791,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* ═══ BULK ORDER CALCULATOR — B2B lead capture ═══════════ */}
+      <BulkCalculator />
 
       {/* ═══ TESTIMONIALS — glass 3D carousel ═══════════════════ */}
       <section className="pt-10 pb-8" style={{ background: "linear-gradient(180deg, #fff 0%, #F4F6FF 100%)" }}>
