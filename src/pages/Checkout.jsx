@@ -11,7 +11,6 @@ import { useCoins } from "../context/CoinsContext";
 import { formatPrice } from "../utils/helpers";
 import toast from "react-hot-toast";
 
-const ADMIN_WA = process.env.REACT_APP_ADMIN_WA || "917568577968";
 const STEPS = ["Address", "Payment", "Confirm"];
 
 const PAY_METHODS = [
@@ -33,22 +32,6 @@ async function lookupPincode(pin) {
   } catch {
     return null;
   }
-}
-
-function sendAdminWhatsApp({ orderId, customerName, phone, items, total, address, paymentMethod }) {
-  const lines = [
-    `*New Order — Jai Shree Dry Fruits*`,
-    `Order ID: #${orderId.slice(0, 8).toUpperCase()}`,
-    `Customer: ${customerName} (+91${phone.replace(/^0|^\+91/, "")})`,
-    `Payment: ${paymentMethod === "cod" ? "Cash on Delivery" : "Online (Razorpay)"}`,
-    ``,
-    `*Items:*`,
-    ...items.map(i => `• ${i.name} (${i.variant}) × ${i.qty} — ₹${i.price * i.qty}`),
-    ``,
-    `Total: ₹${total}`,
-    `Ship to: ${address.address}, ${address.city}, ${address.state} - ${address.pincode}`,
-  ].join("\n");
-  window.open(`https://wa.me/${ADMIN_WA}?text=${encodeURIComponent(lines)}`, "_blank");
 }
 
 const INDIAN_STATES = [
@@ -205,7 +188,6 @@ export default function Checkout() {
           setCoinsEarned(Math.floor(finalTotal));
           setOrderId(oid);
           clearCart();
-          sendAdminWhatsApp({ orderId: oid, customerName: address.name, phone: address.phone, items, total: finalTotal, address, paymentMethod: "Online" });
           sendOrderConfirmationEmail(oid, response.razorpay_payment_id);
           setStep(3);
         } catch (err) {
@@ -234,7 +216,6 @@ export default function Checkout() {
       setCoinsEarned(Math.floor(finalTotal));
       setOrderId(oid);
       clearCart();
-      sendAdminWhatsApp({ orderId: oid, customerName: address.name, phone: address.phone, items, total: finalTotal, address, paymentMethod: "COD" });
       sendOrderConfirmationEmail(oid, null);
       setStep(3);
     } catch (err) {
