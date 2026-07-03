@@ -14,6 +14,15 @@ import toast from "react-hot-toast";
 
 const STEPS = ["Address", "Payment", "Confirm"];
 
+// Razorpay order-creation + signature-verification live in Cloud Functions
+// (functions/index.js) — the secret key must never reach the browser. Falls
+// back to the local emulator so `npm start` + `firebase emulators:start
+// --only functions` works out of the box; set REACT_APP_FUNCTIONS_BASE_URL
+// once the functions are deployed to point at the real Cloud Functions URLs.
+const FUNCTIONS_BASE_URL =
+  process.env.REACT_APP_FUNCTIONS_BASE_URL ||
+  "http://127.0.0.1:5001/jaishreedryfruits-973dd/asia-south1";
+
 // Fallback hardcoded coupons (used if Firestore is empty) — mirrors Cart.jsx
 const FALLBACK_COUPONS = [
   { code: "WELCOME15", type: "percent", value: 15, minOrder: 299, maxUses: 1 },
@@ -356,25 +365,52 @@ export default function Checkout() {
       });
     }
     if (typeof window.gtag === "function") {
+      // GA4 e-commerce event (Analytics reporting)
       window.gtag("event", "purchase", {
         transaction_id: oid,
         value: finalTotal,
         currency: "INR",
         items: items.map((i) => ({ item_id: i.id, item_name: i.name, price: i.price, quantity: i.qty })),
       });
+      // Google Ads "Purchase" conversion action (send_to targets the specific
+      // conversion label, not just the base AW- tag — required for Google Ads
+      // to actually attribute the conversion to ad clicks)
+      window.gtag("event", "conversion", {
+        send_to: "AW-980211107/ApAJCM3CkcocEKOrs9MD",
+        value: finalTotal,
+        currency: "INR",
+        transaction_id: oid,
+      });
     }
   };
 
-  const handleRazorpay = () => {
-    const key = process.env.REACT_APP_RAZORPAY_KEY;
-    if (!key || key.includes("REPLACE")) {
-      toast.error("Payment gateway not configured. Please use Cash on Delivery.", { duration: 4000 });
+  const handleRazorpay = async () => {
+    setLoading(true);
+    let order;
+    try {
+      // Order is created server-side (amount comes from Razorpay's own record of
+      // what was requested, not the browser) so a tampered client can't pay less
+      // than the real total — this also gives us the order_id the signature
+      // check below needs.
+      const res = await fetch(`${FUNCTIONS_BASE_URL}/createOrder`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: finalTotal, receipt: `jsd_${Date.now()}` }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.error || "Order creation failed");
+      order = await res.json();
+    } catch (err) {
+      setLoading(false);
+      toast.error("Payment gateway unavailable. Please use Cash on Delivery.");
       return;
     }
+    setLoading(false);
+
     const options = {
-      key,
-      amount: finalTotal * 100,
-      currency: "INR",
+      key: order.key_id,
+      order_id: order.order_id,
+      amount: order.amount,
+      currency: order.currency,
       name: "Jai Shree Dry Fruits",
       description: `Order — ${items.length} item${items.length > 1 ? "s" : ""}`,
       image: "/logo.png",
@@ -384,6 +420,23 @@ export default function Checkout() {
       handler: async (response) => {
         setLoading(true);
         try {
+          // Never trust a client-reported "payment succeeded" — verify the
+          // signature server-side before treating the order as paid.
+          const verifyRes = await fetch(`${FUNCTIONS_BASE_URL}/verifyPayment`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }),
+          });
+          const verifyData = await verifyRes.json().catch(() => ({}));
+          if (!verifyRes.ok || !verifyData.success) {
+            toast.error("Payment verification failed. Contact support with payment ID: " + response.razorpay_payment_id);
+            return;
+          }
+
           const oid = await saveOrder(response.razorpay_payment_id);
           await earnCoinsForOrder(finalTotal);
           setCoinsEarned(Math.floor(finalTotal));
