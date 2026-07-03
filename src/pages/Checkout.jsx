@@ -345,6 +345,26 @@ export default function Checkout() {
     }
   };
 
+  // Ad platform conversion signal, fired once per successful order (both COD
+  // and Razorpay paths) — call before clearCart() empties `items`.
+  const trackPurchase = (oid) => {
+    if (typeof window.fbq === "function") {
+      window.fbq("track", "Purchase", {
+        content_ids: items.map((i) => i.id),
+        value: finalTotal,
+        currency: "INR",
+      });
+    }
+    if (typeof window.gtag === "function") {
+      window.gtag("event", "purchase", {
+        transaction_id: oid,
+        value: finalTotal,
+        currency: "INR",
+        items: items.map((i) => ({ item_id: i.id, item_name: i.name, price: i.price, quantity: i.qty })),
+      });
+    }
+  };
+
   const handleRazorpay = () => {
     const key = process.env.REACT_APP_RAZORPAY_KEY;
     if (!key || key.includes("REPLACE")) {
@@ -368,6 +388,7 @@ export default function Checkout() {
           await earnCoinsForOrder(finalTotal);
           setCoinsEarned(Math.floor(finalTotal));
           setOrderId(oid);
+          trackPurchase(oid);
           clearCart();
           sendOrderConfirmationEmail(oid, response.razorpay_payment_id);
           setStep(3);
@@ -396,6 +417,7 @@ export default function Checkout() {
       await earnCoinsForOrder(finalTotal);
       setCoinsEarned(Math.floor(finalTotal));
       setOrderId(oid);
+      trackPurchase(oid);
       clearCart();
       sendOrderConfirmationEmail(oid, null);
       setStep(3);

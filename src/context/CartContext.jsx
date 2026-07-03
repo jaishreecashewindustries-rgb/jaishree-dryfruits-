@@ -77,6 +77,24 @@ export const CartProvider = ({ children }) => {
       iconTheme: { primary: "#C9A84C", secondary: "white" },
     });
     dispatch({ type: "OPEN_CART" });
+
+    // Ad platform conversion signals — both scripts queue calls even before
+    // their remote JS finishes loading, so no readiness check needed.
+    if (typeof window.fbq === "function") {
+      window.fbq("track", "AddToCart", {
+        content_ids: [item.id],
+        content_name: item.name,
+        value: item.price * item.qty,
+        currency: "INR",
+      });
+    }
+    if (typeof window.gtag === "function") {
+      window.gtag("event", "add_to_cart", {
+        currency: "INR",
+        value: item.price * item.qty,
+        items: [{ item_id: item.id, item_name: item.name, price: item.price, quantity: item.qty }],
+      });
+    }
   };
 
   const removeFromCart = (id, variantId) => {

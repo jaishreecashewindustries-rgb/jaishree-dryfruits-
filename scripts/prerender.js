@@ -20,7 +20,7 @@
 const fs = require("fs");
 const path = require("path");
 const puppeteer = require("puppeteer");
-const { spawn } = require("child_process");
+const { spawn, execFileSync } = require("child_process");
 const { initializeApp } = require("firebase/app");
 const { getFirestore, collection, getDocs } = require("firebase/firestore");
 
@@ -166,6 +166,13 @@ async function main() {
   ];
 
   fs.rmSync(STAGING_DIR, { recursive: true, force: true }); // clean up any leftover from a crashed previous run
+
+  // Defensive: a previous local run's `serve` process can occasionally
+  // outlive its parent (npx spawns a grandchild `server.kill()` doesn't
+  // always reach), squatting on the port so the next run's server silently
+  // fails to bind and every route then fails with ERR_CONNECTION_REFUSED.
+  // Never an issue in CI (fresh container each run) — only needed locally.
+  try { execFileSync("bash", ["-c", `lsof -ti:${PORT} | xargs -r kill -9`]); } catch {}
 
   console.log(`[prerender] starting static server on port ${PORT}...`);
   const server = await startStaticServer();
