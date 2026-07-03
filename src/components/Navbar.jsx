@@ -62,14 +62,15 @@ export default function Navbar() {
           className="marquee-track flex items-center whitespace-nowrap py-2"
           style={{ width: "max-content" }}
         >
-          {[
-            ...[
+          {(() => {
+            const messages = [
               "Free Delivery on Orders Above ₹499",
               "FSSAI Certified · Direct from Source Farms",
               "25+ Years in Gangauri Bazar, Jaipur",
-            ],
-            ...trustItems.map((t) => `${t.icon} ${t.text}`),
-          ].flatMap((msg) => [msg, msg]).map((msg, i) => (
+              ...trustItems.map((t) => `${t.icon} ${t.text}`),
+            ];
+            return [...messages, ...messages];
+          })().map((msg, i) => (
             <span key={i} className="inline-flex items-center text-[11px] font-semibold tracking-wide text-white/90 px-6">
               {msg}
               <span className="ml-6 text-brand-gold">•</span>

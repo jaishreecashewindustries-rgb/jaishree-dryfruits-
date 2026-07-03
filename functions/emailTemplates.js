@@ -287,6 +287,31 @@ function newsletterWelcomeEmail({ email }) {
   };
 }
 
+// ── Corporate/bulk gifting inquiry — internal notification to the owner ──
+function b2bInquiryEmail({ orgName, eventType, budget, quantity, city, contact, notes }) {
+  return {
+    subject: `New Corporate Gifting Inquiry — ${orgName} | ${BRAND.name}`,
+    senderKey: "orders",
+    html: wrap({
+      preheader: `${orgName} · ${quantity} units · ${city}`,
+      eyebrow: "Corporate Gifting Lead",
+      bodyHtml: `
+        ${heading("New bulk/corporate inquiry received.")}
+        ${infoCard([
+          ["Organisation / Event", orgName],
+          ["Occasion Type", eventType || "—"],
+          ["Budget per Box", budget],
+          ["Quantity", quantity],
+          ["Delivery City", city],
+          ["Contact Number", contact],
+        ])}
+        ${notes ? paragraph(`<strong>Special requirements:</strong> ${notes}`, { size: 13 }) : ""}
+        ${paragraph("Respond within 2 business hours per the site's promise.", { muted: true, size: 12 })}
+      `,
+    }),
+  };
+}
+
 module.exports = {
   otpEmail,
   orderConfirmationEmail,
@@ -296,4 +321,5 @@ module.exports = {
   couponEmail,
   contactReplyEmail,
   newsletterWelcomeEmail,
+  b2bInquiryEmail,
 };

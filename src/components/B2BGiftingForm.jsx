@@ -4,6 +4,11 @@ import { db } from "../firebase/config";
 import toast from "react-hot-toast";
 import { ChevronDown } from "lucide-react";
 
+// Same Cloud Functions backend used by Checkout.jsx/Footer.jsx/AuthContext.jsx.
+const FUNCTIONS_BASE_URL =
+  process.env.REACT_APP_FUNCTIONS_BASE_URL ||
+  "http://127.0.0.1:5001/jaishreedryfruits-973dd/asia-south1";
+
 const BUDGET_BRACKETS = [
   "₹500 – ₹1,000 per box",
   "₹1,000 – ₹2,500 per box",
@@ -49,6 +54,18 @@ export default function B2BGiftingForm({ onClose, theme = "light" }) {
         status: "new",
         source: "website_gifting_form",
       });
+      // Best-effort — Firestore save above is the source of truth, so a
+      // Brevo hiccup shouldn't block the customer-facing success state.
+      fetch(`${FUNCTIONS_BASE_URL}/sendTemplatedEmail`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: "info@jaishreedryfruits.com",
+          toName: "Jai Shree Dryfruits",
+          template: "b2bInquiry",
+          data: form,
+        }),
+      }).catch(() => {});
     } catch {
       // Silent — show success regardless; team follows up via WhatsApp
     } finally {

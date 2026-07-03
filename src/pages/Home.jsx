@@ -782,15 +782,19 @@ export default function Home() {
         <p className="text-[10px] font-bold uppercase tracking-[3px] text-brand-gold mb-2">Corporate & Wedding Gifting</p>
         <h2 className="font-serif text-xl text-white mb-2">Bulk Orders, Made Easy</h2>
         <p className="text-white/50 text-xs mb-5">Custom branded gift boxes, 50+ units, dedicated account manager.</p>
-        <a
-          href="https://wa.me/917568577968?text=Hi%2C%20I%27d%20like%20to%20enquire%20about%20corporate%2Fbulk%20gifting"
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest px-6 py-3 rounded-full"
-          style={{ background: "#C9A84C", color: "#1B2E4B" }}
-        >
-          Enquire on WhatsApp
-        </a>
+        {!showB2BForm ? (
+          <button
+            onClick={() => setShowB2BForm(true)}
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest px-6 py-3 rounded-full"
+            style={{ background: "#C9A84C", color: "#1B2E4B" }}
+          >
+            Fill Enquiry Form
+          </button>
+        ) : (
+          <div className="rounded-2xl p-5 mt-2 text-left" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(201,168,76,0.15)" }}>
+            <B2BGiftingForm theme="dark" onClose={() => setShowB2BForm(false)} />
+          </div>
+        )}
       </section>
 
       {/* ═══ TESTIMONIALS — glass 3D carousel ═══════════════════ */}

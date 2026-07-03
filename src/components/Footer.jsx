@@ -256,10 +256,7 @@ export default function Footer() {
           <ul className="space-y-5">
             <li className="flex gap-3.5 items-start">
               <Phone size={13} className="flex-shrink-0 mt-0.5" style={{ color: "rgba(201,168,76,0.6)" }} />
-              <div>
-                <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>{contact.phone || "+91 75685 77968"}</p>
-                <p className="mt-0.5" style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em" }}>Mon – Sat  ·  9 am – 7 pm</p>
-              </div>
+              <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>{contact.phone || "+91 75685 77968"}</p>
             </li>
             <li className="flex gap-3.5 items-start">
               <Mail size={13} className="flex-shrink-0 mt-0.5" style={{ color: "rgba(201,168,76,0.6)" }} />
@@ -267,11 +264,9 @@ export default function Footer() {
             </li>
             <li className="flex gap-3.5 items-start">
               <MapPin size={13} className="flex-shrink-0 mt-0.5" style={{ color: "rgba(201,168,76,0.6)" }} />
-              <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 13, lineHeight: 1.65 }}>
-                {(contact.address || "41, Barah Ji Ki Gali, Gangauri Bazar, Jaipur – 302001").split(",").map((line, i) => (
-                  <p key={i}>{line.trim()}</p>
-                ))}
-              </div>
+              <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 13, lineHeight: 1.65 }}>
+                {contact.address || "41, Barah Ji Ki Gali, Gangauri Bazar, Jaipur – 302001"}
+              </p>
             </li>
           </ul>
           <a

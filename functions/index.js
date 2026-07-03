@@ -212,6 +212,7 @@ const TEMPLATE_BUILDERS = {
   coupon: templates.couponEmail,
   contactReply: templates.contactReplyEmail,
   newsletterWelcome: templates.newsletterWelcomeEmail,
+  b2bInquiry: templates.b2bInquiryEmail,
 };
 
 exports.sendTemplatedEmail = onRequest(
