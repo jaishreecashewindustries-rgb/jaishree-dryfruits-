@@ -71,7 +71,7 @@ export default function Footer() {
                 value={newsletterEmail}
                 onChange={(e) => setNewsletterEmail(e.target.value)}
                 placeholder="Your email address"
-                className="w-full bg-transparent text-white text-sm pb-2.5 focus:outline-none transition-colors"
+                className="footer-newsletter-input w-full bg-transparent text-white text-sm pb-2.5 focus:outline-none transition-colors"
                 style={{
                   border: "none",
                   borderBottom: "1px solid rgba(201,168,76,0.35)",
@@ -82,7 +82,7 @@ export default function Footer() {
                 onFocus={e => { e.currentTarget.style.borderBottomColor = "#C9A84C"; }}
                 onBlur={e => { e.currentTarget.style.borderBottomColor = "rgba(201,168,76,0.35)"; }}
               />
-              <style>{`input::placeholder{color:rgba(255,255,255,0.28)}`}</style>
+              <style>{`.footer-newsletter-input::placeholder{color:rgba(255,255,255,0.28)}`}</style>
             </div>
             <motion.button
               whileTap={{ scale: 0.95 }}

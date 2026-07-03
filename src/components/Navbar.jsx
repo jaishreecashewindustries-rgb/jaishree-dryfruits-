@@ -8,10 +8,12 @@ import { useLanguage } from "../context/LanguageContext";
 import { useSiteSettings } from "../context/SiteSettingsContext";
 import { PRODUCT_CATEGORIES } from "../utils/helpers";
 import LanguageSwitcher from "./LanguageSwitcher";
+import useBodyScrollLock from "../hooks/useBodyScrollLock";
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [shopMenuOpen, setShopMenuOpen] = useState(false);
@@ -35,13 +37,11 @@ export default function Navbar() {
     setMenuOpen(false);
     setShopMenuOpen(false);
     setUserMenuOpen(false);
+    setMobileCategoriesOpen(false);
   }, [location]);
 
   // Lock body scroll when mobile menu is open
-  useEffect(() => {
-    document.body.style.overflow = menuOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [menuOpen]);
+  useBodyScrollLock(menuOpen);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -114,14 +114,16 @@ export default function Navbar() {
       {/* Main navbar */}
       <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-md" : "bg-white/95 backdrop-blur-sm"}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-16 md:h-20">
+          <div className="relative flex items-center justify-between h-16 md:h-20">
             {/* Mobile menu toggle */}
             <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)}>
               {menuOpen ? <X size={24} className="text-brand-brown" /> : <Menu size={24} className="text-brand-brown" />}
             </button>
 
-            {/* Logo — image only, brand name is baked into the artwork */}
-            <Link to="/" className="flex items-center group">
+            {/* Logo — image only, brand name is baked into the artwork.
+                Absolutely centered on mobile so it stays dead-center regardless of
+                the hamburger/search/cart icon widths on either side. */}
+            <Link to="/" className="flex items-center group absolute left-1/2 -translate-x-1/2 md:static md:left-auto md:translate-x-0">
               <img
                 src="/logo.png"
                 alt="Jai Shree Dry Fruits"
@@ -297,40 +299,87 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* Mobile menu */}
-        {menuOpen && (
-          <div className="md:hidden border-t border-gray-100 bg-white animate-slide-up overflow-y-auto overscroll-contain" style={{ maxHeight: "calc(100dvh - 64px)" }}>
-            <div className="px-4 py-4 space-y-1">
-              <Link to="/" className="block py-2 text-sm font-medium text-brand-brown">Home</Link>
-              <Link to="/products" className="block py-2 text-sm font-medium text-brand-brown">All Products</Link>
-              {PRODUCT_CATEGORIES.slice(0, 6).map((c) => (
-                <Link key={c} to={`/products?category=${c}`} className="block py-2 pl-4 text-sm text-gray-600 hover:text-brand-gold">
-                  → {c}
-                </Link>
-              ))}
-              <Link to="/products?category=Gift Hampers" className="block py-2 text-sm font-medium text-brand-brown">Gift Hampers</Link>
-              <Link to="/about" className="block py-2 text-sm font-medium text-brand-brown">About</Link>
-              <Link to="/contact" className="block py-2 text-sm font-medium text-brand-brown">Contact</Link>
-              {user && (
-                <Link to="/wishlist" className="block py-2 text-sm font-medium text-brand-brown">Wishlist</Link>
-              )}
-              <Link to="/track-order" className="block py-2 text-sm font-medium text-brand-brown">Track Order</Link>
-              <Link to="/sourcing" className="block py-2 text-sm font-medium text-brand-brown">Sourcing Story</Link>
-              <Link to="/blog" className="block py-2 text-sm font-medium text-brand-brown">Our Blog</Link>
-              <Link to="/faq" className="block py-2 text-sm font-medium text-brand-brown">FAQs</Link>
-
-              <div className="pt-3 mt-2 border-t border-gray-100">
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Language / भाषा</p>
-                <LanguageSwitcher mobile />
-              </div>
-
-              {!user && (
-                <Link to="/login" className="block mt-3 btn-primary text-center">Login / Register</Link>
-              )}
-            </div>
-          </div>
-        )}
       </nav>
+
+      {/* Mobile menu — full-screen overlay from the very top (marquee/trust bar height varies,
+          so this can't rely on the nav's own height); carries its own header with logo + close. */}
+      {menuOpen && (
+        <div className="md:hidden fixed inset-0 z-[70] bg-white animate-slide-up flex flex-col">
+          <div className="flex items-center justify-between px-4 h-16 border-b border-gray-100 flex-shrink-0">
+            <button className="p-2 -ml-2" onClick={() => setMenuOpen(false)} aria-label="Close menu">
+              <X size={24} className="text-brand-brown" />
+            </button>
+            <Link to="/" onClick={() => setMenuOpen(false)} className="flex items-center">
+              <img src="/logo.png" alt="Jai Shree Dry Fruits" style={{ height: 44, width: "auto" }} />
+            </Link>
+            <Link to="/cart" onClick={() => setMenuOpen(false)} className="p-2 -mr-2 relative">
+              <ShoppingCart size={22} className="text-brand-brown" />
+              {totalItems > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 bg-brand-gold text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">{totalItems}</span>
+              )}
+            </Link>
+          </div>
+          <div className="px-4 py-3 space-y-0.5 overflow-y-auto overscroll-contain flex-1 min-h-0">
+            <Link to="/" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
+              <Compass size={17} className="text-brand-gold" /> Home
+            </Link>
+            <button
+              type="button"
+              onClick={() => setMobileCategoriesOpen((v) => !v)}
+              className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors"
+            >
+              <span className="flex items-center gap-3"><Package size={17} className="text-brand-gold" /> All Products</span>
+              <ChevronDown size={16} className={`transition-transform ${mobileCategoriesOpen ? "rotate-180" : ""}`} />
+            </button>
+            {mobileCategoriesOpen && (
+              <div className="pl-9 grid grid-cols-2 gap-x-2">
+                {PRODUCT_CATEGORIES.map((c) => (
+                  <Link key={c} to={`/products?category=${c}`} className="block py-1.5 text-sm text-gray-600 active:text-brand-gold transition-colors">
+                    {c}
+                  </Link>
+                ))}
+              </div>
+            )}
+            <Link to="/products?category=Gift Hampers" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
+              <ShoppingCart size={17} className="text-brand-gold" /> Gift Hampers
+            </Link>
+            {user && (
+              <Link to="/wishlist" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
+                <Heart size={17} className="text-brand-gold" /> Wishlist
+              </Link>
+            )}
+            <Link to="/track-order" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
+              <Truck size={17} className="text-brand-gold" /> Track Order
+            </Link>
+
+            <div className="border-t border-gray-100 my-1.5" />
+
+            <Link to="/about" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
+              <BookOpen size={17} className="text-brand-gold" /> About
+            </Link>
+            <Link to="/sourcing" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
+              <MapPin size={17} className="text-brand-gold" /> Sourcing Story
+            </Link>
+            <Link to="/blog" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
+              <BookOpen size={17} className="text-brand-gold" /> Our Blog
+            </Link>
+            <Link to="/contact" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
+              <HelpCircle size={17} className="text-brand-gold" /> Contact
+            </Link>
+            <Link to="/faq" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
+              <HelpCircle size={17} className="text-brand-gold" /> FAQs
+            </Link>
+          </div>
+
+          {/* Language + Login always visible, never scrolls out of view */}
+          <div className="px-4 py-3 border-t border-gray-100 flex-shrink-0 space-y-2.5 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.04)]">
+            <LanguageSwitcher mobile />
+            {!user && (
+              <Link to="/login" className="btn-primary text-center block py-2.5 text-sm rounded-lg">Login / Register</Link>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }

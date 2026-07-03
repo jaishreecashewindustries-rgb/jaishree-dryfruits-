@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /checkout
+Disallow: /cart
+Disallow: /dashboard
+
+Sitemap: https://jaishreedryfruits.com/sitemap.xml

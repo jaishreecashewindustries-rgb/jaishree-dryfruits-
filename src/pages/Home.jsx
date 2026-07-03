@@ -171,6 +171,22 @@ export default function Home() {
   }, []);
   const scrollRef = useRef(null);
   const heroRef = useRef(null);
+  const heroVideoRef = useRef(null);
+
+  // Mobile browsers can silently ignore the `autoPlay` attribute — force play()
+  // explicitly, and retry on the first user gesture if the browser blocked it.
+  useEffect(() => {
+    const video = heroVideoRef.current;
+    if (!video) return;
+    const tryPlay = () => video.play().catch(() => {});
+    tryPlay();
+    document.addEventListener("touchstart", tryPlay, { once: true, passive: true });
+    document.addEventListener("click", tryPlay, { once: true });
+    return () => {
+      document.removeEventListener("touchstart", tryPlay);
+      document.removeEventListener("click", tryPlay);
+    };
+  }, []);
   const { scrollYProgress: heroScroll } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroContentY = useTransform(heroScroll, [0, 1], [0, -70]);
   const heroContentOpacity = useTransform(heroScroll, [0, 0.65], [1, 0]);
@@ -190,6 +206,7 @@ export default function Home() {
 
         {/* Video — no transform to avoid mobile zoom */}
         <video
+          ref={heroVideoRef}
           autoPlay
           muted
           loop
@@ -203,8 +220,8 @@ export default function Home() {
           <source src="/hero.mp4" type="video/mp4" />
         </video>
 
-        {/* Light overlay — let cashews show */}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.18) 50%, rgba(0,0,0,0.72) 100%)" }} />
+        {/* Light overlay — let cashews show; pointer-events-none so taps reach the video below */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.18) 50%, rgba(0,0,0,0.72) 100%)" }} />
 
         {/* Floating gold orbs — luxury depth */}
         {[

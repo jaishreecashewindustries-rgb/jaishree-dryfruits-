@@ -1,18 +1,16 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ShoppingBag, Minus, Plus, Trash2, ArrowRight } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { formatPrice } from "../utils/helpers";
+import useBodyScrollLock from "../hooks/useBodyScrollLock";
 
 export default function CartSidebar() {
   const { items, isOpen, closeCart, removeFromCart, updateQty, subtotal, shipping, total, totalItems } = useCart();
 
   // Lock body scroll when sidebar is open
-  useEffect(() => {
-    document.body.style.overflow = isOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [isOpen]);
+  useBodyScrollLock(isOpen);
 
   return (
     <>
@@ -113,7 +111,7 @@ export default function CartSidebar() {
 
         {/* Footer summary */}
         {items.length > 0 && (
-          <div className="px-5 py-4 border-t border-gray-100 bg-white space-y-3">
+          <div className="px-5 py-4 border-t border-gray-100 bg-white space-y-3" style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}>
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal</span><span className="font-medium">{formatPrice(subtotal)}</span>

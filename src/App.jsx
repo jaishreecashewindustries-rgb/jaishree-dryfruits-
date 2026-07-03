@@ -12,7 +12,6 @@ import { ProductsProvider } from "./context/ProductsContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import CartSidebar from "./components/CartSidebar";
-import WhatsAppButton from "./components/WhatsAppButton";
 import CompareBar from "./components/CompareBar";
 import ScrollProgress from "./components/ScrollProgress";
 import StickyCTA from "./components/StickyCTA";
@@ -74,7 +73,6 @@ function MainLayout({ children }) {
       <CartSidebar />
       <main><PageTransition>{children}</PageTransition></main>
       <Footer />
-      <WhatsAppButton />
       <StickyCTA />
       <CompareBar />
       <MobileBottomNav />

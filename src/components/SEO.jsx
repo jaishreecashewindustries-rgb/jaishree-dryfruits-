@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 
 const SITE_NAME = "Jai Shree Dryfruits";
-const SITE_URL = "https://www.jaishreegryfruits.com";
-const DEFAULT_IMAGE = `${SITE_URL}/og-default.jpg`;
+const SITE_URL = "https://jaishreedryfruits.com";
+const DEFAULT_IMAGE = `${SITE_URL}/logo.png`;
 const DEFAULT_DESC =
   "India's finest dry fruits — premium California almonds, Kashmiri walnuts, Iranian pistachios & more. FSSAI certified. Free shipping above ₹499. Est. 1999, Jaipur.";
 

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { CheckCircle, ChevronRight, Lock, Package, CreditCard, Banknote, MapPin, Loader2, AlertCircle, CheckCircle2, ShoppingCart, ChevronDown, Tag, Coins, X, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -92,6 +92,24 @@ export default function Checkout() {
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(couponFromCart);
   const [couponLoading, setCouponLoading] = useState(false);
+  const [availableCoupons, setAvailableCoupons] = useState(FALLBACK_COUPONS);
+
+  // Show customers which coupons they can use right now
+  useEffect(() => {
+    (async () => {
+      try {
+        const snap = await getDocs(query(collection(db, "coupons"), where("active", "==", true)));
+        if (!snap.empty) {
+          setAvailableCoupons(snap.docs.map((d) => {
+            const data = d.data();
+            return { code: data.code, type: data.discountType || "percent", value: data.discountValue || data.discount || 10, minOrder: data.minOrder || 0 };
+          }));
+        }
+      } catch {
+        // keep fallback coupons
+      }
+    })();
+  }, []);
 
   // JS Coins — applicable directly from Checkout, pre-filled if already applied on Cart
   const [coinsApplied, setCoinsApplied] = useState(coinsRedeemedFromCart > 0);
@@ -113,8 +131,8 @@ export default function Checkout() {
   const maxCoinsToRedeem = Math.min(coins || 0, Math.ceil(COINS_RULES.maxRedeemValue / COINS_RULES.redeemRate));
   const coinsPotentialValue = parseFloat((maxCoinsToRedeem * COINS_RULES.redeemRate).toFixed(2));
 
-  const handleApplyCoupon = async () => {
-    const code = couponInput.trim().toUpperCase();
+  const handleApplyCoupon = async (codeOverride) => {
+    const code = (codeOverride ?? couponInput).trim().toUpperCase();
     if (!code) return;
     if (appliedCoupon) { toast.error("Remove current coupon first"); return; }
     setCouponLoading(true);
@@ -903,9 +921,39 @@ export default function Checkout() {
                   placeholder="Coupon code"
                   className="input-field flex-1 text-xs py-2"
                 />
-                <button onClick={handleApplyCoupon} disabled={couponLoading || !couponInput.trim()} className="btn-outline text-xs px-3 py-2 whitespace-nowrap disabled:opacity-50">
+                <button onClick={() => handleApplyCoupon()} disabled={couponLoading || !couponInput.trim()} className="btn-outline text-xs px-3 py-2 whitespace-nowrap disabled:opacity-50">
                   {couponLoading ? "..." : "Apply"}
                 </button>
+              </div>
+            )}
+
+            {/* Available coupons — tap to auto-fill & apply */}
+            {!appliedCoupon && availableCoupons.length > 0 && (
+              <div className="mt-2.5 space-y-1.5">
+                {availableCoupons.map((c) => {
+                  const eligible = subtotal >= c.minOrder;
+                  return (
+                    <button
+                      key={c.code}
+                      type="button"
+                      disabled={!eligible || couponLoading}
+                      onClick={() => { setCouponInput(c.code); handleApplyCoupon(c.code); }}
+                      className={`w-full flex items-center justify-between border border-dashed rounded-lg px-3 py-2 text-left transition-colors ${
+                        eligible
+                          ? "border-brand-gold/40 bg-brand-cream/50 hover:bg-brand-cream cursor-pointer"
+                          : "border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed"
+                      }`}
+                    >
+                      <span className="flex items-center gap-1.5 text-xs font-bold text-brand-brown">
+                        <Tag size={11} className="text-brand-gold" /> {c.code}
+                      </span>
+                      <span className="text-[11px] text-gray-500">
+                        {c.type === "percent" ? `${c.value}% off` : `₹${c.value} off`}
+                        {c.minOrder > 0 ? ` · min ₹${c.minOrder}` : ""}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -930,11 +978,11 @@ export default function Checkout() {
                     <Coins size={12} /> {coinsLoading ? "Applying..." : `Use ${maxCoinsToRedeem} Coins — Save ₹${coinsPotentialValue}`}
                   </span>
                 </button>
-              ) : (coins || 0) > 0 ? (
+              ) : (
                 <p className="text-[11px] text-gray-400 flex items-center gap-1.5">
-                  <Coins size={11} /> You have {coins} coins (worth ₹{coinsWorth || 0}) — {appliedCoupon ? "remove coupon to use coins" : `min ₹${COINS_RULES.minCartValue} cart & ${COINS_RULES.minRedeem} coins required`}
+                  <Coins size={11} /> You have {coins || 0} JS Coins (worth ₹{coinsWorth || 0}) — {appliedCoupon ? "remove coupon to use coins" : `min ₹${COINS_RULES.minCartValue} cart & ${COINS_RULES.minRedeem} coins required to redeem`}
                 </p>
-              ) : null}
+              )}
             </div>
           )}
 
