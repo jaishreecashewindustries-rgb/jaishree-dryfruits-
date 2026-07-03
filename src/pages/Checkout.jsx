@@ -333,6 +333,29 @@ export default function Checkout() {
   const sendOrderConfirmationEmail = async (orderId, paymentId) => {
     const to = address.email || user?.email;
     if (!to) return;
+
+    // Brevo (Cloud Functions) — best-effort, runs alongside EmailJS below so
+    // neither provider having an outage loses the confirmation entirely.
+    const itemsHtml = items.map(i => `<tr><td style="padding:4px 8px">${i.name} (${i.variant}) × ${i.qty}</td><td style="padding:4px 8px;text-align:right">${formatPrice(i.price * i.qty)}</td></tr>`).join("");
+    fetch(`${FUNCTIONS_BASE_URL}/sendTransactionalEmail`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to,
+        toName: address.name,
+        subject: `Order Confirmed — #${orderId.slice(0, 8).toUpperCase()} | Jai Shree Dryfruits`,
+        htmlContent: `
+          <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
+            <h2 style="color:#3E2723">Thank you, ${address.name}!</h2>
+            <p>Your order <strong>#${orderId.slice(0, 8).toUpperCase()}</strong> has been ${paymentId ? "paid and confirmed" : "placed (Cash on Delivery)"}.</p>
+            <table style="width:100%;border-collapse:collapse">${itemsHtml}</table>
+            <p style="margin-top:12px"><strong>Total: ${formatPrice(finalTotal)}</strong></p>
+            <p style="color:#666;font-size:13px">Delivering to: ${address.address}, ${address.city}, ${address.state} - ${address.pincode}</p>
+          </div>
+        `,
+      }),
+    }).catch((err) => console.warn("Brevo order email failed:", err));
+
     const serviceId = process.env.REACT_APP_EMAILJS_SERVICE_ID;
     const templateId = process.env.REACT_APP_EMAILJS_TEMPLATE_ID;
     const publicKey = process.env.REACT_APP_EMAILJS_PUBLIC_KEY;
@@ -384,7 +407,68 @@ export default function Checkout() {
     }
   };
 
+  // Original client-only flow (no server order-creation/signature-verify) —
+  // this is what's currently live in production. Kept as the default until
+  // the secure backend is deployed with live credentials (see handleRazorpay).
+  const handleRazorpayLegacy = () => {
+    const key = process.env.REACT_APP_RAZORPAY_KEY;
+    if (!key || key.includes("REPLACE")) {
+      toast.error("Payment gateway not configured. Please use Cash on Delivery.", { duration: 4000 });
+      return;
+    }
+    const options = {
+      key,
+      amount: finalTotal * 100,
+      currency: "INR",
+      name: "Jai Shree Dry Fruits",
+      description: `Order — ${items.length} item${items.length > 1 ? "s" : ""}`,
+      image: "/logo.png",
+      prefill: { name: address.name, contact: address.phone, email: user?.email || address.email || "" },
+      notes: { address: `${address.address}, ${address.city}, ${address.state} - ${address.pincode}`, coupon: appliedCoupon || "none" },
+      theme: { color: "#C9A84C" },
+      handler: async (response) => {
+        setLoading(true);
+        try {
+          const oid = await saveOrder(response.razorpay_payment_id);
+          await earnCoinsForOrder(finalTotal);
+          setCoinsEarned(Math.floor(finalTotal));
+          setOrderId(oid);
+          trackPurchase(oid);
+          clearCart();
+          sendOrderConfirmationEmail(oid, response.razorpay_payment_id);
+          setStep(3);
+        } catch (err) {
+          toast.error("Order save failed. Contact support with payment ID: " + response.razorpay_payment_id);
+        } finally {
+          setLoading(false);
+        }
+      },
+      modal: { ondismiss: () => toast("Payment cancelled. Try again anytime.") },
+    };
+    try {
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", (r) => toast.error("Payment failed: " + (r.error?.description || "Try again")));
+      rzp.open();
+    } catch {
+      toast.error("Payment gateway unavailable. Please use Cash on Delivery.");
+    }
+  };
+
   const handleRazorpay = async () => {
+    // The secure order-creation + signature-verification backend
+    // (functions/index.js) is only live once REACT_APP_FUNCTIONS_BASE_URL is
+    // set at build time — that happens once a real (live-mode) Razorpay
+    // secret has been deployed to Cloud Functions. Until then, fall back to
+    // the original client-only flow with the live publishable key so
+    // production checkout keeps working. Do NOT remove this fallback before
+    // the backend is actually deployed with live credentials — without it,
+    // a hosting deploy silently breaks real payments (defaults to calling
+    // localhost, which no customer's browser can reach).
+    const backendConfigured = !!process.env.REACT_APP_FUNCTIONS_BASE_URL;
+    if (!backendConfigured) {
+      return handleRazorpayLegacy();
+    }
+
     setLoading(true);
     let order;
     try {
