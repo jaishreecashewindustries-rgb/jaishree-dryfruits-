@@ -82,8 +82,13 @@ function relativeDate(dateStr) {
 
 export default function ProductDetail() {
   const { id } = useParams();
-  const { products: DEMO_PRODUCTS } = useProducts();
+  const { products: DEMO_PRODUCTS, loading: productsLoading } = useProducts();
   const product = DEMO_PRODUCTS.find((p) => p.id === id) || DEMO_PRODUCTS[0];
+  // True only once Firestore has loaded AND the requested id actually matched a
+  // real product — used as an explicit "safe to prerender" signal (see
+  // scripts/prerender.js), since this page renders fallback data immediately
+  // on mount, before that fallback is replaced with the real product.
+  const productReadyForPrerender = !productsLoading && DEMO_PRODUCTS.some((p) => p.id === id);
   const [selectedImg, setSelectedImg] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState(product.variants[0]);
   const [qty, setQty] = useState(1);
@@ -120,8 +125,10 @@ export default function ProductDetail() {
     return () => clearInterval(interval);
   }, [product.id]);
 
-  // Track recently viewed
+  // Track recently viewed — skip while the real product is still loading, so we
+  // don't pollute this list with the transient fallback product's id.
   useEffect(() => {
+    if (productsLoading || !productReadyForPrerender) return;
     if (!product?.id) return;
     try {
       const existing = JSON.parse(localStorage.getItem("jsd_recently_viewed") || "[]");
@@ -171,8 +178,42 @@ export default function ProductDetail() {
 
   const avgRating = (DUMMY_REVIEWS.reduce((s, r) => s + r.rating, 0) / DUMMY_REVIEWS.length).toFixed(1);
 
+  // While the real product is still loading, `product` above is a transient
+  // fallback (DEMO_PRODUCTS[0]) — showing it, even for a moment, risks a
+  // customer seeing/adding the wrong item. Show a skeleton instead.
+  if (productsLoading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8 min-h-screen animate-pulse">
+        <div className="h-3 w-48 bg-gray-100 rounded mb-6" />
+        <div className="flex flex-col md:flex-row gap-8">
+          <div className="flex-1 aspect-square bg-gray-100 rounded-2xl" />
+          <div className="flex-1 space-y-4">
+            <div className="h-3 w-24 bg-gray-100 rounded" />
+            <div className="h-8 w-3/4 bg-gray-100 rounded" />
+            <div className="h-10 w-1/3 bg-gray-100 rounded" />
+            <div className="h-24 bg-gray-100 rounded" />
+            <div className="h-12 w-full bg-gray-100 rounded" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Firestore has loaded and the requested id genuinely doesn't exist — a real
+  // 404, not the fallback-flash case above. Don't silently show DEMO_PRODUCTS[0].
+  if (!DEMO_PRODUCTS.some((p) => p.id === id)) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-24 text-center min-h-screen">
+        <XCircle size={48} className="mx-auto text-gray-300 mb-4" />
+        <h1 className="font-serif text-2xl text-brand-brown mb-2">Product not found</h1>
+        <p className="text-gray-500 mb-6">This product may have been removed, or the link is incorrect.</p>
+        <Link to="/products" className="btn-primary inline-block">Browse All Products</Link>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 min-h-screen">
+    <div className="max-w-7xl mx-auto px-4 py-8 min-h-screen" data-prerender-ready={productReadyForPrerender ? "true" : "false"}>
       <SEO
         title={product.name}
         description={`${product.description} Buy ${product.name} online from Jai Shree Dryfruits. FSSAI certified. Free shipping above ₹499.`}

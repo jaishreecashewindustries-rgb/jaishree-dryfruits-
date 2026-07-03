@@ -1,0 +1,70 @@
+name: Nightly rebuild & deploy
+
+# Keeps the prerendered (crawlable) HTML fresh — any product added/edited via
+# the admin panel today gets picked up and redeployed within 24h, with no
+# manual "remember to rebuild" step. See scripts/prerender.js for why this
+# exists and scripts/handle-prerender-report.js for failure handling.
+on:
+  schedule:
+    - cron: "0 21 * * *" # 21:00 UTC = 2:30 AM IST
+  workflow_dispatch: {} # allows manually triggering a run from the Actions tab
+
+permissions:
+  contents: read
+  issues: write # needed to file/close prerender-failure issues
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Reconstruct .env from secrets
+        run: |
+          cat <<EOF > .env
+          REACT_APP_FIREBASE_API_KEY=${{ secrets.REACT_APP_FIREBASE_API_KEY }}
+          REACT_APP_FIREBASE_AUTH_DOMAIN=${{ secrets.REACT_APP_FIREBASE_AUTH_DOMAIN }}
+          REACT_APP_FIREBASE_PROJECT_ID=${{ secrets.REACT_APP_FIREBASE_PROJECT_ID }}
+          REACT_APP_FIREBASE_STORAGE_BUCKET=${{ secrets.REACT_APP_FIREBASE_STORAGE_BUCKET }}
+          REACT_APP_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.REACT_APP_FIREBASE_MESSAGING_SENDER_ID }}
+          REACT_APP_FIREBASE_APP_ID=${{ secrets.REACT_APP_FIREBASE_APP_ID }}
+          REACT_APP_FIREBASE_MEASUREMENT_ID=${{ secrets.REACT_APP_FIREBASE_MEASUREMENT_ID }}
+          REACT_APP_RAZORPAY_KEY=${{ secrets.REACT_APP_RAZORPAY_KEY }}
+          REACT_APP_ADMIN_WA=${{ secrets.REACT_APP_ADMIN_WA }}
+          REACT_APP_EMAILJS_SERVICE_ID=${{ secrets.REACT_APP_EMAILJS_SERVICE_ID }}
+          REACT_APP_EMAILJS_TEMPLATE_ID=${{ secrets.REACT_APP_EMAILJS_TEMPLATE_ID }}
+          REACT_APP_EMAILJS_PUBLIC_KEY=${{ secrets.REACT_APP_EMAILJS_PUBLIC_KEY }}
+          EOF
+
+      - run: npm ci
+
+      - name: Build (includes prerender postbuild step)
+        run: npm run build
+
+      - name: File/dedupe/auto-close prerender-failure issues
+        if: always() # run even if the build step above reported per-page failures (it still exits 0)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/handle-prerender-report.js
+
+      - name: Deploy to Firebase Hosting
+        run: npx firebase-tools deploy --only hosting,firestore,storage --token "${{ secrets.FIREBASE_TOKEN }}" --non-interactive
+
+      - name: File an issue if this workflow run itself failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TITLE="[nightly-rebuild-failed] $(date -u +%Y-%m-%d)"
+          EXISTING=$(gh issue list --label nightly-rebuild-failed --state open --json title --jq '.[].title' | grep -Fx "$TITLE" || true)
+          if [ -z "$EXISTING" ]; then
+            gh issue create --title "$TITLE" \
+              --body "The nightly rebuild/deploy workflow failed. Site is still serving the last successful deploy — nothing is down, but new products/content won't appear until this is fixed. See the failed run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" \
+              --label nightly-rebuild-failed
+          fi

@@ -4,6 +4,7 @@ import { Clock, User, ArrowRight, Tag } from "lucide-react";
 import { motion } from "framer-motion";
 import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "../firebase/config";
+import SEO from "../components/SEO";
 
 // Static seed posts (shown if Firestore empty)
 export const SEED_POSTS = [
@@ -112,6 +113,10 @@ export default function Blog() {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEO
+        title="Blog — Dry Fruit Guides & Health Tips"
+        description="Cashew grades, almond health benefits, gifting guides & sourcing stories from Jai Shree Dryfruits — practical dry fruit knowledge from a 25+ year Jaipur-based supplier."
+      />
       {/* Hero */}
       <div className="py-14 px-4 text-center" style={{ background: "linear-gradient(135deg, #0D1B2A 0%, #1B2E4B 100%)" }}>
         <p className="sec-tag justify-center mb-3" style={{ color: "#C9A84C" }}>Our Blog</p>

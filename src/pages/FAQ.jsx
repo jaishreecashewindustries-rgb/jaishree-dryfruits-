@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDown, Search, Package, Truck, CreditCard, RotateCcw, Leaf, MessageCircle, Mail, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
+import SEO from "../components/SEO";
 
 const FAQ_CATEGORIES = [
   {
@@ -112,8 +113,32 @@ export default function FAQ() {
 
   const displayFaqs = search ? searchResults : FAQ_CATEGORIES[activeTab].faqs;
 
+  // FAQPage structured data — lets Google show expandable Q&A directly in
+  // search results (rich snippets), which is free extra visibility/clicks.
+  useEffect(() => {
+    const allFaqs = FAQ_CATEGORIES.flatMap((c) => c.faqs);
+    const el = document.getElementById("sd-faq") || document.createElement("script");
+    el.id = "sd-faq";
+    el.type = "application/ld+json";
+    el.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: allFaqs.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    });
+    document.head.appendChild(el);
+    return () => { el.remove(); };
+  }, []);
+
   return (
     <div className="min-h-screen bg-white">
+      <SEO
+        title="Frequently Asked Questions"
+        description="Answers about Jai Shree Dryfruits orders, shipping, quality, payments & returns. Everything you need to know before you shop premium dry fruits online."
+      />
       {/* Hero */}
       <div className="relative overflow-hidden" style={{ background: "linear-gradient(160deg, #0D1B2A 0%, #1B2E4B 60%, #243D63 100%)" }}>
         <div className="absolute inset-0 opacity-5"

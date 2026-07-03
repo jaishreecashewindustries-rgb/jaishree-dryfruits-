@@ -16,7 +16,7 @@ const SORT_OPTIONS = [
 ];
 
 export default function Products() {
-  const { products: DEMO_PRODUCTS } = useProducts();
+  const { products: DEMO_PRODUCTS, loading: productsLoading } = useProducts();
   const [params, setParams] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sort, setSort] = useState("featured");
@@ -55,7 +55,7 @@ export default function Products() {
   const pageTitle = activeCategory || (activeGoal ? GOAL_LABELS[activeGoal] || activeGoal : "") || activeBadge || (search ? `"${search}"` : "All Products");
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 min-h-screen">
+    <div className="max-w-7xl mx-auto px-4 py-8 min-h-screen" data-prerender-ready={productsLoading ? "false" : "true"}>
       <SEO
         title={pageTitle !== "All Products" ? `${pageTitle} — Buy Online` : "All Products — Premium Dry Fruits"}
         description={`Buy premium ${pageTitle.toLowerCase()} online. FSSAI certified, free shipping above ₹499. Direct from Kashmir, California & Iran. Delivered across India.`}

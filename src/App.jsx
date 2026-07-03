@@ -22,6 +22,7 @@ import LiveSocialProof from "./components/LiveSocialProof";
 import LeadCapturePopup from "./components/LeadCapturePopup";
 import CustomCursor from "./components/CustomCursor";
 import PageTransition from "./components/PageTransition";
+import SEO from "./components/SEO";
 
 // Home is eager — it's the most common landing route, no point delaying first paint
 import Home from "./pages/Home";
@@ -192,6 +193,11 @@ function PolicySection({ title, children }) {
 
 function AboutPage() {
   return (
+    <>
+      <SEO
+        title="About Us"
+        description="Jai Shree Dryfruits — 25+ years of pure quality from Jaipur's heart. FSSAI certified, direct-sourced from Kashmir, California & Iran. Serving 50,000+ families since 1999."
+      />
     <PolicyPageShell title="About Us" subtitle="25+ years of pure quality from Jaipur's heart">
       <PolicySection title="Our Story">
         <p>Jai Shree Dryfruits was born in 1999 inside Jaipur's historic Gangauri Bazar — one of Rajasthan's oldest trading districts, where merchants have exchanged the world's finest spices and dry fruits for centuries. What started as a small family shop run by a single promise — <strong>quality you can taste</strong> — has grown into one of India's most trusted dry fruit brands.</p>
@@ -210,15 +216,18 @@ function AboutPage() {
       <PolicySection title="Contact Us">
         <p>📍 41, Barah Ji Ki Gali, Gangauri Bazar, Jaipur – 302001, Rajasthan</p>
         <p>📞 +91 75685 77968 &nbsp;|&nbsp; +91 99500 62186</p>
-        <p>✉️ info@jaishreegryfruits.com</p>
+        <p>✉️ info@jaishreedryfruits.com</p>
         <p>🕐 Mon–Sat: 9:00 AM – 7:00 PM</p>
       </PolicySection>
     </PolicyPageShell>
+    </>
   );
 }
 
 function ShippingPage() {
   return (
+    <>
+      <SEO title="Shipping Policy" description="Free shipping above ₹499. Metro delivery in 2-3 days, tracked via Delhivery/Shiprocket/India Post. Read Jai Shree Dryfruits' full shipping timelines and charges." />
     <PolicyPageShell title="Shipping Policy" subtitle="Last updated: June 2025">
       <PolicySection title="Delivery Timelines">
         <p><strong>Metro cities</strong> (Delhi, Mumbai, Bangalore, Chennai, Hyderabad, Pune, Kolkata): 2–3 business days.</p>
@@ -242,14 +251,17 @@ function ShippingPage() {
         <p>If your order arrives with visible damage to the outer packaging or any product appears compromised, photograph it immediately upon opening and WhatsApp us at +91 75685 77968 within 48 hours of delivery. We will replace or refund at no cost.</p>
       </PolicySection>
       <PolicySection title="Contact for Shipping Queries">
-        <p>📞 +91 75685 77968 (WhatsApp preferred) &nbsp;|&nbsp; ✉️ info@jaishreegryfruits.com</p>
+        <p>📞 +91 75685 77968 (WhatsApp preferred) &nbsp;|&nbsp; ✉️ info@jaishreedryfruits.com</p>
       </PolicySection>
     </PolicyPageShell>
+    </>
   );
 }
 
 function ReturnsPage() {
   return (
+    <>
+      <SEO title="Return & Refund Policy" description="7-day hassle-free returns on all Jai Shree Dryfruits orders. Free pickup, instant JS Coins credit or bank refund within 5-7 days. 100% satisfaction guaranteed." />
     <PolicyPageShell title="Return & Refund Policy" subtitle="Happiness guaranteed — last updated June 2025">
       <PolicySection title="Our Guarantee">
         <p>We stand 100% behind every product we sell. If you are not completely satisfied with the quality, taste, or freshness of any item, we will replace it or refund you in full — no questions asked.</p>
@@ -285,14 +297,17 @@ function ReturnsPage() {
         <p>Custom-branded corporate gifting orders once dispatched cannot be returned unless defective. Saffron and specialty spice sachets are non-returnable once opened.</p>
       </PolicySection>
     </PolicyPageShell>
+    </>
   );
 }
 
 function PrivacyPage() {
   return (
+    <>
+      <SEO title="Privacy Policy" description="How Jai Shree Dryfruits collects, uses, and protects your personal data. We never sell your information to third parties." noIndex />
     <PolicyPageShell title="Privacy Policy" subtitle="Last updated: June 2025">
       <PolicySection title="Introduction">
-        <p>Jai Shree Dryfruits ("we", "our", "us") is committed to protecting your personal information. This Privacy Policy explains what data we collect, how we use it, and your rights regarding it. By using our website (jaishreegryfruits.com), you agree to this policy.</p>
+        <p>Jai Shree Dryfruits ("we", "our", "us") is committed to protecting your personal information. This Privacy Policy explains what data we collect, how we use it, and your rights regarding it. By using our website (jaishreedryfruits.com), you agree to this policy.</p>
       </PolicySection>
       <PolicySection title="Information We Collect">
         <p><strong>Account information:</strong> Name, email address, phone number, and password when you create an account or sign in with Google.</p>
@@ -318,23 +333,26 @@ function PrivacyPage() {
         <p>Your data is stored securely on Google Firebase servers (Mumbai region, India). All data in transit is encrypted via 256-bit SSL/TLS. Firebase enforces strict access controls — only authorised team members can view order data.</p>
       </PolicySection>
       <PolicySection title="Your Rights">
-        <p>You may request access to, correction of, or deletion of your personal data at any time by emailing info@jaishreegryfruits.com. Account deletion removes all personal data within 30 days.</p>
+        <p>You may request access to, correction of, or deletion of your personal data at any time by emailing info@jaishreedryfruits.com. Account deletion removes all personal data within 30 days.</p>
       </PolicySection>
       <PolicySection title="Cookies">
         <p>We use essential cookies for authentication (Firebase Auth) and localStorage for cart persistence. No third-party advertising cookies are used.</p>
       </PolicySection>
       <PolicySection title="Contact">
-        <p>For privacy concerns: ✉️ info@jaishreegryfruits.com &nbsp;|&nbsp; 📞 +91 75685 77968</p>
+        <p>For privacy concerns: ✉️ info@jaishreedryfruits.com &nbsp;|&nbsp; 📞 +91 75685 77968</p>
       </PolicySection>
     </PolicyPageShell>
+    </>
   );
 }
 
 function TermsPage() {
   return (
+    <>
+      <SEO title="Terms & Conditions" description="Terms and conditions for shopping on Jai Shree Dryfruits — order policies, payment, and legal terms." noIndex />
     <PolicyPageShell title="Terms & Conditions" subtitle="Last updated: June 2025">
       <PolicySection title="Acceptance of Terms">
-        <p>By accessing or placing an order on jaishreegryfruits.com, you agree to be bound by these Terms & Conditions. If you do not agree, please do not use this website.</p>
+        <p>By accessing or placing an order on jaishreedryfruits.com, you agree to be bound by these Terms & Conditions. If you do not agree, please do not use this website.</p>
       </PolicySection>
       <PolicySection title="Products & Pricing">
         <p>All product descriptions, weights, and images are accurate to the best of our knowledge. Product photographs are representative; actual colour and appearance may slightly vary.</p>
@@ -359,10 +377,11 @@ function TermsPage() {
         <p>These terms are governed by the laws of India. Any disputes shall be subject to the exclusive jurisdiction of courts in Jaipur, Rajasthan.</p>
       </PolicySection>
       <PolicySection title="Contact">
-        <p>For legal queries: ✉️ info@jaishreegryfruits.com &nbsp;|&nbsp; 📞 +91 75685 77968</p>
+        <p>For legal queries: ✉️ info@jaishreedryfruits.com &nbsp;|&nbsp; 📞 +91 75685 77968</p>
         <p>Jai Shree Dryfruits, 41 Barah Ji Ki Gali, Gangauri Bazar, Jaipur – 302001, Rajasthan, India.</p>
       </PolicySection>
     </PolicyPageShell>
+    </>
   );
 }
 
@@ -370,13 +389,17 @@ function ContactPage() {
   const [form, setForm] = React.useState({ name: "", email: "", subject: "", message: "" });
   const items = [
     { icon: "phone", label: "Phone",          lines: ["+91 75685 77968", "+91 99500 62186"] },
-    { icon: "mail",  label: "Email",           lines: ["info@jaishreegryfruits.com"] },
+    { icon: "mail",  label: "Email",           lines: ["info@jaishreedryfruits.com"] },
     { icon: "clock", label: "Business Hours",  lines: ["Mon–Sat: 9:00 AM – 7:00 PM"] },
     { icon: "map",   label: "Address",         lines: ["41, Barah Ji Ki Gali, Gangauri Bazar", "Jaipur – 302001"] },
   ];
   const iconMap = { phone: "📱", mail: "✉", clock: "◷", map: "◎" };
   return (
     <div className="min-h-screen bg-white">
+      <SEO
+        title="Contact Us"
+        description="Get in touch with Jai Shree Dryfruits — call, WhatsApp, or email us. Jaipur-based, serving customers across India since 1999."
+      />
       <div className="bg-brand-brown py-16 px-4 text-center">
         <p className="text-brand-gold text-xs font-semibold tracking-widest uppercase mb-3">Get In Touch</p>
         <h1 className="font-serif text-4xl md:text-5xl font-bold text-white mb-3">Contact Us</h1>
@@ -391,7 +414,7 @@ function ContactPage() {
               <input className="input-field" placeholder="Email Address" type="email" value={form.email} onChange={e => setForm(f => ({...f, email: e.target.value}))} />
               <input className="input-field" placeholder="Subject" value={form.subject} onChange={e => setForm(f => ({...f, subject: e.target.value}))} />
               <textarea className="input-field resize-none" rows={4} placeholder="Your message…" value={form.message} onChange={e => setForm(f => ({...f, message: e.target.value}))} />
-              <a href={`mailto:info@jaishreegryfruits.com?subject=${encodeURIComponent(form.subject)}&body=${encodeURIComponent(form.message)}`} className="btn-primary block text-center py-3">Send Message</a>
+              <a href={`mailto:info@jaishreedryfruits.com?subject=${encodeURIComponent(form.subject)}&body=${encodeURIComponent(form.message)}`} className="btn-primary block text-center py-3">Send Message</a>
             </div>
           </div>
           <div className="space-y-5">

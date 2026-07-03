@@ -3,6 +3,7 @@ import { MapPin, ArrowRight, Microscope, FileCheck, Factory, PackageCheck, Sprou
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useSiteSettings } from "../context/SiteSettingsContext";
+import SEO from "../components/SEO";
 
 const FALLBACK_TEAM_PHOTOS = [
   "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&q=80",
@@ -93,6 +94,10 @@ export default function SourcingStory() {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEO
+        title="Our Sourcing Story"
+        description="From California almond orchards to Kashmiri walnut valleys — see exactly where Jai Shree Dryfruits sources every product, direct from origin farms."
+      />
       {/* Hero */}
       <div className="relative overflow-hidden py-24 px-4" style={{ background: "linear-gradient(160deg, #0D1B2A 0%, #1B2E4B 60%, #243D63 100%)" }}>
         <div className="absolute inset-0 opacity-5"
