@@ -5,6 +5,11 @@ import { Search, ChevronDown, MessageCircle, Eye, X } from "lucide-react";
 import { formatPrice, formatDate, getStatusStyle, ORDER_STATUSES, whatsappOrderLink } from "../../utils/helpers";
 import toast from "react-hot-toast";
 
+// Same Cloud Functions backend used elsewhere in the app.
+const FUNCTIONS_BASE_URL =
+  process.env.REACT_APP_FUNCTIONS_BASE_URL ||
+  "http://127.0.0.1:5001/jaishreedryfruits-973dd/asia-south1";
+
 export default function OrderManagement() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,6 +34,24 @@ export default function OrderManagement() {
       setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, status } : o));
       if (selectedOrder?.id === orderId) setSelectedOrder((o) => ({ ...o, status }));
       toast.success(`Order status updated to ${status}`);
+
+      // Best-effort — customer notification, never blocks the status update itself.
+      const order = orders.find((o) => o.id === orderId);
+      const to = order?.userEmail;
+      if (to && (status === "shipped" || status === "returned")) {
+        fetch(`${FUNCTIONS_BASE_URL}/sendTemplatedEmail`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to,
+            toName: order.customerName,
+            template: status === "shipped" ? "dispatch" : "return",
+            data: status === "shipped"
+              ? { name: order.customerName, orderId: orderId.slice(0, 8).toUpperCase() }
+              : { name: order.customerName, orderId: orderId.slice(0, 8).toUpperCase(), refundAmount: order.total, refundMethod: order.coinsRedeemed > 0 ? "JS Coins + original payment method" : "Original payment method" },
+          }),
+        }).catch(() => {});
+      }
     } catch { toast.error("Failed to update status"); }
   };
 

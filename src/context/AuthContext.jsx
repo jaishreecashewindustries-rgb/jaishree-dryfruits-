@@ -14,6 +14,11 @@ import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, googleProvider } from "../firebase/config";
 import toast from "react-hot-toast";
 
+// Same Cloud Functions backend used by Checkout.jsx/Footer.jsx.
+const FUNCTIONS_BASE_URL =
+  process.env.REACT_APP_FUNCTIONS_BASE_URL ||
+  "http://127.0.0.1:5001/jaishreedryfruits-973dd/asia-south1";
+
 const AuthContext = createContext();
 
 export const useAuth = () => {
@@ -31,10 +36,11 @@ export const AuthProvider = ({ children }) => {
     const ref = doc(db, "users", firebaseUser.uid);
     const snap = await getDoc(ref);
     if (!snap.exists()) {
+      const name = firebaseUser.displayName || extraData.name || "";
       await setDoc(ref, {
         uid: firebaseUser.uid,
         email: firebaseUser.email,
-        displayName: firebaseUser.displayName || extraData.name || "",
+        displayName: name,
         photoURL: firebaseUser.photoURL || "",
         phone: "",
         role: "customer",
@@ -44,6 +50,14 @@ export const AuthProvider = ({ children }) => {
         createdAt: serverTimestamp(),
         ...extraData,
       });
+      // Best-effort — never block account creation on the welcome email.
+      if (firebaseUser.email) {
+        fetch(`${FUNCTIONS_BASE_URL}/sendTemplatedEmail`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ to: firebaseUser.email, toName: name, template: "welcome", data: { name: name || "there" } }),
+        }).catch(() => {});
+      }
     }
     const updated = await getDoc(ref);
     return updated.data();

@@ -1,6 +1,8 @@
 import React, { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "./firebase/config";
 import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { LanguageProvider } from "./context/LanguageContext";
@@ -57,6 +59,11 @@ const InquiryManagement = lazy(() => import("./pages/admin/InquiryManagement"));
 const CoinsManagement = lazy(() => import("./pages/admin/CoinsManagement"));
 const ContentManagement = lazy(() => import("./pages/admin/ContentManagement"));
 const LoginSettings = lazy(() => import("./pages/admin/LoginSettings"));
+
+// Same Cloud Functions backend used elsewhere (Checkout.jsx, Footer.jsx, AuthContext.jsx).
+const FUNCTIONS_BASE_URL =
+  process.env.REACT_APP_FUNCTIONS_BASE_URL ||
+  "http://127.0.0.1:5001/jaishreedryfruits-973dd/asia-south1";
 
 function RouteLoader() {
   return (
@@ -387,6 +394,40 @@ function TermsPage() {
 
 function ContactPage() {
   const [form, setForm] = React.useState({ name: "", email: "", subject: "", message: "" });
+  const [sending, setSending] = React.useState(false);
+
+  const handleContactSubmit = async () => {
+    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) {
+      toast.error("Please fill in your name, email, and message.");
+      return;
+    }
+    setSending(true);
+    try {
+      await addDoc(collection(db, "inquiries"), {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        subject: form.subject.trim(),
+        message: form.message.trim(),
+        type: "Contact Form",
+        source: "Website",
+        status: "new",
+        timestamp: serverTimestamp(),
+      });
+      // Best-effort — the inquiry above is already saved for the admin either way.
+      fetch(`${FUNCTIONS_BASE_URL}/sendTemplatedEmail`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: form.email.trim(), toName: form.name.trim(), template: "contactReply", data: { name: form.name.trim(), message: form.message.trim() } }),
+      }).catch(() => {});
+      toast.success("Message sent! We'll get back to you within 4 business hours.");
+      setForm({ name: "", email: "", subject: "", message: "" });
+    } catch {
+      toast.error("Could not send your message — please try again or WhatsApp us.");
+    } finally {
+      setSending(false);
+    }
+  };
+
   const items = [
     { icon: "phone", label: "Phone",          lines: ["+91 75685 77968", "+91 99500 62186"] },
     { icon: "mail",  label: "Email",           lines: ["info@jaishreedryfruits.com"] },
@@ -414,7 +455,7 @@ function ContactPage() {
               <input className="input-field" placeholder="Email Address" type="email" value={form.email} onChange={e => setForm(f => ({...f, email: e.target.value}))} />
               <input className="input-field" placeholder="Subject" value={form.subject} onChange={e => setForm(f => ({...f, subject: e.target.value}))} />
               <textarea className="input-field resize-none" rows={4} placeholder="Your message…" value={form.message} onChange={e => setForm(f => ({...f, message: e.target.value}))} />
-              <a href={`mailto:info@jaishreedryfruits.com?subject=${encodeURIComponent(form.subject)}&body=${encodeURIComponent(form.message)}`} className="btn-primary block text-center py-3">Send Message</a>
+              <button onClick={handleContactSubmit} disabled={sending} className="btn-primary block w-full text-center py-3 disabled:opacity-50">{sending ? "Sending…" : "Send Message"}</button>
             </div>
           </div>
           <div className="space-y-5">

@@ -47,6 +47,7 @@ export const ORDER_STATUSES = [
   { value: "shipped", label: "Shipped", color: "bg-orange-100 text-orange-800" },
   { value: "delivered", label: "Delivered", color: "bg-green-100 text-green-800" },
   { value: "cancelled", label: "Cancelled", color: "bg-red-100 text-red-800" },
+  { value: "returned", label: "Returned", color: "bg-gray-200 text-gray-700" },
 ];
 
 export const getStatusStyle = (status) =>

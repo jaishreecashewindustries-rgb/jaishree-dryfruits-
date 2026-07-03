@@ -7,6 +7,12 @@ import { db } from "../firebase/config";
 import { useSiteSettings } from "../context/SiteSettingsContext";
 import toast from "react-hot-toast";
 
+// Same Cloud Functions backend used by Checkout.jsx for Razorpay — see that
+// file's comment for why this falls back to the local emulator.
+const FUNCTIONS_BASE_URL =
+  process.env.REACT_APP_FUNCTIONS_BASE_URL ||
+  "http://127.0.0.1:5001/jaishreedryfruits-973dd/asia-south1";
+
 const FadeIn = ({ children, delay = 0, className = "" }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
@@ -35,6 +41,18 @@ export default function Footer() {
         email: newsletterEmail.trim(),
         createdAt: serverTimestamp(),
       });
+      // Best-effort — Firestore save above is the source of truth for admin
+      // records, so a Brevo hiccup shouldn't block the user-facing success.
+      fetch(`${FUNCTIONS_BASE_URL}/subscribeNewsletter`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newsletterEmail.trim() }),
+      }).catch(() => {});
+      fetch(`${FUNCTIONS_BASE_URL}/sendTemplatedEmail`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to: newsletterEmail.trim(), template: "newsletterWelcome", data: { email: newsletterEmail.trim() } }),
+      }).catch(() => {});
       toast.success("Subscribed! Welcome to the Premium Club.");
       setNewsletterEmail("");
     } catch {

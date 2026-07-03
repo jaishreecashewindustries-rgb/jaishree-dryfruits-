@@ -334,25 +334,23 @@ export default function Checkout() {
     const to = address.email || user?.email;
     if (!to) return;
 
-    // Brevo (Cloud Functions) — best-effort, runs alongside EmailJS below so
-    // neither provider having an outage loses the confirmation entirely.
-    const itemsHtml = items.map(i => `<tr><td style="padding:4px 8px">${i.name} (${i.variant}) × ${i.qty}</td><td style="padding:4px 8px;text-align:right">${formatPrice(i.price * i.qty)}</td></tr>`).join("");
-    fetch(`${FUNCTIONS_BASE_URL}/sendTransactionalEmail`, {
+    // Brevo (Cloud Functions, branded template) — best-effort, runs alongside
+    // EmailJS below so neither provider having an outage loses the confirmation.
+    fetch(`${FUNCTIONS_BASE_URL}/sendTemplatedEmail`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         to,
         toName: address.name,
-        subject: `Order Confirmed — #${orderId.slice(0, 8).toUpperCase()} | Jai Shree Dryfruits`,
-        htmlContent: `
-          <div style="font-family:sans-serif;max-width:480px;margin:0 auto">
-            <h2 style="color:#3E2723">Thank you, ${address.name}!</h2>
-            <p>Your order <strong>#${orderId.slice(0, 8).toUpperCase()}</strong> has been ${paymentId ? "paid and confirmed" : "placed (Cash on Delivery)"}.</p>
-            <table style="width:100%;border-collapse:collapse">${itemsHtml}</table>
-            <p style="margin-top:12px"><strong>Total: ${formatPrice(finalTotal)}</strong></p>
-            <p style="color:#666;font-size:13px">Delivering to: ${address.address}, ${address.city}, ${address.state} - ${address.pincode}</p>
-          </div>
-        `,
+        template: "orderConfirmation",
+        data: {
+          name: address.name,
+          orderId: orderId.slice(0, 8).toUpperCase(),
+          items: items.map((i) => ({ name: i.name, variant: i.variant, qty: i.qty, price: i.price })),
+          total: finalTotal,
+          address: `${address.address}, ${address.city}, ${address.state} - ${address.pincode}`,
+          paid: !!paymentId,
+        },
       }),
     }).catch((err) => console.warn("Brevo order email failed:", err));
 
