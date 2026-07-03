@@ -171,7 +171,16 @@ async function main() {
   const server = await startStaticServer();
 
   console.log(`[prerender] launching headless browser for ${allRoutes.length} routes...`);
-  const browser = await puppeteer.launch({ headless: "new", args: ["--no-sandbox"] });
+  // `--disable-dev-shm-usage` matters a lot in CI containers, which often
+  // give /dev/shm far less space than a real machine — Chrome can hang or
+  // crash without it. An explicit launch timeout means a broken CI
+  // environment fails fast and loud instead of silently hanging until the
+  // job's outer timeout kills it with no useful error.
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+    timeout: 30000,
+  });
 
   const results = [];
   for (const { route, expectedText } of allRoutes) {
