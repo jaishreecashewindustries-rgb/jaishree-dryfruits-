@@ -4,6 +4,10 @@ const logger = require("firebase-functions/logger");
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
 const templates = require("./emailTemplates");
+const admin = require("firebase-admin");
+
+admin.initializeApp();
+const firestore = admin.firestore();
 
 const RAZORPAY_KEY_ID = defineSecret("RAZORPAY_KEY_ID");
 const RAZORPAY_KEY_SECRET = defineSecret("RAZORPAY_KEY_SECRET");
@@ -248,6 +252,117 @@ exports.sendTemplatedEmail = onRequest(
     } catch (err) {
       logger.error("sendTemplatedEmail failed", err);
       return res.status(500).json({ error: "Send failed" });
+    }
+  }
+);
+
+// ── Email OTP — passwordless login + OTP-based password reset ──
+// Codes live in Firestore (email_otps/{email}), 6 digits, 10-minute expiry,
+// max 5 verify attempts before the code is invalidated outright (rather than
+// just rate-limited) — this is a low-friction consumer flow, not a banking
+// app, so a short deliberately-simple scheme is the right tradeoff here.
+const OTP_TTL_MS = 10 * 60 * 1000;
+const OTP_MAX_ATTEMPTS = 5;
+
+exports.sendEmailOTP = onRequest(
+  { region: REGION, secrets: [BREVO_API_KEY], cors: true },
+  async (req, res) => {
+    setCors(res);
+    if (req.method === "OPTIONS") return res.status(204).send("");
+    if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+    try {
+      const { email, purpose } = req.body || {};
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ error: "A valid email is required" });
+      }
+      if (!["login", "reset"].includes(purpose)) {
+        return res.status(400).json({ error: "purpose must be 'login' or 'reset'" });
+      }
+
+      // Both flows require an existing account — email OTP login isn't a
+      // signup mechanism, and you can't reset a password that doesn't exist.
+      let userRecord;
+      try {
+        userRecord = await admin.auth().getUserByEmail(email);
+      } catch {
+        // Don't reveal whether an email is registered — same response either way.
+        return res.status(200).json({ success: true });
+      }
+
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      await firestore.collection("email_otps").doc(email).set({
+        code,
+        purpose,
+        uid: userRecord.uid,
+        expiresAt: Date.now() + OTP_TTL_MS,
+        attempts: 0,
+      });
+
+      const { subject, html, senderKey } = templates.otpEmail({ name: userRecord.displayName || "there", code });
+      const brevoRes = await fetch(`${BREVO_API}/smtp/email`, {
+        method: "POST",
+        headers: { "api-key": BREVO_API_KEY.value(), "Content-Type": "application/json" },
+        body: JSON.stringify({ sender: resolveSender(senderKey), to: [{ email }], subject, htmlContent: html }),
+      });
+      if (!brevoRes.ok) {
+        const errBody = await brevoRes.json().catch(() => ({}));
+        logger.error("OTP email send failed", errBody);
+        return res.status(502).json({ error: "Could not send verification email" });
+      }
+
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      logger.error("sendEmailOTP failed", err);
+      return res.status(500).json({ error: "Could not send verification code" });
+    }
+  }
+);
+
+exports.verifyEmailOTP = onRequest(
+  { region: REGION },
+  async (req, res) => {
+    setCors(res);
+    if (req.method === "OPTIONS") return res.status(204).send("");
+    if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+    try {
+      const { email, code, purpose, newPassword } = req.body || {};
+      if (!email || !code || !purpose) {
+        return res.status(400).json({ error: "email, code, and purpose are required" });
+      }
+      if (purpose === "reset" && (!newPassword || newPassword.length < 6)) {
+        return res.status(400).json({ error: "newPassword must be at least 6 characters" });
+      }
+
+      const ref = firestore.collection("email_otps").doc(email);
+      const snap = await ref.get();
+      if (!snap.exists) return res.status(400).json({ error: "No verification code found — request a new one" });
+
+      const record = snap.data();
+      if (record.purpose !== purpose) return res.status(400).json({ error: "Verification code was requested for a different purpose" });
+      if (Date.now() > record.expiresAt) { await ref.delete(); return res.status(400).json({ error: "Code expired — request a new one" }); }
+      if (record.attempts >= OTP_MAX_ATTEMPTS) { await ref.delete(); return res.status(400).json({ error: "Too many attempts — request a new code" }); }
+
+      if (record.code !== String(code)) {
+        await ref.update({ attempts: admin.firestore.FieldValue.increment(1) });
+        return res.status(400).json({ error: "Incorrect code" });
+      }
+
+      // Correct — consume the code immediately so it can't be replayed.
+      await ref.delete();
+
+      if (purpose === "login") {
+        const token = await admin.auth().createCustomToken(record.uid);
+        return res.status(200).json({ success: true, token });
+      }
+
+      // purpose === "reset"
+      await admin.auth().updateUser(record.uid, { password: newPassword });
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      logger.error("verifyEmailOTP failed", err);
+      return res.status(500).json({ error: "Verification failed" });
     }
   }
 );

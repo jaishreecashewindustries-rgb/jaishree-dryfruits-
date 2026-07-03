@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from "firebase/firestore";
 import { db } from "../../firebase/config";
-import { Plus, Trash2, Edit2, Check, X, Tag } from "lucide-react";
+import { Plus, Trash2, Edit2, Check, X, Tag, Send } from "lucide-react";
 import toast from "react-hot-toast";
 
 const EMPTY = { code: "", discount: "", minOrder: "", maxUses: "", active: true, expiry: "" };
+
+// Same Cloud Functions backend used elsewhere in the app.
+const FUNCTIONS_BASE_URL =
+  process.env.REACT_APP_FUNCTIONS_BASE_URL ||
+  "http://127.0.0.1:5001/jaishreedryfruits-973dd/asia-south1";
 
 export default function CouponManagement() {
   const [coupons, setCoupons] = useState([]);
@@ -56,6 +61,32 @@ export default function CouponManagement() {
   };
 
   const edit = (c) => { setEditing(c); setForm({ ...c, expiry: c.expiry?.toDate ? c.expiry.toDate().toISOString().split("T")[0] : "" }); setShowForm(true); };
+
+  const sendCoupon = async (c) => {
+    const email = window.prompt(`Send "${c.code}" to which customer email?`);
+    if (!email || !email.trim()) return;
+    const toastId = toast.loading("Sending coupon email...");
+    try {
+      const res = await fetch(`${FUNCTIONS_BASE_URL}/sendTemplatedEmail`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: email.trim(),
+          template: "coupon",
+          data: {
+            code: c.code,
+            discountText: `${c.discount}% OFF`,
+            minOrder: c.minOrder || 0,
+            expiry: c.expiry?.toDate ? c.expiry.toDate().toLocaleDateString("en-IN") : undefined,
+          },
+        }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("Coupon sent!", { id: toastId });
+    } catch {
+      toast.error("Could not send coupon email", { id: toastId });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -158,6 +189,7 @@ export default function CouponManagement() {
                     </td>
                     <td>
                       <div className="flex gap-2">
+                        <button onClick={() => sendCoupon(c)} className="p-1.5 text-brand-gold hover:bg-amber-50 rounded" title="Send to a customer"><Send size={14} /></button>
                         <button onClick={() => edit(c)} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded"><Edit2 size={14} /></button>
                         <button onClick={() => deleteCoupon(c.id)} className="p-1.5 text-red-400 hover:bg-red-50 rounded"><Trash2 size={14} /></button>
                       </div>

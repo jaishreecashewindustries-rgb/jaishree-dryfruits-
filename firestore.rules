@@ -51,6 +51,13 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // ── EMAIL OTPS ───────────────────────────────────────────────────────────
+    // Written/read only by Cloud Functions (admin SDK, bypasses rules) —
+    // codes and password-reset capability must never be client-readable.
+    match /email_otps/{email} {
+      allow read, write: if false;
+    }
+
     // ── COINS ────────────────────────────────────────────────────────────────
     match /coins/{userId} {
       allow read, write: if isOwner(userId) || isAdmin();

@@ -5,15 +5,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 
-// Login method tabs: email/password, phone OTP, Google
+// Login method tabs: email/password, phone OTP, email OTP, Google
 const METHODS = [
   { id: "email", label: "Email" },
   { id: "phone", label: "Phone OTP" },
+  { id: "emailOtp", label: "Email OTP" },
 ];
 
 export default function Login() {
   const [mode, setMode] = useState("login"); // login | register | forgot
-  const [method, setMethod] = useState("email"); // email | phone
+  const [method, setMethod] = useState("email"); // email | phone | emailOtp
   const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -24,7 +25,20 @@ export default function Login() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [otpLoading, setOtpLoading] = useState(false);
 
-  const { loginWithEmail, registerWithEmail, loginWithGoogle, resetPassword, sendPhoneOTP, verifyPhoneOTP } = useAuth();
+  // Email OTP state (login) — reuses the same 6-box `otp` array above
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
+  const [emailOtpAddress, setEmailOtpAddress] = useState("");
+
+  // Forgot-password OTP state — step 1: request code, step 2: enter code + new password
+  const [resetStep, setResetStep] = useState("email"); // email | verify
+  const [resetOtp, setResetOtp] = useState(["", "", "", "", "", ""]);
+  const [newPassword, setNewPassword] = useState("");
+
+  const {
+    loginWithEmail, registerWithEmail, loginWithGoogle,
+    sendPhoneOTP, verifyPhoneOTP,
+    sendEmailOTP, verifyEmailOTPLogin, verifyEmailOTPReset,
+  } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || "/";
@@ -42,14 +56,76 @@ export default function Login() {
         if (form.password !== form.confirm) { toast.error("Passwords don't match!"); return; }
         await registerWithEmail(form.email, form.password, form.name);
         navigate(from, { replace: true });
-      } else {
-        await resetPassword(form.email);
-        setMode("login");
       }
     } catch (err) {
       toast.error(err.message?.replace("Firebase: ", "").split(" (auth/")[0] || "Something went wrong");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ── Forgot password — OTP code, not the old email-link flow ──
+  const handleSendResetOTP = async (e) => {
+    e.preventDefault();
+    if (!form.email.trim()) { toast.error("Enter your email"); return; }
+    setLoading(true);
+    try {
+      await sendEmailOTP(form.email.trim(), "reset");
+      setResetStep("verify");
+      toast.success("If that account exists, a code has been sent.");
+    } catch (err) {
+      toast.error(err.message || "Could not send code");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyResetOTP = async () => {
+    const code = resetOtp.join("");
+    if (code.length !== 6) { toast.error("Enter the 6-digit code"); return; }
+    if (newPassword.length < 6) { toast.error("New password must be at least 6 characters"); return; }
+    setLoading(true);
+    try {
+      await verifyEmailOTPReset(form.email.trim(), code, newPassword);
+      setMode("login");
+      setResetStep("email");
+      setResetOtp(["", "", "", "", "", ""]);
+      setNewPassword("");
+    } catch (err) {
+      toast.error(err.message || "Invalid code");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Email OTP login ──
+  const handleSendEmailLoginOTP = async () => {
+    if (!form.email.trim()) { toast.error("Enter your email"); return; }
+    setOtpLoading(true);
+    try {
+      await sendEmailOTP(form.email.trim(), "login");
+      setEmailOtpAddress(form.email.trim());
+      setEmailOtpSent(true);
+      toast.success("If that account exists, a code has been sent.");
+    } catch (err) {
+      toast.error(err.message || "Could not send code");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyEmailLoginOTP = async () => {
+    const code = otp.join("");
+    if (code.length !== 6) { toast.error("Enter the 6-digit code"); return; }
+    setOtpLoading(true);
+    try {
+      await verifyEmailOTPLogin(emailOtpAddress, code);
+      navigate(from, { replace: true });
+    } catch (err) {
+      toast.error(err.message || "Invalid code");
+      setOtp(["", "", "", "", "", ""]);
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -163,21 +239,64 @@ export default function Login() {
               {/* ── Forgot password ── */}
               {mode === "forgot" ? (
                 <>
-                  <button onClick={() => setMode("login")} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-brand-brown mb-5 transition-colors">
+                  <button onClick={() => { setMode("login"); setResetStep("email"); setResetOtp(["", "", "", "", "", ""]); setNewPassword(""); }} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-brand-brown mb-5 transition-colors">
                     <ArrowLeft size={14} /> Back to Sign In
                   </button>
                   <h2 className="font-serif text-2xl font-bold text-brand-brown mb-1">Reset Password</h2>
-                  <p className="text-sm text-gray-500 mb-6">We'll send a reset link to your email.</p>
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="relative">
-                      <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                      <input name="email" value={form.email} onChange={handle} type="email" placeholder="Email address" required className="input-field pl-9" />
-                    </div>
-                    <button type="submit" disabled={loading} className="w-full py-3.5 rounded-lg text-white font-semibold disabled:opacity-60 transition-all hover:scale-[1.02]"
-                      style={{ background: "linear-gradient(135deg, #2C4B8C, #1A2744)" }}>
-                      {loading ? "Sending..." : "Send Reset Email"}
-                    </button>
-                  </form>
+                  {resetStep === "email" ? (
+                    <>
+                      <p className="text-sm text-gray-500 mb-6">We'll email you a 6-digit code.</p>
+                      <form onSubmit={handleSendResetOTP} className="space-y-4">
+                        <div className="relative">
+                          <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                          <input name="email" value={form.email} onChange={handle} type="email" placeholder="Email address" required className="input-field pl-9" />
+                        </div>
+                        <button type="submit" disabled={loading} className="w-full py-3.5 rounded-lg text-white font-semibold disabled:opacity-60 transition-all hover:scale-[1.02]"
+                          style={{ background: "linear-gradient(135deg, #2C4B8C, #1A2744)" }}>
+                          {loading ? "Sending..." : "Send Code"}
+                        </button>
+                      </form>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-gray-500 mb-6">Enter the code sent to {form.email} and choose a new password.</p>
+                      <div className="space-y-4">
+                        <div className="flex gap-2 justify-between">
+                          {resetOtp.map((d, i) => (
+                            <input
+                              key={i}
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={1}
+                              value={d}
+                              onChange={e => {
+                                if (!/^\d?$/.test(e.target.value)) return;
+                                const next = [...resetOtp]; next[i] = e.target.value; setResetOtp(next);
+                                if (e.target.value && i < 5) document.getElementById(`reset-otp-${i + 1}`)?.focus();
+                              }}
+                              onKeyDown={e => { if (e.key === "Backspace" && !resetOtp[i] && i > 0) document.getElementById(`reset-otp-${i - 1}`)?.focus(); }}
+                              id={`reset-otp-${i}`}
+                              className="w-10 h-12 text-center text-lg font-bold border-2 rounded-xl focus:outline-none transition-colors"
+                              style={{ borderColor: d ? "#C9A84C" : "#E2E8F0", color: "#1B2E4B", fontSize: 20 }}
+                              autoFocus={i === 0}
+                            />
+                          ))}
+                        </div>
+                        <div className="relative">
+                          <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                          <input value={newPassword} onChange={e => setNewPassword(e.target.value)} type={showPwd ? "text" : "password"} placeholder="New password" className="input-field pl-9 pr-10" style={{ fontSize: 16 }} />
+                          <button type="button" onClick={() => setShowPwd(!showPwd)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                            {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        </div>
+                        <button onClick={handleVerifyResetOTP} disabled={loading} className="w-full py-3.5 rounded-lg text-white font-semibold disabled:opacity-60 transition-all"
+                          style={{ background: "linear-gradient(135deg, #2C4B8C, #1A2744)" }}>
+                          {loading ? "Updating..." : "Reset Password"}
+                        </button>
+                        <button type="button" onClick={handleSendResetOTP} className="text-xs text-brand-gold hover:underline block mx-auto">Resend code</button>
+                      </div>
+                    </>
+                  )}
                 </>
               ) : (
                 <>
@@ -211,7 +330,7 @@ export default function Login() {
                       {METHODS.map((m) => (
                         <button
                           key={m.id}
-                          onClick={() => { setMethod(m.id); setOtpSent(false); setOtp(["","","","","",""]); }}
+                          onClick={() => { setMethod(m.id); setOtpSent(false); setEmailOtpSent(false); setOtp(["","","","","",""]); }}
                           className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${method === m.id ? "bg-white shadow text-brand-brown" : "text-gray-500"}`}
                         >
                           {m.label}
@@ -338,6 +457,80 @@ export default function Login() {
 
                           <button
                             onClick={handleVerifyOTP}
+                            disabled={otpLoading || otp.join("").length < 6}
+                            className="w-full py-3.5 rounded-lg text-white font-semibold disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                            style={{ background: "linear-gradient(135deg, #2C4B8C, #1A2744)", boxShadow: "0 4px 20px rgba(26,39,68,0.35)" }}
+                          >
+                            {otpLoading ? (
+                              <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Verifying...</>
+                            ) : (
+                              <>Verify & Sign In <ChevronRight size={16} /></>
+                            )}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── EMAIL OTP ── */}
+                  {method === "emailOtp" && (
+                    <div className="space-y-5">
+                      {!emailOtpSent ? (
+                        <>
+                          <div>
+                            <label className="text-xs font-semibold text-gray-500 block mb-2">Email address</label>
+                            <div className="relative">
+                              <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                              <input name="email" value={form.email} onChange={handle} type="email" placeholder="Email address" className="input-field pl-9" style={{ fontSize: 16 }} />
+                            </div>
+                            <p className="text-xs text-gray-400 mt-1.5">A 6-digit code will be sent to your inbox</p>
+                          </div>
+                          <button
+                            onClick={handleSendEmailLoginOTP}
+                            disabled={otpLoading || !form.email.trim()}
+                            className="w-full py-3.5 rounded-lg text-white font-semibold disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+                            style={{ background: "linear-gradient(135deg, #C9A84C, #9E7A2E)", boxShadow: "0 4px 20px rgba(201,168,76,0.3)" }}
+                          >
+                            {otpLoading ? (
+                              <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Sending code...</>
+                            ) : (
+                              <><Mail size={16} />Send Code</>
+                            )}
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <div>
+                            <div className="flex items-center justify-between mb-3">
+                              <label className="text-xs font-semibold text-gray-500">Enter code sent to {emailOtpAddress}</label>
+                              <button onClick={() => { setEmailOtpSent(false); setOtp(["", "", "", "", "", ""]); }} className="text-xs text-brand-gold hover:underline">Change</button>
+                            </div>
+                            <div className="flex gap-2 justify-between">
+                              {otp.map((d, i) => (
+                                <input
+                                  key={i}
+                                  id={`otp-${i}`}
+                                  type="text"
+                                  inputMode="numeric"
+                                  maxLength={1}
+                                  value={d}
+                                  onChange={e => handleOtpChange(i, e.target.value)}
+                                  onKeyDown={e => handleOtpKeyDown(i, e)}
+                                  className="w-10 h-12 text-center text-lg font-bold border-2 rounded-xl focus:outline-none transition-colors"
+                                  style={{ borderColor: d ? "#C9A84C" : "#E2E8F0", color: "#1B2E4B", fontSize: 20 }}
+                                  onFocus={e => e.currentTarget.style.borderColor = "#C9A84C"}
+                                  onBlur={e => e.currentTarget.style.borderColor = d ? "#C9A84C" : "#E2E8F0"}
+                                  autoFocus={i === 0}
+                                />
+                              ))}
+                            </div>
+                            <p className="text-xs text-gray-400 mt-2 text-center">
+                              Didn't receive it?{" "}
+                              <button onClick={handleSendEmailLoginOTP} className="text-brand-gold hover:underline font-semibold">Resend code</button>
+                            </p>
+                          </div>
+                          <button
+                            onClick={handleVerifyEmailLoginOTP}
                             disabled={otpLoading || otp.join("").length < 6}
                             className="w-full py-3.5 rounded-lg text-white font-semibold disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                             style={{ background: "linear-gradient(135deg, #2C4B8C, #1A2744)", boxShadow: "0 4px 20px rgba(26,39,68,0.35)" }}

@@ -9,6 +9,7 @@ import {
   sendPasswordResetEmail,
   RecaptchaVerifier,
   signInWithPhoneNumber,
+  signInWithCustomToken,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, googleProvider } from "../firebase/config";
@@ -57,6 +58,18 @@ export const AuthProvider = ({ children }) => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ to: firebaseUser.email, toName: name, template: "welcome", data: { name: name || "there" } }),
         }).catch(() => {});
+        // Welcome coupon — sent as a separate email a moment later rather than
+        // crammed into the welcome email, so each message stays focused.
+        fetch(`${FUNCTIONS_BASE_URL}/sendTemplatedEmail`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to: firebaseUser.email,
+            toName: name,
+            template: "coupon",
+            data: { name: name || "there", code: "WELCOME15", discountText: "15% OFF your first order", minOrder: 299 },
+          }),
+        }).catch(() => {});
       }
     }
     const updated = await getDoc(ref);
@@ -93,6 +106,43 @@ export const AuthProvider = ({ children }) => {
   const resetPassword = async (email) => {
     await sendPasswordResetEmail(auth, email);
     toast.success("Password reset email sent!");
+  };
+
+  // ── Email OTP — passwordless login + OTP-based password reset ──
+  // Backed by Cloud Functions (sendEmailOTP/verifyEmailOTP in functions/index.js),
+  // not Firebase Auth's built-in email-link flow — a 6-digit code the user
+  // types back in, matching the phone-OTP UX already on this page.
+  const sendEmailOTP = async (email, purpose) => {
+    const res = await fetch(`${FUNCTIONS_BASE_URL}/sendEmailOTP`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, purpose }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Could not send verification code");
+  };
+
+  const verifyEmailOTPLogin = async (email, code) => {
+    const res = await fetch(`${FUNCTIONS_BASE_URL}/verifyEmailOTP`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code, purpose: "login" }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Invalid code");
+    await signInWithCustomToken(auth, data.token);
+    toast.success("Welcome back!");
+  };
+
+  const verifyEmailOTPReset = async (email, code, newPassword) => {
+    const res = await fetch(`${FUNCTIONS_BASE_URL}/verifyEmailOTP`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code, purpose: "reset", newPassword }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Invalid code");
+    toast.success("Password updated — sign in with your new password.");
   };
 
   // ── Phone OTP ──────────────────────────────────────────────────────────
@@ -146,6 +196,9 @@ export const AuthProvider = ({ children }) => {
         resetPassword,
         sendPhoneOTP,
         verifyPhoneOTP,
+        sendEmailOTP,
+        verifyEmailOTPLogin,
+        verifyEmailOTPReset,
       }}
     >
       {!loading && children}
