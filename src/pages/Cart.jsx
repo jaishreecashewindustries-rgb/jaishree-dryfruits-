@@ -11,12 +11,11 @@ import { useLanguage } from "../context/LanguageContext";
 import { formatPrice } from "../utils/helpers";
 import toast from "react-hot-toast";
 
-// Fallback hardcoded coupons (used if Firestore is empty)
+// Fallback hardcoded coupons (used if Firestore is empty) — mirrors Checkout.jsx
 const FALLBACK_COUPONS = [
-  { code: "WELCOME15", type: "percent", value: 15, minOrder: 299, maxUses: 1 },
-  { code: "CASHEW10",  type: "percent", value: 10, minOrder: 199, maxUses: null },
-  { code: "MONSOON20", type: "percent", value: 20, minOrder: 499, maxUses: null },
-  { code: "FLAT50",    type: "flat",    value: 50, minOrder: 499, maxUses: null },
+  { code: "WELCOME100", type: "flat", value: 100, minOrder: 599, maxUses: 1 },
+  { code: "FLAT150",    type: "flat", value: 150, minOrder: 1499, maxUses: null },
+  { code: "FLAT300",    type: "flat", value: 300, minOrder: 2999, maxUses: null },
 ];
 
 export default function Cart() {

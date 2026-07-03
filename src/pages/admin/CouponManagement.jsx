@@ -4,7 +4,7 @@ import { db } from "../../firebase/config";
 import { Plus, Trash2, Edit2, Check, X, Tag, Send } from "lucide-react";
 import toast from "react-hot-toast";
 
-const EMPTY = { code: "", discount: "", minOrder: "", maxUses: "", active: true, expiry: "" };
+const EMPTY = { code: "", discountType: "flat", discountValue: "", minOrder: "", maxUses: "", active: true, expiry: "" };
 
 // Same Cloud Functions backend used elsewhere in the app.
 const FUNCTIONS_BASE_URL =
@@ -30,16 +30,16 @@ export default function CouponManagement() {
   };
 
   const save = async () => {
-    if (!form.code || !form.discount) { toast.error("Code and discount % are required"); return; }
+    if (!form.code || !form.discountValue) { toast.error("Code and discount value are required"); return; }
     const data = {
       code: form.code.trim().toUpperCase(),
-      discount: parseInt(form.discount) || 0,
+      discountType: form.discountType, // "flat" (₹) or "percent" (%)
+      discountValue: parseInt(form.discountValue) || 0,
       minOrder: parseInt(form.minOrder) || 0,
       maxUses: parseInt(form.maxUses) || 0,
       active: form.active,
       uses: editing?.uses || 0,
       expiry: form.expiry ? new Date(form.expiry) : null,
-      type: "percent",
     };
     try {
       if (editing) {
@@ -60,7 +60,17 @@ export default function CouponManagement() {
     load();
   };
 
-  const edit = (c) => { setEditing(c); setForm({ ...c, expiry: c.expiry?.toDate ? c.expiry.toDate().toISOString().split("T")[0] : "" }); setShowForm(true); };
+  const edit = (c) => {
+    setEditing(c);
+    setForm({
+      ...c,
+      // Back-compat for coupons saved before the flat/percent split existed.
+      discountType: c.discountType || c.type || "flat",
+      discountValue: c.discountValue ?? c.discount ?? "",
+      expiry: c.expiry?.toDate ? c.expiry.toDate().toISOString().split("T")[0] : "",
+    });
+    setShowForm(true);
+  };
 
   const sendCoupon = async (c) => {
     const email = window.prompt(`Send "${c.code}" to which customer email?`);
@@ -75,7 +85,7 @@ export default function CouponManagement() {
           template: "coupon",
           data: {
             code: c.code,
-            discountText: `${c.discount}% OFF`,
+            discountText: c.discountType === "percent" ? `${c.discountValue}% OFF` : `₹${c.discountValue} OFF`,
             minOrder: c.minOrder || 0,
             expiry: c.expiry?.toDate ? c.expiry.toDate().toLocaleDateString("en-IN") : undefined,
           },
@@ -125,8 +135,25 @@ export default function CouponManagement() {
               <input className="input-field text-sm uppercase" placeholder="WELCOME15" value={form.code} onChange={e => setForm(f => ({ ...f, code: e.target.value.toUpperCase() }))} />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Discount % *</label>
-              <input className="input-field text-sm" type="number" placeholder="15" value={form.discount} onChange={e => setForm(f => ({ ...f, discount: e.target.value }))} />
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Discount Type *</label>
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                {[["flat", "₹ Flat"], ["percent", "% Percent"]].map(([val, label]) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, discountType: val }))}
+                    className={`flex-1 py-2 rounded-md text-xs font-semibold transition-all ${form.discountType === val ? "bg-white shadow text-brand-brown" : "text-gray-500"}`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                Discount Value * {form.discountType === "flat" ? "(₹)" : "(%)"}
+              </label>
+              <input className="input-field text-sm" type="number" placeholder={form.discountType === "flat" ? "100" : "10"} value={form.discountValue} onChange={e => setForm(f => ({ ...f, discountValue: e.target.value }))} />
             </div>
             <div>
               <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Min Order (₹)</label>
@@ -178,7 +205,7 @@ export default function CouponManagement() {
                 {coupons.map(c => (
                   <tr key={c.id}>
                     <td><span className="font-mono font-bold text-brand-brown bg-brand-cream px-2 py-1 text-sm">{c.code}</span></td>
-                    <td><span className="text-green-600 font-semibold">{c.discount}% OFF</span></td>
+                    <td><span className="text-green-600 font-semibold">{(c.discountType || c.type) === "percent" ? `${c.discountValue ?? c.discount}% OFF` : `₹${c.discountValue ?? c.discount} OFF`}</span></td>
                     <td>₹{c.minOrder || 0}</td>
                     <td>{c.uses || 0}{c.maxUses ? ` / ${c.maxUses}` : " / ∞"}</td>
                     <td className="text-xs">{c.expiry?.toDate ? c.expiry.toDate().toLocaleDateString("en-IN") : "No expiry"}</td>

@@ -23,12 +23,14 @@ const FUNCTIONS_BASE_URL =
   process.env.REACT_APP_FUNCTIONS_BASE_URL ||
   "http://127.0.0.1:5001/jaishreedryfruits-973dd/asia-south1";
 
-// Fallback hardcoded coupons (used if Firestore is empty) — mirrors Cart.jsx
+// Fallback hardcoded coupons (used if Firestore is empty) — mirrors Cart.jsx.
+// Flat-₹, tiered-by-cart-value — matches how established dry fruit brands
+// (e.g. Happilo) structure offers, and keeps margin impact predictable
+// regardless of basket mix, unlike a blanket % code.
 const FALLBACK_COUPONS = [
-  { code: "WELCOME15", type: "percent", value: 15, minOrder: 299, maxUses: 1 },
-  { code: "CASHEW10",  type: "percent", value: 10, minOrder: 199, maxUses: null },
-  { code: "MONSOON20", type: "percent", value: 20, minOrder: 499, maxUses: null },
-  { code: "FLAT50",    type: "flat",    value: 50, minOrder: 499, maxUses: null },
+  { code: "WELCOME100", type: "flat", value: 100, minOrder: 599, maxUses: 1 },
+  { code: "FLAT150",    type: "flat", value: 150, minOrder: 1499, maxUses: null },
+  { code: "FLAT300",    type: "flat", value: 300, minOrder: 2999, maxUses: null },
 ];
 
 const PAY_METHODS = [

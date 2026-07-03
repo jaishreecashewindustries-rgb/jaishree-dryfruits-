@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }) => {
             to: firebaseUser.email,
             toName: name,
             template: "coupon",
-            data: { name: name || "there", code: "WELCOME15", discountText: "15% OFF your first order", minOrder: 299 },
+            data: { name: name || "there", code: "WELCOME100", discountText: "₹100 OFF your first order", minOrder: 599 },
           }),
         }).catch(() => {});
       }

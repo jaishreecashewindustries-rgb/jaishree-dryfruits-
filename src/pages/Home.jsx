@@ -17,8 +17,6 @@ import MagneticButton from "../components/MagneticButton";
 import SEO from "../components/SEO";
 import B2BGiftingForm from "../components/B2BGiftingForm";
 import TestimonialsCarousel from "../components/TestimonialsCarousel";
-import BulkCalculator from "../components/BulkCalculator";
-import TrustMarquee from "../components/TrustMarquee";
 import { formatPrice } from "../utils/helpers";
 import { useProducts } from "../context/ProductsContext";
 
@@ -163,6 +161,7 @@ export default function Home() {
   const { products: DEMO_PRODUCTS } = useProducts();
   const featured = DEMO_PRODUCTS.filter((p) => p.featured).slice(0, 8);
   const [showB2BForm, setShowB2BForm] = useState(false);
+  const [heritageExpanded, setHeritageExpanded] = useState(false);
   const [productsReady, setProductsReady] = useState(false);
 
   useEffect(() => {
@@ -316,8 +315,6 @@ export default function Home() {
           </motion.div>
         </motion.div>
       </section>
-
-      <TrustMarquee />
 
       {/* ═══ FEATURES BAR ═══════════════════════════════════════ */}
       <section style={{ background: "linear-gradient(135deg, #fff 0%, #F4F6FF 100%)", borderBottom: "1px solid #dde3f5" }}>
@@ -492,12 +489,12 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══ HANDPICKED COMBO DEALS ══════════════════════════════ */}
-      <section className="py-16 px-4" style={{ background: "linear-gradient(160deg, #0D1B2A 0%, #1B2E4B 60%, #243D63 100%)" }}>
+      {/* ═══ HANDPICKED COMBO DEALS — clean white grid, not another dark block ═══ */}
+      <section className="py-16 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <FadeUp className="text-center mb-10">
             <p className="text-brand-gold text-[10px] font-semibold tracking-[4px] uppercase mb-4">Curated Value Bundles</p>
-            <h2 className="font-serif text-white mb-4" style={{ fontSize: "clamp(24px,4vw,42px)", fontWeight: 400 }}>Handpicked <em style={{ color: "#E2C06A" }}>Combo Deals</em></h2>
+            <h2 className="font-serif text-brand-brown mb-4" style={{ fontSize: "clamp(24px,4vw,42px)", fontWeight: 400 }}>Handpicked <em style={{ color: "#C9A84C" }}>Combo Deals</em></h2>
             <div className="w-12 h-px mx-auto" style={{ background: "linear-gradient(90deg, transparent, #C9A84C, transparent)" }} />
           </FadeUp>
           {/* Strict uniform grid — all cards same height via flex column */}
@@ -516,44 +513,40 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.06 }}
-                className="flex flex-col overflow-hidden group"
-                style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(201,168,76,0.15)" }}
+                className="flex flex-col overflow-hidden group bg-white rounded-xl border border-gray-100 hover:shadow-lg transition-shadow duration-300"
               >
                 {/* Fixed-height image — no overlap with card below */}
-                <div className="relative flex-shrink-0 overflow-hidden" style={{ height: 140 }}>
+                <div className="relative flex-shrink-0 overflow-hidden rounded-t-xl" style={{ height: 140 }}>
                   <img
                     src={combo.img}
                     alt={combo.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    style={{ opacity: 0.92 }}
                   />
-                  <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(13,27,42,0.2) 0%, rgba(13,27,42,0.65) 100%)" }} />
                   <span
-                    className="absolute top-3 left-3 text-[9px] font-bold tracking-[2px] uppercase px-2.5 py-1"
+                    className="absolute top-3 left-3 text-[9px] font-bold tracking-[2px] uppercase px-2.5 py-1 rounded"
                     style={{ background: "#C9A84C", color: "#1B2E4B" }}
                   >
                     {combo.badge}
                   </span>
                   <span
-                    className="absolute bottom-3 right-3 text-[10px] font-bold tracking-wider"
-                    style={{ color: "#86EFAC" }}
+                    className="absolute bottom-3 right-3 text-[10px] font-bold tracking-wider px-2 py-0.5 rounded bg-green-600 text-white"
                   >
                     {combo.saving}
                   </span>
                 </div>
                 {/* Card body — flex-grow so all cards fill equal height */}
                 <div className="p-3 md:p-4 flex flex-col flex-grow">
-                  <h3 className="font-serif text-xs md:text-sm font-semibold text-white mb-1 leading-snug">{combo.name}</h3>
-                  <p className="text-white/50 text-[10px] md:text-xs leading-relaxed mb-3 flex-grow">{combo.items}</p>
+                  <h3 className="font-serif text-xs md:text-sm font-semibold text-brand-brown mb-1 leading-snug">{combo.name}</h3>
+                  <p className="text-gray-500 text-[10px] md:text-xs leading-relaxed mb-3 flex-grow">{combo.items}</p>
                   <div className="flex items-end justify-between mb-3">
                     <div>
-                      <p className="font-serif text-base md:text-lg font-light text-brand-gold">{combo.price}</p>
-                      <p className="text-white/30 text-[10px] line-through">{combo.original}</p>
+                      <p className="font-serif text-base md:text-lg font-semibold text-brand-brown">{combo.price}</p>
+                      <p className="text-gray-400 text-[10px] line-through">{combo.original}</p>
                     </div>
                   </div>
                   <Link
                     to={`/products?combo=${combo.tag}`}
-                    className="flex items-center justify-center gap-2 text-[11px] font-bold py-2.5 w-full tracking-[2px] uppercase transition-all duration-200 group-hover:gap-3"
+                    className="flex items-center justify-center gap-2 text-[11px] font-bold py-2.5 w-full tracking-[2px] uppercase transition-all duration-200 group-hover:gap-3 rounded-lg"
                     style={{ background: "linear-gradient(135deg, #C9A84C, #E2C06A)", color: "#1B2E4B" }}
                   >
                     View Bundle <ArrowRight size={11} />
@@ -570,86 +563,57 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══ HERITAGE & PERMANENCE ══════════════════════════════ */}
-      <section className="py-20 md:py-32 px-4" style={{ background: "#F4F0E8" }}>
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-14 md:gap-24 items-start">
-            {/* Left: Text */}
-            <FadeUp>
-              <p className="text-[10px] font-bold uppercase tracking-[4px] text-brand-gold mb-7 flex items-center gap-3">
-                <span className="w-8 h-px bg-brand-gold inline-block" />
-                Since 1999
-              </p>
-              <h2 className="font-serif text-4xl md:text-5xl font-normal text-brand-brown leading-tight mb-8">
-                A Quarter Century<br />
-                of <em style={{ color: "#C9A84C" }}>Unbroken</em><br />
-                Provenance
-              </h2>
-              <div className="space-y-5 text-sm text-gray-600 leading-relaxed mb-10">
-                <p>
-                  Jaipur's Gangauri Bazar has been a trading quarter for rare spices and dry fruits since the 16th century — when Rajput merchants established the market under royal patronage. Our shop at 41, Barah Ji Ki Gali has operated continuously within this quarter since 1999.
-                </p>
-                <p>
-                  This is not brand heritage borrowed from mythology. It is a physical address with a 25-year operating history, an FSSAI registration that predates most online dry fruit brands, and generations of customer families who still walk through our door.
-                </p>
-                <p className="font-semibold text-brand-brown">
-                  Online platforms can show you certifications.<br />They cannot show you this address.
-                </p>
+      {/* ═══ HERITAGE — compact, collapsible (Happilo-style "Our Journey") ═══ */}
+      <section className="py-12 px-4" style={{ background: "#F4F0E8" }}>
+        <div className="max-w-4xl mx-auto">
+          <FadeUp>
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[3px] text-brand-gold mb-2">Since 1999</p>
+                <h2 className="font-serif text-2xl md:text-3xl font-normal text-brand-brown">Our Journey</h2>
               </div>
-
-              {/* Timeline */}
-              <div className="space-y-5 mb-10 border-l-2 border-brand-gold/20 pl-6">
+              <div className="flex gap-6">
                 {[
-                  { year: "1999", event: "First shop opened in Gangauri Bazar, Jaipur" },
-                  { year: "2008", event: "Direct import relationship established with California farms" },
-                  { year: "2015", event: "FSSAI certification obtained; Kashmiri walnut sourcing begins" },
-                  { year: "2022", event: "Pan-India online dispatch launched from our Jaipur facility" },
-                  { year: "2025", event: "50,000th family served across India" },
-                ].map(({ year, event }) => (
-                  <div key={year} className="flex gap-4 items-start">
-                    <span className="font-serif text-brand-gold text-xs font-semibold w-8 flex-shrink-0 pt-0.5">{year}</span>
-                    <p className="text-sm text-gray-500 leading-snug">{event}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="p-4 bg-white/70 rounded-xl border border-brand-gold/15">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-brand-gold mb-1">Physical Address</p>
-                <p className="text-sm text-brand-brown font-medium">41, Barah Ji Ki Gali, Gangauri Bazar</p>
-                <p className="text-xs text-gray-500 mt-0.5">Jaipur — 302001, Rajasthan · Mon–Sat 9 AM – 7 PM</p>
-              </div>
-            </FadeUp>
-
-            {/* Right: Map + stats */}
-            <FadeUp delay={0.1}>
-              <div className="rounded-2xl overflow-hidden shadow-xl mb-5" style={{ height: 320 }}>
-                <iframe
-                  src="https://maps.google.com/maps?q=Gangauri+Bazar+Jaipur+Rajasthan+302001&t=&z=16&ie=UTF8&iwloc=&output=embed"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen=""
-                  loading="lazy"
-                  referrerPolicy="no-referrer-when-downgrade"
-                  title="Jai Shree Dryfruits — Gangauri Bazar, Jaipur"
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  { to: 25, suffix: "+", label: "Years in Gangauri Bazar" },
-                  { to: 50000, suffix: "+", label: "Families served" },
-                  { to: 3, suffix: "", label: "Generations of sourcing" },
+                  { to: 25, suffix: "+", label: "Years" },
+                  { to: 50000, suffix: "+", label: "Families" },
                 ].map(s => (
-                  <div key={s.label} className="text-center p-4 bg-white rounded-xl border border-brand-gold/10">
-                    <p className="font-serif text-2xl font-semibold text-brand-brown">
-                      <AnimatedCounter to={s.to} suffix={s.suffix} />
-                    </p>
-                    <p className="text-[10px] text-gray-500 mt-0.5 leading-tight">{s.label}</p>
+                  <div key={s.label} className="text-center">
+                    <p className="font-serif text-xl font-semibold text-brand-brown"><AnimatedCounter to={s.to} suffix={s.suffix} /></p>
+                    <p className="text-[10px] text-gray-500 leading-tight">{s.label}</p>
                   </div>
                 ))}
               </div>
-            </FadeUp>
-          </div>
+            </div>
+            <p className="text-sm text-gray-600 leading-relaxed mb-3">
+              Jai Shree Dryfruits was born in 1999 inside Jaipur's Gangauri Bazar — a trading quarter for rare spices and dry fruits since the 16th century. That's a 25-year operating history at one physical address, not brand heritage borrowed from mythology.
+            </p>
+            {heritageExpanded && (
+              <div className="space-y-4 text-sm text-gray-600 leading-relaxed mb-4">
+                <p>This is not brand heritage borrowed from mythology. It is a physical address with a 25-year operating history, an FSSAI registration that predates most online dry fruit brands, and generations of customer families who still walk through our door.</p>
+                <div className="space-y-3 border-l-2 border-brand-gold/20 pl-5">
+                  {[
+                    { year: "1999", event: "First shop opened in Gangauri Bazar, Jaipur" },
+                    { year: "2008", event: "Direct import relationship established with California farms" },
+                    { year: "2015", event: "FSSAI certification obtained; Kashmiri walnut sourcing begins" },
+                    { year: "2022", event: "Pan-India online dispatch launched from our Jaipur facility" },
+                    { year: "2025", event: "50,000th family served across India" },
+                  ].map(({ year, event }) => (
+                    <div key={year} className="flex gap-4 items-start">
+                      <span className="font-serif text-brand-gold text-xs font-semibold w-8 flex-shrink-0 pt-0.5">{year}</span>
+                      <p className="text-sm text-gray-500 leading-snug">{event}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-gray-500">41, Barah Ji Ki Gali, Gangauri Bazar, Jaipur — 302001, Rajasthan · Mon–Sat 9 AM – 7 PM</p>
+              </div>
+            )}
+            <button
+              onClick={() => setHeritageExpanded((v) => !v)}
+              className="text-xs font-bold uppercase tracking-widest text-brand-gold hover:text-brand-brown transition-colors"
+            >
+              {heritageExpanded ? "Show Less" : "Read More"}
+            </button>
+          </FadeUp>
         </div>
       </section>
 
@@ -753,8 +717,12 @@ export default function Home() {
         </FadeUp>
       </section>
 
-      {/* ═══ CORPORATE GIFTING CONCIERGE ═══════════════════════ */}
-      <section className="py-10 md:py-32 px-4" style={{ background: "linear-gradient(160deg, #0D1B35 0%, #1A2744 100%)" }}>
+      {/* ═══ CORPORATE GIFTING CONCIERGE ═══════════════════════
+           Full copy + stats + embedded form only on desktop (md+) — on
+           mobile that stack (heading, 5 bullets, 4 stat cards, then a whole
+           form with maxHeight:90vh) ran to nearly a full extra screen of
+           scroll. Mobile gets one compact banner instead. ═══ */}
+      <section className="hidden md:block py-32 px-4" style={{ background: "linear-gradient(160deg, #0D1B35 0%, #1A2744 100%)" }}>
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-2 gap-14 md:gap-20 items-start">
             {/* Left: Copy */}
@@ -809,8 +777,21 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══ BULK ORDER CALCULATOR — B2B lead capture ═══════════ */}
-      <BulkCalculator />
+      {/* Mobile — compact one-line banner instead of the full concierge layout above */}
+      <section className="md:hidden py-8 px-4 text-center" style={{ background: "linear-gradient(160deg, #0D1B35 0%, #1A2744 100%)" }}>
+        <p className="text-[10px] font-bold uppercase tracking-[3px] text-brand-gold mb-2">Corporate & Wedding Gifting</p>
+        <h2 className="font-serif text-xl text-white mb-2">Bulk Orders, Made Easy</h2>
+        <p className="text-white/50 text-xs mb-5">Custom branded gift boxes, 50+ units, dedicated account manager.</p>
+        <a
+          href="https://wa.me/917568577968?text=Hi%2C%20I%27d%20like%20to%20enquire%20about%20corporate%2Fbulk%20gifting"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest px-6 py-3 rounded-full"
+          style={{ background: "#C9A84C", color: "#1B2E4B" }}
+        >
+          Enquire on WhatsApp
+        </a>
+      </section>
 
       {/* ═══ TESTIMONIALS — glass 3D carousel ═══════════════════ */}
       <section className="pt-10 pb-8" style={{ background: "linear-gradient(180deg, #fff 0%, #F4F6FF 100%)" }}>

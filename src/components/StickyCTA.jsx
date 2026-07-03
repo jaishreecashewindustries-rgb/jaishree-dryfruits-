@@ -9,7 +9,11 @@ export default function StickyCTA() {
   const { totalItems } = useCart();
 
   useEffect(() => {
-    const handler = () => setVisible(window.scrollY > 500);
+    const handler = () => {
+      const nearBottom =
+        window.innerHeight + window.scrollY > document.documentElement.scrollHeight - 500;
+      setVisible(window.scrollY > 500 && !nearBottom);
+    };
     window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
   }, []);

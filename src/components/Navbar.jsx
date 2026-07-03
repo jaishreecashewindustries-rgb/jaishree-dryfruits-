@@ -54,62 +54,29 @@ export default function Navbar() {
 
   return (
     <>
-      {/* ── Premium Announcement Bar ────────────────────────────────────── */}
-      <div
-        className="overflow-hidden"
-        style={{
-          background: "linear-gradient(90deg, #071E14 0%, #0B3D2E 40%, #0D4A35 60%, #071E14 100%)",
-          borderBottom: "1px solid rgba(201,168,76,0.18)",
-          paddingTop: 10,
-          paddingBottom: 10,
-        }}
-      >
+      {/* ── Announcement Bar — one clean, brand-colour bar (was two mismatched
+             marquees stacked, in a dark-green gradient that didn't match the
+             site's actual navy/gold palette anywhere else) ── */}
+      <div className="overflow-hidden bg-brand-brown">
         <div
-          className="marquee-track-luxury flex items-center whitespace-nowrap"
+          className="marquee-track flex items-center whitespace-nowrap py-2"
           style={{ width: "max-content" }}
         >
           {[
-            "COMPLIMENTARY PREMIUM AIR EXPRESS DISPATCH ON ALLOCATIONS ABOVE ₹1,200",
-            "REGISTER CORPORATE GSTIN AT CHECKOUT FOR ENTERPRISE TAX CREDIT",
-            "FRESHLY SORTED · SINGLE-ORIGIN HARVEST · DIRECT FROM FARM",
-            "COMPLIMENTARY PREMIUM AIR EXPRESS DISPATCH ON ALLOCATIONS ABOVE ₹1,200",
-            "REGISTER CORPORATE GSTIN AT CHECKOUT FOR ENTERPRISE TAX CREDIT",
-            "FRESHLY SORTED · SINGLE-ORIGIN HARVEST · DIRECT FROM FARM",
-          ].map((msg, i) => (
-            <span key={i} className="inline-flex items-center">
-              <span
-                className="font-serif italic"
-                style={{ color: "#E8C97A", fontSize: 13, letterSpacing: "0.2em", padding: "0 2.5rem" }}
-              >
-                {msg}
-              </span>
-              <motion.span
-                animate={{ opacity: [0.3, 1, 0.3] }}
-                transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-                style={{ color: "#C9A84C", fontSize: 8 }}
-              >
-                ✦
-              </motion.span>
+            ...[
+              "Free Delivery on Orders Above ₹499",
+              "FSSAI Certified · Direct from Source Farms",
+              "25+ Years in Gangauri Bazar, Jaipur",
+            ],
+            ...trustItems.map((t) => `${t.icon} ${t.text}`),
+          ].flatMap((msg) => [msg, msg]).map((msg, i) => (
+            <span key={i} className="inline-flex items-center text-[11px] font-semibold tracking-wide text-white/90 px-6">
+              {msg}
+              <span className="ml-6 text-brand-gold">•</span>
             </span>
           ))}
         </div>
       </div>
-
-      {/* ── Trust Bar — rotating short trust badges, admin-editable ── */}
-      {trustItems.length > 0 && (
-        <div className="overflow-hidden bg-brand-cream border-b border-brand-gold/15">
-          <div
-            className="marquee-track flex items-center whitespace-nowrap py-1.5"
-            style={{ width: "max-content" }}
-          >
-            {[...trustItems, ...trustItems].map((t, i) => (
-              <span key={i} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-brown/70 px-5">
-                <span>{t.icon}</span> {t.text}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Main navbar */}
       <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-md" : "bg-white/95 backdrop-blur-sm"}`}>

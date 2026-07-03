@@ -100,7 +100,7 @@ export default function Footer() {
                 onFocus={e => { e.currentTarget.style.borderBottomColor = "#C9A84C"; }}
                 onBlur={e => { e.currentTarget.style.borderBottomColor = "rgba(201,168,76,0.35)"; }}
               />
-              <style>{`.footer-newsletter-input::placeholder{color:rgba(255,255,255,0.28)}`}</style>
+              <style>{`.footer-newsletter-input::placeholder{color:rgba(255,255,255,0.4)}`}</style>
             </div>
             <motion.button
               whileTap={{ scale: 0.95 }}
@@ -124,7 +124,7 @@ export default function Footer() {
       </div>
 
       {/* ── Main footer body ── */}
-      <div className="max-w-7xl mx-auto px-4 py-16 grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-12">
+      <div className="max-w-7xl mx-auto px-4 py-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-10 md:gap-12">
 
         {/* Brand — clean typographic mark, no coloured badge */}
         <FadeIn className="col-span-2 md:col-span-1">
@@ -151,7 +151,7 @@ export default function Footer() {
               <div className="mt-2 w-8 h-px" style={{ background: "rgba(201,168,76,0.4)" }} />
             </div>
           </div>
-          <p className="text-sm leading-relaxed mb-7" style={{ color: "rgba(255,255,255,0.38)", lineHeight: 1.75 }}>
+          <p className="text-sm leading-relaxed mb-7" style={{ color: "rgba(255,255,255,0.6)", lineHeight: 1.75 }}>
             {contact.footerTagline || "Finest quality dry fruits and nuts sourced from the best farms in Kashmir, California and Iran. Delivered fresh to your door since 1999."}
           </p>
           <div className="flex gap-3">
@@ -187,7 +187,7 @@ export default function Footer() {
           >
             Quick Links
           </h4>
-          <ul className="space-y-3.5" style={{ fontSize: 13, color: "rgba(255,255,255,0.42)", lineHeight: 1 }}>
+          <ul className="space-y-3.5" style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", lineHeight: 1 }}>
             {[
               { to: "/",                           label: "Home" },
               { to: "/products",                   label: "All Products" },
@@ -202,9 +202,9 @@ export default function Footer() {
                 <Link
                   to={l.to}
                   className="transition-colors duration-200 hover:translate-x-1 inline-block"
-                  style={{ color: "rgba(255,255,255,0.42)" }}
+                  style={{ color: "rgba(255,255,255,0.65)" }}
                   onMouseEnter={e => { e.currentTarget.style.color = "#C9A84C"; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.42)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.65)"; }}
                 >
                   {l.label}
                 </Link>
@@ -221,7 +221,7 @@ export default function Footer() {
           >
             Support
           </h4>
-          <ul className="space-y-3.5" style={{ fontSize: 13, color: "rgba(255,255,255,0.42)" }}>
+          <ul className="space-y-3.5" style={{ fontSize: 13, color: "rgba(255,255,255,0.65)" }}>
             {[
               { to: "/faq",      label: "FAQs" },
               { to: "/shipping", label: "Shipping Policy" },
@@ -234,9 +234,9 @@ export default function Footer() {
                 <Link
                   to={l.to}
                   className="transition-colors duration-200"
-                  style={{ color: "rgba(255,255,255,0.42)" }}
+                  style={{ color: "rgba(255,255,255,0.65)" }}
                   onMouseEnter={e => { e.currentTarget.style.color = "#C9A84C"; }}
-                  onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.42)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.color = "rgba(255,255,255,0.65)"; }}
                 >
                   {l.label}
                 </Link>
@@ -258,16 +258,16 @@ export default function Footer() {
               <Phone size={13} className="flex-shrink-0 mt-0.5" style={{ color: "rgba(201,168,76,0.6)" }} />
               <div>
                 <p style={{ color: "rgba(255,255,255,0.7)", fontSize: 13 }}>{contact.phone || "+91 75685 77968"}</p>
-                <p className="mt-0.5" style={{ fontSize: 11, color: "rgba(255,255,255,0.25)", letterSpacing: "0.04em" }}>Mon – Sat  ·  9 am – 7 pm</p>
+                <p className="mt-0.5" style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em" }}>Mon – Sat  ·  9 am – 7 pm</p>
               </div>
             </li>
             <li className="flex gap-3.5 items-start">
               <Mail size={13} className="flex-shrink-0 mt-0.5" style={{ color: "rgba(201,168,76,0.6)" }} />
-              <span style={{ color: "rgba(255,255,255,0.42)", fontSize: 13 }}>{contact.email || "info@jaishreedryfruits.com"}</span>
+              <span style={{ color: "rgba(255,255,255,0.65)", fontSize: 13 }}>{contact.email || "info@jaishreedryfruits.com"}</span>
             </li>
             <li className="flex gap-3.5 items-start">
               <MapPin size={13} className="flex-shrink-0 mt-0.5" style={{ color: "rgba(201,168,76,0.6)" }} />
-              <div style={{ color: "rgba(255,255,255,0.42)", fontSize: 13, lineHeight: 1.65 }}>
+              <div style={{ color: "rgba(255,255,255,0.65)", fontSize: 13, lineHeight: 1.65 }}>
                 {(contact.address || "41, Barah Ji Ki Gali, Gangauri Bazar, Jaipur – 302001").split(",").map((line, i) => (
                   <p key={i}>{line.trim()}</p>
                 ))}
@@ -315,17 +315,17 @@ export default function Footer() {
       {/* Bottom bar */}
       <div className="py-6 px-4">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
-          <p style={{ fontSize: 11, color: "rgba(255,255,255,0.22)", letterSpacing: "0.04em" }}>
+          <p style={{ fontSize: 11, color: "rgba(255,255,255,0.5)", letterSpacing: "0.04em" }}>
             © {new Date().getFullYear()} Jai Shree Dryfruits. All rights reserved.
           </p>
           <div className="flex gap-6 flex-wrap justify-center">
-            <span className="flex items-center gap-1.5" style={{ fontSize: 11, color: "rgba(255,255,255,0.32)" }}>
+            <span className="flex items-center gap-1.5" style={{ fontSize: 11, color: "rgba(255,255,255,0.55)" }}>
               <Lock size={10} style={{ color: "rgba(201,168,76,0.5)" }} /> Secure Payments
             </span>
-            <span className="flex items-center gap-1.5" style={{ fontSize: 11, color: "rgba(255,255,255,0.32)" }}>
+            <span className="flex items-center gap-1.5" style={{ fontSize: 11, color: "rgba(255,255,255,0.55)" }}>
               <Truck size={10} style={{ color: "rgba(201,168,76,0.5)" }} /> Free Shipping ₹499+
             </span>
-            <span className="flex items-center gap-1.5" style={{ fontSize: 11, color: "rgba(255,255,255,0.32)" }}>
+            <span className="flex items-center gap-1.5" style={{ fontSize: 11, color: "rgba(255,255,255,0.55)" }}>
               <ShieldCheck size={10} style={{ color: "rgba(201,168,76,0.5)" }} /> 100% Authentic
             </span>
           </div>
