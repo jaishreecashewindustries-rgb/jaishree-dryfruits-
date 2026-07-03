@@ -155,7 +155,7 @@ async function main() {
     products = await fetchProductsForPrerender();
   } catch (err) {
     console.error("[prerender] FATAL — could not fetch products, aborting prerender (build/deploy will continue with plain SPA output):", err.message);
-    return; // Non-fatal to the overall build — just skip prerendering entirely this run.
+    process.exit(0); // Non-fatal to the overall build — just skip prerendering entirely this run. Explicit exit for the same reason as below.
   }
 
   const productRoutes = products.map((p) => ({ route: `/product/${p.id}`, expectedText: p.name }));
@@ -190,7 +190,7 @@ async function main() {
   }
 
   await browser.close();
-  server.kill();
+  server.kill("SIGKILL");
 
   // Only now — after every route has been rendered against the untouched
   // original build/ — copy the successful snapshots into build/. This is
@@ -208,6 +208,15 @@ async function main() {
   };
   fs.writeFileSync(path.join(BUILD_DIR, "prerender-report.json"), JSON.stringify(report, null, 2));
   console.log(`[prerender] done — ${report.ok}/${report.total} pages prerendered. ${report.timeout.length} timeouts, ${report.mismatch.length} mismatches (see build/prerender-report.json).`);
+
+  // The actual prerender work is done at this point, but something —
+  // `npx serve`'s child process, or a lingering Firestore gRPC channel from
+  // the Firebase SDK — keeps Node's event loop alive, so the process never
+  // exits on its own. In GitHub Actions this manifests as: script logs
+  // "done", then the job hangs silently for the full 30-minute timeout with
+  // zero further output. Forcing exit here is the standard fix for this
+  // exact class of bug in one-off Node CLI scripts.
+  process.exit(0);
 }
 
 function copyDirRecursive(src, dest) {
