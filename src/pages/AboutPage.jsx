@@ -39,7 +39,7 @@ export default function AboutPage() {
     <div className="min-h-screen bg-white">
       <SEO
         title="About Us"
-        description="Jai Shree Dryfruits — 25+ years of pure quality from Jaipur's heart. FSSAI certified, direct-sourced from Kashmir, California & Iran. Serving 50,000+ families since 1999."
+        description="25+ years of pure quality from Jaipur's heart. FSSAI certified, direct-sourced from Kashmir, California & Iran. Serving 50,000+ families since 1999."
       />
 
       {/* Hero */}

@@ -204,7 +204,7 @@ function PolicySection({ title, children }) {
 function ShippingPage() {
   return (
     <>
-      <SEO title="Shipping Policy" description="Free shipping above ₹499. Metro delivery in 2-3 days, tracked via Delhivery/Shiprocket/India Post. Read Jai Shree Dryfruits' full shipping timelines and charges." />
+      <SEO title="Shipping Policy" description="Free shipping above ₹499. Metro delivery in 2-3 days, tracked via Delhivery/Shiprocket/India Post. Full shipping timelines and charges." />
     <PolicyPageShell title="Shipping Policy" subtitle="Last updated: June 2025">
       <PolicySection title="Delivery Timelines">
         <p><strong>Metro cities</strong> (Delhi, Mumbai, Bangalore, Chennai, Hyderabad, Pune, Kolkata): 2–3 business days.</p>

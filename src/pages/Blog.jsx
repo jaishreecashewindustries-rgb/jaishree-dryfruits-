@@ -115,7 +115,7 @@ export default function Blog() {
     <div className="min-h-screen bg-white">
       <SEO
         title="Blog — Dry Fruit Guides & Health Tips"
-        description="Cashew grades, almond health benefits, gifting guides & sourcing stories from Jai Shree Dryfruits — practical dry fruit knowledge from a 25+ year Jaipur-based supplier."
+        description="Cashew grades, almond health benefits, gifting guides & sourcing stories — practical dry fruit knowledge from a 25+ year Jaipur-based supplier."
       />
       {/* Hero */}
       <div className="py-14 px-4 text-center" style={{ background: "linear-gradient(135deg, #0D1B2A 0%, #1B2E4B 100%)" }}>

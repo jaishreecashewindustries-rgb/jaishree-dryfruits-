@@ -196,7 +196,7 @@ export default function Home() {
     <div className="min-h-screen overflow-x-hidden">
       <SEO
         title="India's Finest Dry Fruits — Premium Almonds, Cashews, Pistachios"
-        description="Shop premium California almonds, Kashmiri walnuts, Iranian pistachios & gift hampers. FSSAI certified. Free shipping above ₹499. Est. 1999, Jaipur. 50,000+ happy families."
+        description="Shop premium California almonds, Kashmiri walnuts & Iranian pistachios. FSSAI certified, free shipping above ₹499. Est. 1999, Jaipur. 50,000+ happy families."
         type="website"
       />
 
