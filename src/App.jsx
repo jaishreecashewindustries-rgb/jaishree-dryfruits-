@@ -45,6 +45,7 @@ const FAQ = lazy(() => import("./pages/FAQ"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const SourcingStory = lazy(() => import("./pages/SourcingStory"));
+const AboutPage = lazy(() => import("./pages/AboutPage"));
 
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -195,39 +196,6 @@ function PolicySection({ title, children }) {
       </h2>
       <div className="text-gray-600 text-sm leading-relaxed space-y-2">{children}</div>
     </div>
-  );
-}
-
-function AboutPage() {
-  return (
-    <>
-      <SEO
-        title="About Us"
-        description="Jai Shree Dryfruits — 25+ years of pure quality from Jaipur's heart. FSSAI certified, direct-sourced from Kashmir, California & Iran. Serving 50,000+ families since 1999."
-      />
-    <PolicyPageShell title="About Us" subtitle="25+ years of pure quality from Jaipur's heart">
-      <PolicySection title="Our Story">
-        <p>Jai Shree Dryfruits was born in 1999 inside Jaipur's historic Gangauri Bazar — one of Rajasthan's oldest trading districts, where merchants have exchanged the world's finest spices and dry fruits for centuries. What started as a small family shop run by a single promise — <strong>quality you can taste</strong> — has grown into one of India's most trusted dry fruit brands.</p>
-        <p>Today we serve over 50,000 families across India, supplying to homes, hotels, corporate offices, and wedding caterers. Yet our sourcing philosophy remains unchanged: every almond, cashew, walnut, pistachio, and date is hand-selected from its origin farm before it reaches your door.</p>
-      </PolicySection>
-      <PolicySection title="Where We Source">
-        <p><strong>Kashmir, India</strong> — Walnuts and saffron from the Sopore valley, harvested each October by the same farming families we've partnered with for over a decade.</p>
-        <p><strong>California, USA</strong> — Premium almonds and pistachios from the San Joaquin Valley, processed within 48 hours of shelling.</p>
-        <p><strong>Iran</strong> — Hand-picked Iranian green pistachios and dried figs, sourced from licensed exporters with FSSAI approval.</p>
-        <p><strong>Saudi Arabia &amp; Afghanistan</strong> — Medjool dates, Afghani figs, and Irani dry apricots.</p>
-      </PolicySection>
-      <PolicySection title="Quality Promise">
-        <p>Every batch we receive is inspected for moisture content (below 5%), kernel integrity (minimum 98% whole), zero foreign matter, and absence of mineral oil coating or chemical preservatives. We are FSSAI certified (License No. on every package) and maintain lab test records for every batch dispatched.</p>
-        <p>We never use sulphur dioxide, artificial colouring, or mineral oil — common adulterants in the Indian market. Our products are 100% natural, exactly as they come from the farm.</p>
-      </PolicySection>
-      <PolicySection title="Contact Us">
-        <p>📍 41, Barah Ji Ki Gali, Gangauri Bazar, Jaipur – 302001, Rajasthan</p>
-        <p>📞 +91 75685 77968 &nbsp;|&nbsp; +91 99500 62186</p>
-        <p>✉️ info@jaishreedryfruits.com</p>
-        <p>🕐 Mon–Sat: 9:00 AM – 7:00 PM</p>
-      </PolicySection>
-    </PolicyPageShell>
-    </>
   );
 }
 

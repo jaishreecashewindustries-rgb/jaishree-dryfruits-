@@ -270,7 +270,7 @@ export default function FAQ() {
               <MessageCircle size={14} /> WhatsApp
             </a>
             <a
-              href="mailto:info@jaishreedryfuits.com"
+              href="mailto:info@jaishreedryfruits.com"
               className="inline-flex items-center gap-2 border border-white/25 text-white text-xs font-bold uppercase tracking-widest px-6 py-3 hover:bg-white/10 transition-all"
             >
               <Mail size={14} /> Email Us
