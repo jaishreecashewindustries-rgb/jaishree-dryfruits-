@@ -160,6 +160,48 @@ async function prerenderRoute(browser, route, expectedText) {
   return result;
 }
 
+// Priorities for the static routes — matches the hand-maintained sitemap.xml
+// this replaces. Anything not listed here (individual product pages) gets
+// a sensible default below.
+const STATIC_PRIORITIES = {
+  "/": "1.0",
+  "/products": "0.9",
+  "/about": "0.6",
+  "/contact": "0.6",
+  "/faq": "0.5",
+  "/blog": "0.6",
+  "/sourcing": "0.5",
+  "/track-order": "0.3",
+  "/shipping": "0.3",
+  "/returns": "0.3",
+};
+
+// sitemap.xml used to be a hand-maintained static file in public/ — it went
+// stale (zero individual /product/:id URLs ever listed, so Google had to
+// rely on discovering them via crawled links instead of the sitemap) and had
+// unescaped spaces in category query strings (e.g. "category=Combo Packs"),
+// which isn't valid inside a <loc> per the sitemap spec. Generating it here
+// from the same route list already used for prerendering means it can never
+// drift from what's actually on the site again.
+const NOINDEX_ROUTES = ["/privacy", "/terms"]; // must match `noIndex` on these pages' <SEO> — no point listing pages we told Google not to index
+
+function generateSitemap(routes) {
+  // Routes are already correctly percent-encoded where it matters (see
+  // CATEGORY_ROUTES' encodeURIComponent above) — just XML-escape the
+  // remaining sitemap-unsafe character (&) and prefix with the real domain.
+  const urls = routes
+    .filter(({ route }) => !NOINDEX_ROUTES.includes(route))
+    .map(({ route }) => {
+      const routePath = route.split("?")[0];
+      const isCategory = route.includes("category=");
+      const priority = isCategory ? "0.7" : (STATIC_PRIORITIES[routePath] || (routePath.startsWith("/product/") ? "0.8" : "0.7"));
+      const loc = (SITE_URL + route).replace(/&/g, "&amp;");
+      return `  <url><loc>${loc}</loc><priority>${priority}</priority></url>`;
+    });
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
+  fs.writeFileSync(path.join(BUILD_DIR, "sitemap.xml"), xml);
+}
+
 async function main() {
   console.log("[prerender] fetching product catalogue for route list + content checks...");
   let products = [];
@@ -217,6 +259,9 @@ async function main() {
   console.log("[prerender] copying successful snapshots from staging into build/...");
   copyDirRecursive(STAGING_DIR, BUILD_DIR);
   fs.rmSync(STAGING_DIR, { recursive: true, force: true });
+
+  console.log("[prerender] generating sitemap.xml from the live route list...");
+  generateSitemap(allRoutes);
 
   const report = {
     generatedAt: new Date().toISOString(),
