@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 import { db, verifyAuth } from "../firebase/config";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
-import emailjs from "@emailjs/browser";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useCoins, COINS_RULES } from "../context/CoinsContext";
@@ -349,16 +348,15 @@ export default function Checkout() {
     return ref.id;
   };
 
-  // Sent client-side via EmailJS — no Cloud Functions/Eventarc involved,
-  // so it isn't affected by the asia-south1 Firestore-trigger region
-  // limitation. Template variables match the EmailJS "Order Confirmation"
-  // template: email, order_id, orders[] (name/units/price), cost.shipping/tax
+  // Brevo (Cloud Functions, branded template). EmailJS used to run alongside
+  // this as a duplicate fallback from before the Brevo backend was reliable
+  // — now that REACT_APP_FUNCTIONS_BASE_URL actually points at the deployed
+  // functions, that meant every order sent the customer two confirmation
+  // emails (one branded, one plain). Removed EmailJS entirely.
   const sendOrderConfirmationEmail = async (orderId, paymentId) => {
     const to = address.email || user?.email;
     if (!to) return;
 
-    // Brevo (Cloud Functions, branded template) — best-effort, runs alongside
-    // EmailJS below so neither provider having an outage loses the confirmation.
     fetch(`${FUNCTIONS_BASE_URL}/sendTemplatedEmail`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -375,27 +373,7 @@ export default function Checkout() {
           paid: !!paymentId,
         },
       }),
-    }).catch((err) => console.warn("Brevo order email failed:", err));
-
-    const serviceId = process.env.REACT_APP_EMAILJS_SERVICE_ID;
-    const templateId = process.env.REACT_APP_EMAILJS_TEMPLATE_ID;
-    const publicKey = process.env.REACT_APP_EMAILJS_PUBLIC_KEY;
-    if (!serviceId || !templateId || !publicKey) return;
-    try {
-      await emailjs.send(serviceId, templateId, {
-        email: to,
-        to_name: address.name,
-        order_id: orderId.slice(0, 8).toUpperCase(),
-        orders: items.map(i => ({ name: `${i.name} (${i.variant})`, units: i.qty, price: i.price * i.qty })),
-        cost: { shipping: shipping || 0, tax: 0 },
-        order_total: finalTotal,
-        shipping_address: `${address.address}, ${address.city}, ${address.state} - ${address.pincode}`,
-        payment_status: paymentId ? "Paid and confirmed" : "Placed (Cash on Delivery)",
-      }, { publicKey });
-    } catch (err) {
-      console.warn("Order confirmation email failed:", err);
-      // non-critical — never block checkout on email failure
-    }
+    }).catch((err) => console.warn("Order confirmation email failed:", err));
   };
 
   // Ad platform conversion signal, fired once per successful order (both COD
