@@ -34,6 +34,7 @@ const BUILD_DIR = path.join(__dirname, "..", "build");
 const STAGING_DIR = path.join(__dirname, "..", ".prerender-staging");
 const PORT = 5050;
 const BASE = `http://localhost:${PORT}`;
+const SITE_URL = "https://jaishreedryfruits.com";
 
 // ── Load .env manually (no dotenv dependency needed for a handful of KEY=VALUE lines) ──
 function loadEnv() {
@@ -134,7 +135,18 @@ async function prerenderRoute(browser, route, expectedText) {
       return result;
     }
 
-    const html = await page.content();
+    // Safety net: anything in the app that reads window.location (canonical
+    // tags, og:url, tracking pixel config, etc.) sees this local staging
+    // server's address while prerendering, not the real domain. A bug here
+    // once shipped a canonical tag pointing at localhost:5050 to every page
+    // in production, which Google could never resolve — this rewrite catches
+    // that whole class of mistake even if a future component makes it again.
+    const html = (await page.content())
+      .split(BASE).join(SITE_URL)
+      // Meta Pixel's fbevents.js reads window.location.hostname at init time
+      // and injects its own config-fetch <script src="...&domain=..."> tag —
+      // during prerendering that freezes in "domain=localhost" too.
+      .split("domain=localhost&").join(`domain=${new URL(SITE_URL).hostname}&`);
     const filePath = routeToFilePath(route);
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, html);

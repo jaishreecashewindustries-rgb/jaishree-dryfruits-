@@ -65,7 +65,14 @@ export default function SEO({
   noIndex = false,
 }) {
   const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} — India's Finest Dry Fruits`;
-  const canonicalURL = canonical || window.location.href;
+  // Always anchor to the real production origin, never window.location.href —
+  // the prerender build runs Puppeteer against a local static server
+  // (http://localhost:5050), and window.location.href there bakes
+  // "localhost:5050" into the canonical tag of every prerendered page
+  // shipped to production. That tells Google the real page lives at an
+  // unreachable localhost URL, which is why pages were stuck on
+  // "Crawled - currently not indexed" in Search Console.
+  const canonicalURL = canonical || `${SITE_URL}${window.location.pathname}${window.location.search}`;
 
   useEffect(() => {
     document.title = fullTitle;
