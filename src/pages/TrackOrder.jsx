@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Package, Search, CheckCircle2, Clock, Truck, MapPin, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
-import { collection, query, getDocs, doc, getDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { formatPrice } from "../utils/helpers";
 import { Link } from "react-router-dom";
@@ -30,7 +30,13 @@ export default function TrackOrder() {
     if (!id) { setError("Please enter your Order ID"); return; }
     setLoading(true); setError(""); setOrder(null);
     try {
-      const snap = await getDoc(doc(db, "orders", id));
+      // The order number shown to the customer (email, WhatsApp, confirmation
+      // screen) IS the Firestore document ID for orders placed after this
+      // fix — see Checkout.jsx's generateOrderCode(). Firestore rules allow
+      // a direct get-by-ID for anyone (same trust model as a magic link),
+      // but not an unauthenticated query/list, so this only works as a
+      // direct doc lookup, not a where() query.
+      const snap = await getDoc(doc(db, "orders", id.toUpperCase()));
       if (snap.exists()) {
         setOrder({ id: snap.id, ...snap.data() });
       } else {

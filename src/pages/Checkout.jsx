@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { CheckCircle, ChevronRight, Lock, Package, CreditCard, Banknote, MapPin, Loader2, AlertCircle, CheckCircle2, ShoppingCart, ChevronDown, Tag, Coins, X, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, addDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
+import { collection, doc, setDoc, getDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 import { db, verifyAuth } from "../firebase/config";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { useCart } from "../context/CartContext";
@@ -322,6 +322,20 @@ export default function Checkout() {
     return Object.keys(errors).length === 0;
   };
 
+  // 8-char uppercase-alnum code, used as BOTH the Firestore document ID and
+  // the order number shown to the customer (email, WhatsApp, confirmation
+  // screen, Track Order). Previously the doc ID was Firestore's own 20-char
+  // mixed-case auto-ID, and only a truncated-and-uppercased slice of it was
+  // ever shown to customers — since uppercasing is irreversible, Track
+  // Order's lookup-by-ID could never match what a customer actually typed
+  // in. Making the visible code the real ID sidesteps that entirely.
+  const generateOrderCode = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I — easy to read back
+    let code = "";
+    for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
+    return code;
+  };
+
   const saveOrder = async (paymentId = null) => {
     const order = {
       userId: user?.uid || "guest",
@@ -344,7 +358,16 @@ export default function Checkout() {
       gstinCompany: gstinData.company.trim() || null,
       createdAt: serverTimestamp(),
     };
-    const ref = await addDoc(collection(db, "orders"), order);
+    // Collision odds are astronomically low (32^8 combinations), but check
+    // anyway — it costs one cheap read and guarantees correctness.
+    let code = generateOrderCode();
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const existing = await getDoc(doc(db, "orders", code));
+      if (!existing.exists()) break;
+      code = generateOrderCode();
+    }
+    const ref = doc(db, "orders", code);
+    await setDoc(ref, { ...order, orderNumber: code });
     return ref.id;
   };
 
@@ -368,6 +391,11 @@ export default function Checkout() {
           name: address.name,
           orderId: orderId.slice(0, 8).toUpperCase(),
           items: items.map((i) => ({ name: i.name, variant: i.variant, qty: i.qty, price: i.price })),
+          subtotal,
+          shipping,
+          discount,
+          coupon: appliedCoupon?.code || null,
+          coinsDiscount: coinsDiscount || 0,
           total: finalTotal,
           address: `${address.address}, ${address.city}, ${address.state} - ${address.pincode}`,
           paid: !!paymentId,

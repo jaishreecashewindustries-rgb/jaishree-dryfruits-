@@ -150,7 +150,16 @@ function otpEmail({ name, code }) {
 }
 
 // ── Order confirmation ──
-function orderConfirmationEmail({ name, orderId, items, total, address, paid }) {
+function orderConfirmationEmail({ name, orderId, items, subtotal, shipping, discount, coupon, coinsDiscount, total, address, paid }) {
+  const summaryRows = [];
+  if (subtotal != null) summaryRows.push(`<tr><td style="padding:5px 0;font-family:${SANS};font-size:13px;color:${BRAND.muted};">Subtotal</td><td style="padding:5px 0;font-family:${SANS};font-size:13px;color:${BRAND.text};text-align:right;">${fmt(subtotal)}</td></tr>`);
+  if (shipping != null) summaryRows.push(`<tr><td style="padding:5px 0;font-family:${SANS};font-size:13px;color:${BRAND.muted};">Shipping</td><td style="padding:5px 0;font-family:${SANS};font-size:13px;color:${BRAND.text};text-align:right;">${shipping > 0 ? fmt(shipping) : "Free"}</td></tr>`);
+  if (discount > 0) summaryRows.push(`<tr><td style="padding:5px 0;font-family:${SANS};font-size:13px;color:#16a34a;">Discount${coupon ? ` (${coupon})` : ""}</td><td style="padding:5px 0;font-family:${SANS};font-size:13px;color:#16a34a;text-align:right;">-${fmt(discount)}</td></tr>`);
+  if (coinsDiscount > 0) summaryRows.push(`<tr><td style="padding:5px 0;font-family:${SANS};font-size:13px;color:#16a34a;">JS Coins Redeemed</td><td style="padding:5px 0;font-family:${SANS};font-size:13px;color:#16a34a;text-align:right;">-${fmt(coinsDiscount)}</td></tr>`);
+  const summaryTable = summaryRows.length
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:4px;">${summaryRows.join("")}</table>`
+    : "";
+
   return {
     subject: `Order Confirmed — #${orderId} | ${BRAND.name}`,
     senderKey: "orders",
@@ -162,6 +171,7 @@ function orderConfirmationEmail({ name, orderId, items, total, address, paid }) 
         ${paragraph(`Your order has been ${paid ? "received and payment confirmed" : "placed and will be prepared for Cash on Delivery"}.`)}
         ${infoCard([["Order Number", `#${orderId}`], ["Status", paid ? "Paid" : "Cash on Delivery"]])}
         ${itemsTable(items, fmt)}
+        ${summaryTable}
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:6px;border-top:2px solid ${BRAND.brown};padding-top:14px;">
           <tr><td style="font-family:${SANS};font-size:13px;letter-spacing:0.5px;text-transform:uppercase;color:${BRAND.muted};">Total</td><td style="font-family:${SERIF};font-size:20px;font-weight:600;color:${BRAND.brown};text-align:right;">${fmt(total)}</td></tr>
         </table>
