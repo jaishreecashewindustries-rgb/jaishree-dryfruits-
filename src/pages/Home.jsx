@@ -19,6 +19,7 @@ import B2BGiftingForm from "../components/B2BGiftingForm";
 import TestimonialsCarousel from "../components/TestimonialsCarousel";
 import { formatPrice } from "../utils/helpers";
 import { useProducts } from "../context/ProductsContext";
+import { useSiteSettings } from "../context/SiteSettingsContext";
 
 /* ── Framer helpers ─────────────────────────────────────────── */
 function FadeUp({ children, delay = 0, className = "" }) {
@@ -160,6 +161,16 @@ function useLiveTestimonials() {
 export default function Home() {
   const { products: DEMO_PRODUCTS } = useProducts();
   const featured = DEMO_PRODUCTS.filter((p) => p.featured).slice(0, 8);
+  const { siteContent } = useSiteSettings() || {};
+  // Admin-editable via Content Management → Hero/Banner. Falls back to the
+  // approved default copy — the video background itself stays fixed
+  // (a CMS "background image" field doesn't fit a video hero), only the
+  // text/CTAs are admin-controlled.
+  const hero = siteContent?.hero || {};
+  const [heroLine1, heroLine2] = (hero.headline || "India's Finest\nDry Fruits").split("\n");
+  const heroSubheadline = hero.subheadline || "Kashmir · California · Iran";
+  const heroCtaText = hero.ctaText || "Shop Now";
+  const heroCtaSecondary = hero.ctaSecondary || "Gift Hampers";
   const [showB2BForm, setShowB2BForm] = useState(false);
   const [heritageExpanded, setHeritageExpanded] = useState(false);
   const [productsReady, setProductsReady] = useState(false);
@@ -249,15 +260,15 @@ export default function Home() {
             className="font-serif font-bold text-white mb-3 drop-shadow-lg"
             style={{ fontSize: "clamp(2rem, 8vw, 5rem)", lineHeight: 1.1, letterSpacing: "-0.01em" }}
           >
-            {"India's Finest".split("").map((ch, i) => (
+            {heroLine1.split("").map((ch, i) => (
               <motion.span
                 key={i}
                 variants={{ hidden: { opacity: 0, y: 24, rotateX: -40 }, visible: { opacity: 1, y: 0, rotateX: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } } }}
                 style={{ display: "inline-block" }}
               >{ch === " " ? " " : ch}</motion.span>
             ))}
-            <br />
-            {"Dry Fruits".split("").map((ch, i) => (
+            {heroLine2 && <br />}
+            {(heroLine2 || "").split("").map((ch, i) => (
               <motion.span
                 key={i}
                 variants={{ hidden: { opacity: 0, y: 24, rotateX: -40 }, visible: { opacity: 1, y: 0, rotateX: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] } } }}
@@ -273,7 +284,7 @@ export default function Home() {
             transition={{ delay: 0.15, duration: 0.4 }}
             className="text-white/70 text-xs md:text-sm font-light tracking-[0.28em] uppercase mb-7"
           >
-            Kashmir · California · Iran
+            {heroSubheadline}
           </motion.p>
 
           {/* CTA buttons */}
@@ -287,14 +298,14 @@ export default function Home() {
               to="/products"
               className="group flex items-center gap-2 bg-brand-gold hover:bg-brand-gold-dark text-white font-semibold tracking-[0.1em] uppercase text-xs px-6 py-3 transition-all duration-300 hover:scale-105 shadow-lg shadow-brand-gold/30"
             >
-              {tr("shopNow")}
+              {heroCtaText}
               <ArrowRight size={13} className="group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
               to="/products?category=Gift Hampers"
               className="text-white/80 hover:text-white tracking-[0.12em] uppercase text-xs font-medium border border-white/30 hover:border-white px-6 py-3 transition-all duration-300 backdrop-blur-sm bg-white/5"
             >
-              Gift Hampers
+              {heroCtaSecondary}
             </Link>
           </motion.div>
         </motion.div>

@@ -83,18 +83,23 @@ export const DEFAULT_ORIGINS = [
 // Mirrors admin/ContentManagement.jsx's DEFAULTS — kept in sync so the
 // /admin/content editor and the live site always agree on field shapes.
 export const DEFAULT_SITE_CONTENT = {
+  // These defaults ARE the live copy until an admin overrides them via
+  // Content Management — kept identical to what's hardcoded as the
+  // fallback in Home.jsx/AboutPage.jsx/SourcingStory.jsx so wiring up the
+  // CMS doesn't silently change the approved site copy the moment someone
+  // opens the editor (this happened once — see git history).
   hero: {
-    headline: "Premium Dry Fruits,\nDelivered Fresh",
-    subheadline: "Sourced from the world's finest farms. Freshness guaranteed.",
+    headline: "India's Finest\nDry Fruits",
+    subheadline: "Kashmir · California · Iran",
     backgroundImage: "",
-    ctaText: "Shop Premium Collection",
-    ctaSecondary: "Our Story",
+    ctaText: "Shop Now",
+    ctaSecondary: "Gift Hampers",
   },
   about: {
     storyTitle: "Our Story",
-    storyText: "Founded with a passion for purity, Jai Shree Dry Fruits sources the finest nuts and dry fruits from trusted farms around the world.",
+    storyText: "Jai Shree Dryfruits was born in 1999 inside Jaipur's historic Gangauri Bazar — one of Rajasthan's oldest trading districts, where merchants have exchanged the world's finest spices and dry fruits for centuries.",
     missionTitle: "Our Mission",
-    missionText: "To bring premium-quality, authentic dry fruits to every Indian home — fresh, pure, and fairly priced.",
+    missionText: "Today we serve over 50,000 families across India — homes, hotels, corporate offices, and wedding caterers. Yet our philosophy hasn't changed: every almond, cashew, walnut, pistachio, and date is hand-selected from its origin farm before it reaches your door.",
     bannerImage: "",
     values: [
       { title: "Pure & Natural", desc: "No artificial preservatives or additives" },
@@ -109,14 +114,14 @@ export const DEFAULT_SITE_CONTENT = {
     ],
   },
   sourcing: {
-    title: "From Farm to Your Table",
-    text: "We travel to the source — California almonds, Iranian pistachios, Kashmiri walnuts — building direct relationships with farmers who share our commitment to quality.",
+    title: "",
+    text: "We don't buy from wholesalers. Every dry fruit at Jai Shree has a documented origin, a verified farm, and a quality-assured journey from harvest to your hand.",
     image: "",
     highlights: [
       { label: "Farm Partners", value: "50+" },
       { label: "Countries Sourced", value: "12" },
       { label: "Quality Checks", value: "3-Stage" },
-      { label: "Years Experience", value: "15+" },
+      { label: "Years Experience", value: "25+" },
     ],
   },
   contact: {
