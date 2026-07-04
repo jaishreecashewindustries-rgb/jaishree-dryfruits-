@@ -36,8 +36,8 @@ const DEFAULTS = {
   },
   team: {
     members: [
-      { name: "Rajesh Kumar", title: "Founder & CEO", bio: "Visionary behind Jai Shree Dry Fruits with 15+ years in premium food industry.", photo: "" },
-      { name: "Priya Kumar", title: "COO", bio: "Operations expert ensuring every order is perfect and on time.", photo: "" },
+      { name: "Jitesh Pansari", title: "Co-Founder & CEO", bio: "Leads sourcing and quality control, carrying forward 25+ years of the family business built in Jaipur's Gangauri Bazar.", photo: "" },
+      { name: "Praveen Pansari", title: "Co-Founder & COO", bio: "Oversees operations and logistics, ensuring every order across India is packed fresh and delivered on time.", photo: "" },
     ],
   },
   sourcing: {
@@ -52,10 +52,10 @@ const DEFAULTS = {
     ],
   },
   contact: {
-    phone: "+91 98765 43210",
-    email: "hello@jaishreedryfruits.com",
-    address: "Mumbai, Maharashtra, India",
-    whatsapp: "+91 98765 43210",
+    phone: "+91 75685 77968",
+    email: "info@jaishreedryfruits.com",
+    address: "41, Barah Ji Ki Gali, Gangauri Bazar, Jaipur – 302001",
+    whatsapp: "+91 75685 77968",
     footerTagline: "Premium Dry Fruits & Nuts — Fresh, Pure, Authentic",
     socialInstagram: "",
     socialFacebook: "",

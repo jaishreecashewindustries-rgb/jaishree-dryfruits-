@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { NavLink, Navigate, Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingBag, Users, Star, Tag, LogOut, Menu, ChevronRight, MessageSquare, BookOpen, Coins, Image, TrendingUp, FileText, Settings } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, Users, Star, Tag, LogOut, Menu, ChevronRight, MessageSquare, BookOpen, Coins, Image, TrendingUp, FileText, Settings, Truck } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
 const NAV_LINKS = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/admin/products", label: "Products", icon: Package },
   { to: "/admin/orders", label: "Orders", icon: ShoppingBag },
+  { to: "/admin/courier", label: "Courier & Tracking", icon: Truck },
   { to: "/admin/customers", label: "Customers", icon: Users },
   { to: "/admin/reviews", label: "Reviews", icon: Star },
   { to: "/admin/coupons", label: "Coupons", icon: Tag },

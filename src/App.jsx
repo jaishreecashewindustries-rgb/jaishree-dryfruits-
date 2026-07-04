@@ -51,6 +51,7 @@ const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const ProductManagement = lazy(() => import("./pages/admin/ProductManagement"));
 const OrderManagement = lazy(() => import("./pages/admin/OrderManagement"));
+const CourierManagement = lazy(() => import("./pages/admin/CourierManagement"));
 const CustomerManagement = lazy(() => import("./pages/admin/CustomerManagement"));
 const ReviewManagement = lazy(() => import("./pages/admin/ReviewManagement"));
 const ColorManagement = lazy(() => import("./pages/admin/ColorManagement"));
@@ -144,6 +145,7 @@ export default function App() {
                         <Route index element={<AdminDashboard />} />
                         <Route path="products" element={<ProductManagement />} />
                         <Route path="orders" element={<OrderManagement />} />
+                        <Route path="courier" element={<CourierManagement />} />
                         <Route path="customers" element={<CustomerManagement />} />
                         <Route path="reviews" element={<ReviewManagement />} />
                         <Route path="colors" element={<ColorManagement />} />

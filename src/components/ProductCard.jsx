@@ -176,9 +176,9 @@ export default function ProductCard({ product }) {
         {/* Variant selector — standalone buttons, NOT inside any <a> */}
         {product.variants?.length > 1 && (
           <div className="flex gap-1.5 mb-3 flex-wrap">
-            {product.variants.map((v) => (
+            {product.variants.map((v, i) => (
               <button
-                key={v.id}
+                key={v.id || `${product.id}-${i}`}
                 type="button"
                 onClick={() => setSelectedVariant(v)}
                 className={`text-xs px-2.5 py-1 rounded-lg border transition-all ${

@@ -33,6 +33,7 @@ export default function AboutPage() {
         { name: "Jitesh Pansari", title: "Co-Founder & CEO", photo: "" },
         { name: "Praveen Pansari", title: "Co-Founder & COO", photo: "" },
       ];
+  const about = siteContent?.about || {};
 
   return (
     <div className="min-h-screen bg-white">
@@ -98,15 +99,15 @@ export default function AboutPage() {
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             className="p-10 md:p-12 flex flex-col justify-center"
           >
-            <p className="sec-tag mb-4">Our Story</p>
+            <p className="sec-tag mb-4">{about.storyTitle || "Our Story"}</p>
             <h2 className="font-serif text-2xl md:text-3xl font-normal text-brand-brown mb-4">
               A Family Shop That Grew Into a Trusted Name
             </h2>
             <p className="text-gray-500 text-sm leading-relaxed mb-4">
-              Jai Shree Dryfruits was born in 1999 inside Jaipur's historic Gangauri Bazar — one of Rajasthan's oldest trading districts, where merchants have exchanged the world's finest spices and dry fruits for centuries.
+              {about.storyText || "Jai Shree Dryfruits was born in 1999 inside Jaipur's historic Gangauri Bazar — one of Rajasthan's oldest trading districts, where merchants have exchanged the world's finest spices and dry fruits for centuries."}
             </p>
             <p className="text-gray-500 text-sm leading-relaxed">
-              Today we serve over 50,000 families across India — homes, hotels, corporate offices, and wedding caterers. Yet our philosophy hasn't changed: every almond, cashew, walnut, pistachio, and date is hand-selected from its origin farm before it reaches your door.
+              {about.missionText || "Today we serve over 50,000 families across India — homes, hotels, corporate offices, and wedding caterers. Yet our philosophy hasn't changed: every almond, cashew, walnut, pistachio, and date is hand-selected from its origin farm before it reaches your door."}
             </p>
             <Link to="/sourcing" className="mt-6 inline-flex items-center gap-2 text-brand-gold text-sm font-semibold hover:text-brand-brown transition-colors w-fit">
               See our full sourcing story <ArrowRight size={14} />

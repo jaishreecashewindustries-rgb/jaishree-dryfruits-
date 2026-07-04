@@ -303,12 +303,12 @@ export default function ProductDetail() {
                   const pp = per100g(v.price, v.weight);
                   return pp != null && (min == null || pp < min) ? pp : min;
                 }, null);
-                return product.variants.map((v) => {
+                return product.variants.map((v, i) => {
                   const pp = per100g(v.price, v.weight);
                   const isBest = pp != null && pp === best && product.variants.length > 1;
                   return (
                     <button
-                      key={v.id}
+                      key={v.id || `${product.id}-${i}`}
                       onClick={() => setSelectedVariant(v)}
                       className={`relative px-4 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${selectedVariant.id === v.id ? "border-brand-gold bg-brand-cream text-brand-brown font-bold" : "border-gray-200 text-gray-600 hover:border-brand-gold"}`}
                     >

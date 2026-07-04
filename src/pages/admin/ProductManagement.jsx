@@ -76,8 +76,16 @@ export default function ProductManagement() {
       const data = {
         ...form,
         tags: form.tags ? form.tags.split(",").map((t) => t.trim()) : [],
-        variants: form.variants.map((v) => ({
+        // A variant ever saved without an id breaks more than just the React
+        // key on the storefront — ProductCard uses variant.id as the cart
+        // line-item identifier, so an id-less variant (this happened once,
+        // in production) means "add to cart" sends variantId: undefined,
+        // silently merging/misidentifying cart lines. Guarantee one here so
+        // it can never reach Firestore again regardless of how the form
+        // state got into a bad shape.
+        variants: form.variants.map((v, i) => ({
           ...v,
+          id: v.id || `v${Date.now()}${i}`,
           price: Number(v.price),
           originalPrice: v.originalPrice ? Number(v.originalPrice) : null,
           stock: Number(v.stock),

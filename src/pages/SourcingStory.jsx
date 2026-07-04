@@ -91,6 +91,7 @@ export default function SourcingStory() {
         { name: "Jitesh Pansari", title: "Co-Founder & CEO", photo: "" },
         { name: "Praveen Pansari", title: "Co-Founder & COO", photo: "" },
       ];
+  const sourcing = siteContent?.sourcing || {};
 
   return (
     <div className="min-h-screen bg-white">
@@ -110,11 +111,11 @@ export default function SourcingStory() {
         >
           <p className="sec-tag justify-center mb-5" style={{ color: "#C9A84C" }}>Our Sourcing Story</p>
           <h1 className="font-serif text-white mb-6" style={{ fontSize: "clamp(32px,5vw,56px)", fontWeight: 400, lineHeight: 1.1 }}>
-            From <em style={{ color: "#E2C06A" }}>World's Best Farms</em><br />to Your Table
+            {sourcing.title || <>From <em style={{ color: "#E2C06A" }}>World's Best Farms</em><br />to Your Table</>}
           </h1>
           <div className="w-12 h-px mx-auto mb-6" style={{ background: "linear-gradient(90deg, transparent, #C9A84C, transparent)" }} />
           <p className="text-white/55 text-sm leading-relaxed max-w-xl mx-auto">
-            We don't buy from wholesalers. Every dry fruit at Jai Shree has a documented origin, a verified farm, and a quality-assured journey from harvest to your hand.
+            {sourcing.text || "We don't buy from wholesalers. Every dry fruit at Jai Shree has a documented origin, a verified farm, and a quality-assured journey from harvest to your hand."}
           </p>
         </motion.div>
       </div>
