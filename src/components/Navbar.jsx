@@ -7,7 +7,6 @@ import { useCart } from "../context/CartContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useSiteSettings } from "../context/SiteSettingsContext";
 import { PRODUCT_CATEGORIES } from "../utils/helpers";
-import LanguageSwitcher from "./LanguageSwitcher";
 import useBodyScrollLock from "../hooks/useBodyScrollLock";
 
 export default function Navbar() {
@@ -189,11 +188,6 @@ export default function Navbar() {
                 </Link>
               )}
 
-              {/* Language switcher (desktop) */}
-              <div className="hidden md:block">
-                <LanguageSwitcher />
-              </div>
-
               {/* Cart */}
               <button onClick={toggleCart} className="relative p-2 hover:bg-brand-cream rounded-lg transition-colors">
                 <ShoppingCart size={20} className="text-brand-brown" />
@@ -339,9 +333,8 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Language + Login always visible, never scrolls out of view */}
+          {/* Login always visible, never scrolls out of view */}
           <div className="px-4 py-3 border-t border-gray-100 flex-shrink-0 space-y-2.5 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.04)]">
-            <LanguageSwitcher mobile />
             {!user && (
               <Link to="/login" className="btn-primary text-center block py-2.5 text-sm rounded-lg">{tr("loginRegister")}</Link>
             )}

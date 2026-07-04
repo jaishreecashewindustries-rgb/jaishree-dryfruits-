@@ -30,6 +30,9 @@ const T = {
     aboutUs: "About Us", contactUs: "Contact Us", shippingPolicy: "Shipping Policy",
     returnRefund: "Return & Refund", privacyPolicy: "Privacy Policy", termsConditions: "Terms & Conditions",
     weAccept: "We Accept",
+    ourJourney: "Our Journey", whyChooseUsHome: "Why Choose Us", bulkOrdersEasy: "Bulk Orders, Made Easy",
+    needHelpChoosing: "Need Help Choosing?", viewAllProducts: "View All Products", viewAllCombos: "View All Combos",
+    viewAllArticles: "View All Articles", viewAllFaqs: "View All FAQs", readMore: "Read More", showLess: "Show Less",
   },
   hi: {
     shopNow: "अभी खरीदें", addToCart: "कार्ट में डालें", buyNow: "अभी लें",
