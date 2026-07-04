@@ -5,6 +5,7 @@ import { Phone, Mail, MapPin, Instagram, Facebook, Youtube, Lock, Truck, ShieldC
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useSiteSettings } from "../context/SiteSettingsContext";
+import { useLanguage } from "../context/LanguageContext";
 import toast from "react-hot-toast";
 
 // Same Cloud Functions backend used by Checkout.jsx for Razorpay — see that
@@ -27,10 +28,11 @@ const FadeIn = ({ children, delay = 0, className = "" }) => (
 
 export default function Footer() {
   const { siteContent } = useSiteSettings() || {};
+  const { tr } = useLanguage();
   const contact = siteContent?.contact || {};
   const phoneDigits = (contact.phone || "+91 75685 77968").replace(/\D/g, "");
   const [newsletterEmail, setNewsletterEmail] = useState("");
-  const [subscribing, setSubscribing] = useState(false);
+  const [isSubscribing, setSubscribing] = useState(false);
 
   const handleNewsletterSubmit = async (e) => {
     e.preventDefault();
@@ -72,7 +74,7 @@ export default function Footer() {
             <p className="text-[10px] font-bold uppercase tracking-[4px] mb-2" style={{ color: "rgba(201,168,76,0.6)" }}>
               Premium Club
             </p>
-            <h3 className="font-serif text-xl font-light text-white">Join Our Premium Club</h3>
+            <h3 className="font-serif text-xl font-light text-white">{tr("joinPremiumClub")}</h3>
             <p className="text-sm mt-1" style={{ color: "rgba(255,255,255,0.4)" }}>
               Exclusive offers, new arrivals &amp; health tips
             </p>
@@ -88,7 +90,7 @@ export default function Footer() {
                 required
                 value={newsletterEmail}
                 onChange={(e) => setNewsletterEmail(e.target.value)}
-                placeholder="Your email address"
+                placeholder={tr("emailPlaceholder")}
                 className="footer-newsletter-input w-full bg-transparent text-white text-sm pb-2.5 focus:outline-none transition-colors"
                 style={{
                   border: "none",
@@ -105,7 +107,7 @@ export default function Footer() {
             <motion.button
               whileTap={{ scale: 0.95 }}
               type="submit"
-              disabled={subscribing}
+              disabled={isSubscribing}
               className="text-[11px] font-bold uppercase tracking-[3px] pb-2.5 transition-colors whitespace-nowrap flex items-center gap-1.5"
               style={{
                 background: "none",
@@ -117,7 +119,7 @@ export default function Footer() {
               onMouseEnter={e => { e.currentTarget.style.color = "#E8C97A"; e.currentTarget.style.borderBottomColor = "#E8C97A"; }}
               onMouseLeave={e => { e.currentTarget.style.color = "#C9A84C"; e.currentTarget.style.borderBottomColor = "#C9A84C"; }}
             >
-              {subscribing ? "Subscribing..." : "Subscribe"} <Send size={11} />
+              {isSubscribing ? tr("subscribing") : tr("subscribe")} <Send size={11} />
             </motion.button>
           </form>
         </div>
@@ -189,14 +191,14 @@ export default function Footer() {
           </h4>
           <ul className="space-y-3.5" style={{ fontSize: 13, color: "rgba(255,255,255,0.65)", lineHeight: 1 }}>
             {[
-              { to: "/",                           label: "Home" },
-              { to: "/products",                   label: "All Products" },
-              { to: "/products?badge=Best Seller", label: "Best Sellers" },
-              { to: "/products?category=Gift Hampers", label: "Gift Hampers" },
-              { to: "/blog",                       label: "Our Blog" },
-              { to: "/sourcing",                   label: "Sourcing Story" },
-              { to: "/about",                      label: "About Us" },
-              { to: "/contact",                    label: "Contact Us" },
+              { to: "/",                           label: tr("home") },
+              { to: "/products",                   label: tr("allProducts") },
+              { to: "/products?badge=Best Seller", label: tr("bestSellers") },
+              { to: "/products?category=Gift Hampers", label: tr("giftHampers") },
+              { to: "/blog",                       label: tr("ourBlog") },
+              { to: "/sourcing",                   label: tr("sourcingStory") },
+              { to: "/about",                      label: tr("aboutUs") },
+              { to: "/contact",                    label: tr("contactUs") },
             ].map((l) => (
               <li key={l.to}>
                 <Link
@@ -223,12 +225,12 @@ export default function Footer() {
           </h4>
           <ul className="space-y-3.5" style={{ fontSize: 13, color: "rgba(255,255,255,0.65)" }}>
             {[
-              { to: "/faq",      label: "FAQs" },
-              { to: "/shipping", label: "Shipping Policy" },
-              { to: "/returns",  label: "Return & Refund" },
-              { to: "/privacy",  label: "Privacy Policy" },
-              { to: "/terms",    label: "Terms & Conditions" },
-              { to: "/track-order", label: "Track Order" },
+              { to: "/faq",      label: tr("faqs") },
+              { to: "/shipping", label: tr("shippingPolicy") },
+              { to: "/returns",  label: tr("returnRefund") },
+              { to: "/privacy",  label: tr("privacyPolicy") },
+              { to: "/terms",    label: tr("termsConditions") },
+              { to: "/track-order", label: tr("trackOrder") },
             ].map((l) => (
               <li key={l.to}>
                 <Link
@@ -291,7 +293,7 @@ export default function Footer() {
       <FadeIn className="px-4 py-5 border-t" style={{ borderColor: "rgba(201,168,76,0.08)" }}>
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <span className="text-[10px] uppercase tracking-[2.5px]" style={{ color: "rgba(255,255,255,0.3)" }}>
-            We Accept
+            {tr("weAccept")}
           </span>
           <div className="flex items-center gap-2.5 flex-wrap justify-center">
             {["UPI", "Visa", "Mastercard", "RuPay", "Net Banking", "COD"].map((m) => (

@@ -64,9 +64,9 @@ export default function Navbar() {
         >
           {(() => {
             const messages = [
-              "Free Delivery on Orders Above ₹499",
-              "FSSAI Certified · Direct from Source Farms",
-              "25+ Years in Gangauri Bazar, Jaipur",
+              tr("freeDeliveryBanner"),
+              tr("fssaiBanner"),
+              tr("yearsBanner"),
               ...trustItems.map((t) => `${t.icon} ${t.text}`),
             ];
             return [...messages, ...messages];
@@ -107,7 +107,7 @@ export default function Navbar() {
               {/* Shop dropdown */}
               <div className="relative" onMouseEnter={() => setShopMenuOpen(true)} onMouseLeave={() => setShopMenuOpen(false)}>
                 <button className="nav-link text-sm flex items-center gap-1">
-                  Shop <ChevronDown size={14} className={`transition-transform duration-300 ${shopMenuOpen ? "rotate-180" : ""}`} />
+                  {tr("shop")} <ChevronDown size={14} className={`transition-transform duration-300 ${shopMenuOpen ? "rotate-180" : ""}`} />
                 </button>
                 <AnimatePresence>
                   {shopMenuOpen && (
@@ -129,8 +129,8 @@ export default function Navbar() {
                         ))}
                       </div>
                       <div className="border-t border-gray-100 mt-3 pt-3">
-                        <Link to="/products?badge=Best Seller" className="text-xs text-brand-warm font-semibold hover:underline block mb-1">🔥 Best Sellers</Link>
-                        <Link to="/products?badge=New" className="text-xs text-green-600 font-semibold hover:underline block">✨ New Arrivals</Link>
+                        <Link to="/products?badge=Best Seller" className="text-xs text-brand-warm font-semibold hover:underline block mb-1">🔥 {tr("bestSellers")}</Link>
+                        <Link to="/products?badge=New" className="text-xs text-green-600 font-semibold hover:underline block">✨ {tr("newArrivals")}</Link>
                       </div>
                     </motion.div>
                   )}
@@ -140,7 +140,7 @@ export default function Navbar() {
               {/* Explore dropdown */}
               <div className="relative" onMouseEnter={() => setExploreMenuOpen(true)} onMouseLeave={() => setExploreMenuOpen(false)}>
                 <button className="nav-link text-sm flex items-center gap-1">
-                  Explore <ChevronDown size={14} className={`transition-transform duration-300 ${exploreMenuOpen ? "rotate-180" : ""}`} />
+                  {tr("explore")} <ChevronDown size={14} className={`transition-transform duration-300 ${exploreMenuOpen ? "rotate-180" : ""}`} />
                 </button>
                 <AnimatePresence>
                   {exploreMenuOpen && (
@@ -152,10 +152,10 @@ export default function Navbar() {
                       className="absolute top-full left-0 mt-2 w-52 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 z-50"
                     >
                       {[
-                        { to: "/sourcing", label: "Sourcing Story", icon: <MapPin size={14} /> },
-                        { to: "/blog", label: "Our Blog", icon: <BookOpen size={14} /> },
-                        { to: "/track-order", label: "Track Order", icon: <Truck size={14} /> },
-                        { to: "/faq", label: "FAQs", icon: <HelpCircle size={14} /> },
+                        { to: "/sourcing", label: tr("sourcingStory"), icon: <MapPin size={14} /> },
+                        { to: "/blog", label: tr("ourBlog"), icon: <BookOpen size={14} /> },
+                        { to: "/track-order", label: tr("trackOrder"), icon: <Truck size={14} /> },
+                        { to: "/faq", label: tr("faqs"), icon: <HelpCircle size={14} /> },
                       ].map((item) => (
                         <Link
                           key={item.to}
@@ -170,8 +170,8 @@ export default function Navbar() {
                 </AnimatePresence>
               </div>
 
-              <Link to="/products?category=Gift Hampers" className="nav-link text-sm">Gift Hampers</Link>
-              <Link to="/about" className="nav-link text-sm">About</Link>
+              <Link to="/products?category=Gift Hampers" className="nav-link text-sm">{tr("giftHampers")}</Link>
+              <Link to="/about" className="nav-link text-sm">{tr("about")}</Link>
               <Link to="/contact" className="nav-link text-sm">{tr("contact")}</Link>
             </div>
 
@@ -224,18 +224,18 @@ export default function Navbar() {
                         <p className="text-xs text-gray-400 truncate">{user.email}</p>
                       </div>
                       <Link to="/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-brand-cream hover:text-brand-brown transition-colors">
-                        <Package size={16} /> My Orders
+                        <Package size={16} /> {tr("myOrders")}
                       </Link>
                       <Link to="/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-brand-cream hover:text-brand-brown transition-colors">
-                        <User size={16} /> My Profile
+                        <User size={16} /> {tr("myProfile")}
                       </Link>
                       {isAdmin && (
                         <Link to="/admin" className="flex items-center gap-2 px-4 py-2 text-sm text-brand-gold font-semibold hover:bg-brand-cream transition-colors">
-                          <LayoutDashboard size={16} /> Admin Dashboard
+                          <LayoutDashboard size={16} /> {tr("adminDashboard")}
                         </Link>
                       )}
                       <button onClick={logout} className="flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:bg-red-50 transition-colors w-full text-left">
-                        <LogOut size={16} /> Sign Out
+                        <LogOut size={16} /> {tr("signOut")}
                       </button>
                     </div>
                   )}
@@ -258,11 +258,11 @@ export default function Navbar() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={`${tr("search")} almonds, cashews, gift hampers...`}
+                placeholder={tr("searchPlaceholder")}
                 className="input-field flex-1"
                 style={{ fontSize: "16px" }}
               />
-              <button type="submit" className="btn-primary py-3 px-6">Search</button>
+              <button type="submit" className="btn-primary py-3 px-6">{tr("searchBtn")}</button>
             </form>
           </div>
         )}
@@ -289,14 +289,14 @@ export default function Navbar() {
           </div>
           <div className="px-4 py-3 space-y-0.5 overflow-y-auto overscroll-contain flex-1 min-h-0">
             <Link to="/" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
-              <Compass size={17} className="text-brand-gold" /> Home
+              <Compass size={17} className="text-brand-gold" /> {tr("home")}
             </Link>
             <button
               type="button"
               onClick={() => setMobileCategoriesOpen((v) => !v)}
               className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors"
             >
-              <span className="flex items-center gap-3"><Package size={17} className="text-brand-gold" /> All Products</span>
+              <span className="flex items-center gap-3"><Package size={17} className="text-brand-gold" /> {tr("allProducts")}</span>
               <ChevronDown size={16} className={`transition-transform ${mobileCategoriesOpen ? "rotate-180" : ""}`} />
             </button>
             {mobileCategoriesOpen && (
@@ -309,33 +309,33 @@ export default function Navbar() {
               </div>
             )}
             <Link to="/products?category=Gift Hampers" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
-              <ShoppingCart size={17} className="text-brand-gold" /> Gift Hampers
+              <ShoppingCart size={17} className="text-brand-gold" /> {tr("giftHampers")}
             </Link>
             {user && (
               <Link to="/wishlist" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
-                <Heart size={17} className="text-brand-gold" /> Wishlist
+                <Heart size={17} className="text-brand-gold" /> {tr("wishlist")}
               </Link>
             )}
             <Link to="/track-order" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
-              <Truck size={17} className="text-brand-gold" /> Track Order
+              <Truck size={17} className="text-brand-gold" /> {tr("trackOrder")}
             </Link>
 
             <div className="border-t border-gray-100 my-1.5" />
 
             <Link to="/about" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
-              <BookOpen size={17} className="text-brand-gold" /> About
+              <BookOpen size={17} className="text-brand-gold" /> {tr("about")}
             </Link>
             <Link to="/sourcing" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
-              <MapPin size={17} className="text-brand-gold" /> Sourcing Story
+              <MapPin size={17} className="text-brand-gold" /> {tr("sourcingStory")}
             </Link>
             <Link to="/blog" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
-              <BookOpen size={17} className="text-brand-gold" /> Our Blog
+              <BookOpen size={17} className="text-brand-gold" /> {tr("ourBlog")}
             </Link>
             <Link to="/contact" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
-              <HelpCircle size={17} className="text-brand-gold" /> Contact
+              <HelpCircle size={17} className="text-brand-gold" /> {tr("contact")}
             </Link>
             <Link to="/faq" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
-              <HelpCircle size={17} className="text-brand-gold" /> FAQs
+              <HelpCircle size={17} className="text-brand-gold" /> {tr("faqs")}
             </Link>
           </div>
 
@@ -343,7 +343,7 @@ export default function Navbar() {
           <div className="px-4 py-3 border-t border-gray-100 flex-shrink-0 space-y-2.5 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.04)]">
             <LanguageSwitcher mobile />
             {!user && (
-              <Link to="/login" className="btn-primary text-center block py-2.5 text-sm rounded-lg">Login / Register</Link>
+              <Link to="/login" className="btn-primary text-center block py-2.5 text-sm rounded-lg">{tr("loginRegister")}</Link>
             )}
           </div>
         </div>
