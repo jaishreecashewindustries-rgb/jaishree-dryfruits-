@@ -59,8 +59,15 @@
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     </noscript>
     <title>Jai Shree Dryfruits - Premium Dry Fruits & Nuts</title>
-    <!-- Razorpay Checkout SDK — loaded async, used only at checkout -->
-    <script src="https://checkout.razorpay.com/v1/checkout.js" defer></script>
+    <!-- Razorpay Checkout SDK is loaded lazily from src/pages/Checkout.jsx,
+         only when a customer reaches payment — NOT here. It used to be
+         loaded globally on every page, and it prefetches its entire
+         payment-chunk bundle (400+ requests: illustrations, OTP forms, EMI
+         flows, language packs) the instant it loads, which never lets the
+         network go idle. That was the actual cause of Lighthouse/GTmetrix/
+         Search Console's "No network idle period" error showing up on every
+         single page of the site, including pages with no checkout on them
+         at all (About, FAQ, etc). Do not add it back here. -->
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

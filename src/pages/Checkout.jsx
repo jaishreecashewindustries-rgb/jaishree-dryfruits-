@@ -23,6 +23,27 @@ const FUNCTIONS_BASE_URL =
   process.env.REACT_APP_FUNCTIONS_BASE_URL ||
   "http://127.0.0.1:5001/jaishreedryfruits-973dd/asia-south1";
 
+// Loaded lazily, only when the customer actually reaches payment — this used
+// to sit in public/index.html on every single page (Home, About, everywhere),
+// and Razorpay's checkout.js prefetches its entire payment-method chunk
+// bundle (illustrations, OTP forms, EMI/emandate flows, language packs — 400+
+// requests) the moment it loads, which never lets the network go idle. That
+// was the actual cause of Lighthouse/GTmetrix/GSC's "No network idle period"
+// error on every page of the site, not just Checkout.
+let razorpayScriptPromise = null;
+function loadRazorpayScript() {
+  if (window.Razorpay) return Promise.resolve();
+  if (razorpayScriptPromise) return razorpayScriptPromise;
+  razorpayScriptPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = resolve;
+    script.onerror = () => { razorpayScriptPromise = null; reject(new Error("Failed to load Razorpay")); };
+    document.body.appendChild(script);
+  });
+  return razorpayScriptPromise;
+}
+
 // Fallback hardcoded coupons (used if Firestore is empty) — mirrors Cart.jsx.
 // Flat-₹, tiered-by-cart-value — matches how established dry fruit brands
 // (e.g. Happilo) structure offers, and keeps margin impact predictable
@@ -410,10 +431,16 @@ export default function Checkout() {
   // Original client-only flow (no server order-creation/signature-verify) —
   // this is what's currently live in production. Kept as the default until
   // the secure backend is deployed with live credentials (see handleRazorpay).
-  const handleRazorpayLegacy = () => {
+  const handleRazorpayLegacy = async () => {
     const key = process.env.REACT_APP_RAZORPAY_KEY;
     if (!key || key.includes("REPLACE")) {
       toast.error("Payment gateway not configured. Please use Cash on Delivery.", { duration: 4000 });
+      return;
+    }
+    try {
+      await loadRazorpayScript();
+    } catch {
+      toast.error("Payment gateway unavailable. Please use Cash on Delivery.");
       return;
     }
     const options = {
@@ -475,12 +502,16 @@ export default function Checkout() {
       // Order is created server-side (amount comes from Razorpay's own record of
       // what was requested, not the browser) so a tampered client can't pay less
       // than the real total — this also gives us the order_id the signature
-      // check below needs.
-      const res = await fetch(`${FUNCTIONS_BASE_URL}/createOrder`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: finalTotal, receipt: `jsd_${Date.now()}` }),
-      });
+      // check below needs. Loading the Razorpay script in parallel avoids
+      // adding its latency to checkout instead of doing it up front.
+      const [res] = await Promise.all([
+        fetch(`${FUNCTIONS_BASE_URL}/createOrder`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: finalTotal, receipt: `jsd_${Date.now()}` }),
+        }),
+        loadRazorpayScript(),
+      ]);
       if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.error || "Order creation failed");
       order = await res.json();
     } catch (err) {
