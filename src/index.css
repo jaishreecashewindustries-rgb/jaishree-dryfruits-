@@ -170,6 +170,22 @@ img { display: block; max-width: 100%; }
     padding: 4px 10px;
     font-weight: 700;
   }
+  .badge-premium {
+    background: var(--gold2);
+    color: var(--navy);
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    padding: 4px 10px;
+    font-weight: 700;
+  }
+  .badge-limited {
+    background: #9E7A2E;
+    color: white;
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 4px 10px;
+    font-weight: 700;
+  }
   .input-field {
     @apply w-full border border-brand-border rounded-none px-4 py-3 focus:outline-none focus:border-brand-brown transition-all;
     background: var(--bg2);

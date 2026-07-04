@@ -71,9 +71,9 @@ export default function ProductCard({ product }) {
 
   const badgeColors = {
     "Best Seller": "badge-gold",
-    Premium: "bg-purple-500 text-white text-xs font-semibold px-2 py-1 rounded-full",
+    Premium: "badge-premium",
     New: "badge-new",
-    Limited: "bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full",
+    Limited: "badge-limited",
     Sale: "badge-sale",
   };
 

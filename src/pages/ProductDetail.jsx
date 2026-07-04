@@ -244,7 +244,9 @@ export default function ProductDetail() {
             <div className="absolute top-4 left-4 z-10 badge-sale text-sm px-3 py-1">-{discount}% OFF</div>
           )}
           {product.badge && (
-            <div className="absolute top-4 right-4 z-10 badge-gold text-sm px-3 py-1">{product.badge}</div>
+            <div className={`absolute top-4 right-4 z-10 text-sm px-3 py-1 ${
+              { "Best Seller": "badge-gold", Premium: "badge-premium", New: "badge-new", Limited: "badge-limited", Sale: "badge-sale" }[product.badge] || "badge-gold"
+            }`}>{product.badge}</div>
           )}
           <ImageLightbox images={product.images} alt={product.name} />
         </div>
