@@ -1,48 +1,18 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Globe } from "lucide-react";
+import { useLanguage } from "../context/LanguageContext";
+import { LANGUAGES } from "../utils/translations";
 
-const LANGUAGES = [
-  { code: "en", label: "EN", name: "English" },
-  { code: "hi", label: "हि", name: "हिंदी" },
-  { code: "mr", label: "म", name: "मराठी" },
-  { code: "gu", label: "ગુ", name: "ગુજરાતી" },
-  { code: "pa", label: "ਪੰ", name: "ਪੰਜਾਬੀ" },
-  { code: "bn", label: "বা", name: "বাংলা" },
-  { code: "ta", label: "த", name: "தமிழ்" },
-  { code: "te", label: "తె", name: "తెలుగు" },
-];
-
-function triggerGoogleTranslate(langCode) {
-  try { localStorage.setItem("jsd_lang", langCode); } catch {}
-
-  if (langCode === "en") {
-    // Remove translate cookies and reload to restore English
-    document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    document.cookie = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=" + window.location.hostname;
-    window.location.reload();
-    return;
-  }
-
-  // Set Google Translate cookie — used on both the root path and host so
-  // every route picks it up after reload.
-  document.cookie = `googtrans=/en/${langCode}; path=/`;
-  document.cookie = `googtrans=/en/${langCode}; path=/; domain=${window.location.hostname}`;
-
-  // Always reload: Google Translate's MutationObserver can miss content that
-  // React mounts after the initial paint (route changes, lazy sections,
-  // animated-in elements), which is why only "some areas" were translating
-  // before. A full reload re-renders the whole DOM under the new language
-  // cookie, guaranteeing the entire page — not just visible-at-click-time
-  // nodes — gets translated.
-  window.location.reload();
-}
-
+// Used to drive Google Translate via cookies + a full page reload — broken
+// ever since the Google Translate widget itself was removed (it kept the
+// network busy forever in the background, which was the actual cause of
+// "No network idle period" failures on every page). Now wired to the app's
+// own i18next-backed LanguageContext instead: instant, no reload, no
+// external script, and it actually still works.
 export default function LanguageSwitcher({ mobile = false }) {
+  const { lang, setLanguage } = useLanguage();
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
-  const [activeLang, setActiveLang] = useState(() => {
-    try { return localStorage.getItem("jsd_lang") || "en"; } catch { return "en"; }
-  });
 
   useEffect(() => {
     const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
@@ -51,12 +21,11 @@ export default function LanguageSwitcher({ mobile = false }) {
   }, []);
 
   const handleSelect = (code) => {
-    setActiveLang(code);
+    setLanguage(code);
     setOpen(false);
-    triggerGoogleTranslate(code);
   };
 
-  const current = LANGUAGES.find((l) => l.code === activeLang) || LANGUAGES[0];
+  const current = LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0];
 
   // Mobile: horizontal chips
   if (mobile) {
@@ -67,7 +36,7 @@ export default function LanguageSwitcher({ mobile = false }) {
             key={l.code}
             onClick={() => handleSelect(l.code)}
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
-              activeLang === l.code
+              lang === l.code
                 ? "bg-brand-brown text-white border-brand-brown"
                 : "border-gray-200 text-gray-600 hover:border-brand-gold hover:text-brand-gold"
             }`}
@@ -101,11 +70,11 @@ export default function LanguageSwitcher({ mobile = false }) {
               key={l.code}
               onClick={() => handleSelect(l.code)}
               className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all hover:bg-white/5"
-              style={{ color: activeLang === l.code ? "#E8C97A" : "rgba(255,255,255,0.7)" }}
+              style={{ color: lang === l.code ? "#E8C97A" : "rgba(255,255,255,0.7)" }}
             >
               <span className="font-bold text-xs w-6">{l.label}</span>
               <span className="text-sm">{l.name}</span>
-              {activeLang === l.code && <span className="ml-auto text-brand-gold text-xs">✓</span>}
+              {lang === l.code && <span className="ml-auto text-brand-gold text-xs">✓</span>}
             </button>
           ))}
         </div>

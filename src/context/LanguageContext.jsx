@@ -1,20 +1,24 @@
-import React, { createContext, useContext, useState } from "react";
-import { t } from "../utils/translations";
+import React, { createContext, useContext } from "react";
+import { useTranslation } from "react-i18next";
 
+// Thin wrapper around react-i18next — kept so every existing call site
+// (useLanguage().tr("key") / .lang / .setLanguage()) keeps working unchanged
+// after the underlying engine swap from a hand-rolled dictionary lookup to
+// i18next (see src/i18n.js for why).
 const LanguageContext = createContext();
 
 export function LanguageProvider({ children }) {
-  const [lang, setLang] = useState(() => localStorage.getItem("lang") || "en");
+  const { t, i18n } = useTranslation();
 
   const setLanguage = (code) => {
-    setLang(code);
+    i18n.changeLanguage(code);
     localStorage.setItem("lang", code);
   };
 
-  const tr = (key, vars) => t(lang, key, vars);
+  const tr = (key, vars) => t(key, vars);
 
   return (
-    <LanguageContext.Provider value={{ lang, setLanguage, tr }}>
+    <LanguageContext.Provider value={{ lang: i18n.language, setLanguage, tr }}>
       {children}
     </LanguageContext.Provider>
   );
