@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, User, Phone, ChevronRight, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -35,13 +35,20 @@ export default function Login() {
   const [newPassword, setNewPassword] = useState("");
 
   const {
-    loginWithEmail, registerWithEmail, loginWithGoogle,
+    user, loginWithEmail, registerWithEmail, loginWithGoogle,
     sendPhoneOTP, verifyPhoneOTP,
     sendEmailOTP, verifyEmailOTPLogin, verifyEmailOTPReset,
   } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from || "/";
+
+  // Mobile Google sign-in uses a full-page redirect (see AuthContext) — the
+  // page reloads back on this same /login route once it completes, so there's
+  // no in-flight promise to await here. Once `user` becomes truthy, move on.
+  useEffect(() => {
+    if (user) navigate(from, { replace: true });
+  }, [user]);
 
   const handle = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 

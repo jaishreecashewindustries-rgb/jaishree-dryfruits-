@@ -75,18 +75,25 @@ export default function Cart() {
     }
     setCouponLoading(true);
     try {
-      // Try Firestore first
-      const q = query(
-        collection(db, "coupons"),
-        where("code", "==", code),
-        where("active", "==", true)
-      );
+      // Look up by code only — an admin-managed coupon must always win over
+      // the hardcoded fallback, even when it's been deactivated or its
+      // value edited, otherwise deactivating e.g. WELCOME100 in the admin
+      // dashboard silently does nothing on the live site because it still
+      // matches a FALLBACK_COUPONS entry with the same code.
+      const q = query(collection(db, "coupons"), where("code", "==", code));
       const snap = await getDocs(q);
       let coupon = null;
       if (!snap.empty) {
         const data = snap.docs[0].data();
-        // Check expiry
-        if (data.expiry && new Date(data.expiry) < new Date()) {
+        if (!data.active) {
+          toast.error("This coupon is no longer active");
+          setCouponLoading(false);
+          return;
+        }
+        // Check expiry — expiry is stored as a Firestore Timestamp, not a
+        // plain date string, so it needs .toDate() before comparing.
+        const expiryDate = data.expiry?.toDate ? data.expiry.toDate() : (data.expiry ? new Date(data.expiry) : null);
+        if (expiryDate && expiryDate < new Date()) {
           toast.error("This coupon has expired");
           setCouponLoading(false);
           return;
@@ -98,13 +105,14 @@ export default function Cart() {
           return;
         }
         coupon = {
+          id: snap.docs[0].id,
           code: data.code,
           type: data.discountType || "percent",
           value: data.discountValue || data.discount || 10,
           minOrder: data.minOrder || 0,
         };
       } else {
-        // Fall back to hardcoded
+        // No admin-managed coupon with this code exists — fall back to hardcoded
         coupon = FALLBACK_COUPONS.find(c => c.code === code) || null;
       }
 

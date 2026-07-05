@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { NavLink, Navigate, Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingBag, Users, Star, Tag, LogOut, Menu, ChevronRight, MessageSquare, BookOpen, Coins, Image, TrendingUp, FileText, Settings, Truck } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, Users, Star, Tag, LogOut, Menu, ChevronRight, MessageSquare, BookOpen, Coins, Image, TrendingUp, FileText, Settings, Truck, Boxes, CreditCard, Mail } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
 const NAV_LINKS = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/admin/products", label: "Products", icon: Package },
+  { to: "/admin/stock", label: "Stock", icon: Boxes },
   { to: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { to: "/admin/courier", label: "Courier & Tracking", icon: Truck },
   { to: "/admin/customers", label: "Customers", icon: Users },
@@ -14,6 +15,8 @@ const NAV_LINKS = [
   { to: "/admin/blog", label: "Blog", icon: BookOpen },
   { to: "/admin/inquiries", label: "Inquiries", icon: MessageSquare },
   { to: "/admin/coins", label: "JS Coins", icon: Coins },
+  { to: "/admin/payments", label: "Payments", icon: CreditCard },
+  { to: "/admin/newsletter", label: "Newsletter", icon: Mail },
   { to: "/admin/content", label: "Content", icon: FileText },
   { to: "/admin/settings", label: "Settings", icon: Settings },
 ];
@@ -105,8 +108,8 @@ export default function AdminLayout() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <a href="/" target="_blank" rel="noreferrer" className="hidden md:flex items-center gap-2 text-xs font-semibold px-3 py-1.5 transition-all" style={{ border: "1px solid #E2E8F0", color: "#5A6A7A" }}>
-              🌐 View Site
+            <a href="/" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs font-semibold px-2 md:px-3 py-1.5 transition-all" style={{ border: "1px solid #E2E8F0", color: "#5A6A7A" }}>
+              🌐 <span className="hidden sm:inline">View Site</span>
             </a>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: "#C9A84C", color: "#1B2E4B" }}>A</div>

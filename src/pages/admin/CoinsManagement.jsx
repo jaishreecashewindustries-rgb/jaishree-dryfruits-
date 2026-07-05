@@ -1,16 +1,51 @@
 import React, { useState, useEffect } from "react";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, doc, setDoc } from "firebase/firestore";
 import { db } from "../../firebase/config";
 import { COINS_RULES } from "../../context/CoinsContext";
-import { Coins, TrendingUp, Users, Gift } from "lucide-react";
+import { Coins, TrendingUp, Users, Gift, Edit2, Save, X } from "lucide-react";
+import toast from "react-hot-toast";
+
+const RULE_FIELDS = [
+  { key: "perOrderRupee", label: "Coins per ₹1 spent", step: "0.1" },
+  { key: "signup", label: "Signup bonus (coins)", step: "1" },
+  { key: "review", label: "Review bonus (coins)", step: "1" },
+  { key: "referral", label: "Referral bonus (coins)", step: "1" },
+  { key: "birthday", label: "Birthday bonus (coins)", step: "1" },
+  { key: "redeemRate", label: "₹ value per coin (redeem rate)", step: "0.001" },
+  { key: "minRedeem", label: "Minimum coins to redeem", step: "1" },
+  { key: "minCartValue", label: "Minimum cart value to unlock (₹)", step: "1" },
+  { key: "maxRedeemValue", label: "Max discount per order (₹)", step: "1" },
+];
 
 export default function CoinsManagement() {
   const [balances, setBalances] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("overview");
+  const [editingRules, setEditingRules] = useState(false);
+  const [rulesForm, setRulesForm] = useState(COINS_RULES);
+  const [savingRules, setSavingRules] = useState(false);
 
   useEffect(() => { load(); }, []);
+
+  const startEditRules = () => { setRulesForm({ ...COINS_RULES }); setEditingRules(true); };
+
+  const saveRules = async () => {
+    setSavingRules(true);
+    try {
+      const cleaned = Object.fromEntries(
+        RULE_FIELDS.map((f) => [f.key, Number(rulesForm[f.key])])
+      );
+      await setDoc(doc(db, "settings", "coins"), cleaned, { merge: true });
+      Object.assign(COINS_RULES, cleaned);
+      setEditingRules(false);
+      toast.success("JS Coins rules updated — live on the website now");
+    } catch (e) {
+      toast.error("Failed to save rules");
+    } finally {
+      setSavingRules(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -38,20 +73,55 @@ export default function CoinsManagement() {
 
       {/* Rules Banner */}
       <div className="rounded-xl p-5" style={{ background: "linear-gradient(135deg, #1B2E4B, #243D63)", border: "1px solid rgba(201,168,76,0.3)" }}>
-        <p className="text-brand-gold text-xs font-bold tracking-widest uppercase mb-3">Current Rewards Rules</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: "Per ₹1 Spent", val: `${COINS_RULES.perOrderRupee} Coin` },
-            { label: "Signup Bonus", val: `${COINS_RULES.signup} Coins` },
-            { label: "Review Bonus", val: `${COINS_RULES.review} Coins` },
-            { label: "Redeem Rate", val: `₹${COINS_RULES.redeemRate}/Coin` },
-          ].map(r => (
-            <div key={r.label} className="text-center">
-              <p className="font-serif text-2xl font-normal text-white mb-1">{r.val}</p>
-              <p className="text-white/40 text-xs uppercase tracking-wider">{r.label}</p>
-            </div>
-          ))}
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-brand-gold text-xs font-bold tracking-widest uppercase">Current Rewards Rules</p>
+          {!editingRules && (
+            <button onClick={startEditRules} className="flex items-center gap-1.5 text-xs font-semibold text-white/70 hover:text-white transition-colors">
+              <Edit2 size={12} /> Edit
+            </button>
+          )}
         </div>
+
+        {!editingRules ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: "Per ₹1 Spent", val: `${COINS_RULES.perOrderRupee} Coin` },
+              { label: "Signup Bonus", val: `${COINS_RULES.signup} Coins` },
+              { label: "Review Bonus", val: `${COINS_RULES.review} Coins` },
+              { label: "Redeem Rate", val: `₹${COINS_RULES.redeemRate}/Coin` },
+            ].map(r => (
+              <div key={r.label} className="text-center">
+                <p className="font-serif text-2xl font-normal text-white mb-1">{r.val}</p>
+                <p className="text-white/40 text-xs uppercase tracking-wider">{r.label}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {RULE_FIELDS.map((f) => (
+                <div key={f.key}>
+                  <label className="text-white/50 text-[11px] uppercase tracking-wide block mb-1">{f.label}</label>
+                  <input
+                    type="number"
+                    step={f.step}
+                    value={rulesForm[f.key]}
+                    onChange={(e) => setRulesForm((p) => ({ ...p, [f.key]: e.target.value }))}
+                    className="w-full rounded-lg px-3 py-2 text-sm bg-white/10 text-white border border-white/20 focus:border-brand-gold focus:outline-none"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3">
+              <button onClick={saveRules} disabled={savingRules} className="flex items-center gap-2 bg-brand-gold text-brand-brown font-semibold px-4 py-2 rounded-lg text-sm">
+                <Save size={14} /> {savingRules ? "Saving..." : "Save & Publish Live"}
+              </button>
+              <button onClick={() => setEditingRules(false)} className="flex items-center gap-2 text-white/70 hover:text-white px-4 py-2 rounded-lg text-sm border border-white/20">
+                <X size={14} /> Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Stats */}

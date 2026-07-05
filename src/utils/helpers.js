@@ -75,9 +75,9 @@ export const DEMO_PRODUCTS = [
       "https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=600&q=80",
     ],
     variants: [
-      { id: "v1a", weight: "250g", price: 380, stock: 50, perDay: "~20 daily servings · ₹19 per day" },
-      { id: "v1b", weight: "500g", price: 720, stock: 35, perDay: "~40 daily servings · ₹18 per day" },
-      { id: "v1c", weight: "1kg",  price: 1380, stock: 20, perDay: "~80 daily servings · ₹17 per day" },
+      { id: "v1a", weight: "250g", price: 380, originalPrice: 480, stock: 50, perDay: "~20 daily servings · ₹19 per day" },
+      { id: "v1b", weight: "500g", price: 720, originalPrice: 900, stock: 35, perDay: "~40 daily servings · ₹18 per day" },
+      { id: "v1c", weight: "1kg",  price: 1380, originalPrice: 1720, stock: 20, perDay: "~80 daily servings · ₹17 per day" },
     ],
     passport: {
       origin: "San Joaquin Valley, California, USA (37.9577° N, 120.3597° W)",
@@ -107,8 +107,8 @@ export const DEMO_PRODUCTS = [
       "https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=600&q=80",
     ],
     variants: [
-      { id: "v2a", weight: "250g", price: 480, stock: 40, perDay: "~25 daily servings · ₹19 per day" },
-      { id: "v2b", weight: "500g", price: 920, stock: 25, perDay: "~50 daily servings · ₹18 per day" },
+      { id: "v2a", weight: "250g", price: 480, originalPrice: 600, stock: 40, perDay: "~25 daily servings · ₹19 per day" },
+      { id: "v2b", weight: "500g", price: 920, originalPrice: 1150, stock: 25, perDay: "~50 daily servings · ₹18 per day" },
     ],
     passport: {
       origin: "Kollam District, Kerala, India (8.8932° N, 76.6141° E) — FSSAI-approved processing unit",
@@ -137,8 +137,8 @@ export const DEMO_PRODUCTS = [
       "https://images.unsplash.com/photo-1502825751399-28baa9b81efe?w=600&q=80",
     ],
     variants: [
-      { id: "v3a", weight: "250g", price: 640, stock: 30, perDay: "~17 daily handfuls · ₹38 per day" },
-      { id: "v3b", weight: "500g", price: 1200, stock: 15, perDay: "~33 daily handfuls · ₹36 per day" },
+      { id: "v3a", weight: "250g", price: 640, originalPrice: 800, stock: 30, perDay: "~17 daily handfuls · ₹38 per day" },
+      { id: "v3b", weight: "500g", price: 1200, originalPrice: 1500, stock: 15, perDay: "~33 daily handfuls · ₹36 per day" },
     ],
     passport: {
       origin: "Rafsanjan, Kerman Province, Iran (30.4065° N, 55.9940° E) — World's highest-density pistachio belt",
@@ -167,9 +167,9 @@ export const DEMO_PRODUCTS = [
       "https://images.unsplash.com/photo-1524593656068-fbac72624bb0?w=600&q=80",
     ],
     variants: [
-      { id: "v4a", weight: "250g", price: 300, stock: 60, perDay: "~17 daily servings · ₹18 per day" },
-      { id: "v4b", weight: "500g", price: 560, stock: 45, perDay: "~33 daily servings · ₹17 per day" },
-      { id: "v4c", weight: "1kg",  price: 1080, stock: 30, perDay: "~67 daily servings · ₹16 per day" },
+      { id: "v4a", weight: "250g", price: 300, originalPrice: 380, stock: 60, perDay: "~17 daily servings · ₹18 per day" },
+      { id: "v4b", weight: "500g", price: 560, originalPrice: 700, stock: 45, perDay: "~33 daily servings · ₹17 per day" },
+      { id: "v4c", weight: "1kg",  price: 1080, originalPrice: 1350, stock: 30, perDay: "~67 daily servings · ₹16 per day" },
     ],
     passport: {
       origin: "Sopore Valley, Baramulla District, Kashmir (34.0836° N, 74.4648° E) — Himalayan orchards, 1,585m elevation",
@@ -198,8 +198,8 @@ export const DEMO_PRODUCTS = [
       "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600&q=80",
     ],
     variants: [
-      { id: "v5a", weight: "1kg Assorted", price: 1600, stock: 20, perDay: null },
-      { id: "v5b", weight: "2kg Assorted", price: 2980, stock: 10, perDay: null },
+      { id: "v5a", weight: "1kg Assorted", price: 1600, originalPrice: 2000, stock: 20, perDay: null },
+      { id: "v5b", weight: "2kg Assorted", price: 2980, originalPrice: 3720, stock: 10, perDay: null },
     ],
     passport: {
       origin: "Multi-origin: Almonds (California) · Cashews (Kerala) · Walnuts (Kashmir) · Pistachios (Iran) — each component carries individual origin batch record",
@@ -228,8 +228,8 @@ export const DEMO_PRODUCTS = [
       "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600&q=80",
     ],
     variants: [
-      { id: "v6a", weight: "500g", price: 780, stock: 55, perDay: "~33 daily handfuls · ₹24 per day" },
-      { id: "v6b", weight: "1kg",  price: 1480, stock: 40, perDay: "~67 daily handfuls · ₹22 per day" },
+      { id: "v6a", weight: "500g", price: 780, originalPrice: 980, stock: 55, perDay: "~33 daily handfuls · ₹24 per day" },
+      { id: "v6b", weight: "1kg",  price: 1480, originalPrice: 1850, stock: 40, perDay: "~67 daily handfuls · ₹22 per day" },
     ],
     passport: {
       origin: "Multi-origin blend: Almonds (San Joaquin Valley, CA) · Cashews (Kollam, Kerala) · Walnuts (Sopore, Kashmir) · Pistachios (Rafsanjan, Iran) · Raisins (Nashik, Maharashtra)",

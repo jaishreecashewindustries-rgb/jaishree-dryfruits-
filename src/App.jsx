@@ -50,6 +50,9 @@ const AboutPage = lazy(() => import("./pages/AboutPage"));
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const ProductManagement = lazy(() => import("./pages/admin/ProductManagement"));
+const StockManagement = lazy(() => import("./pages/admin/StockManagement"));
+const PaymentsManagement = lazy(() => import("./pages/admin/PaymentsManagement"));
+const NewsletterManagement = lazy(() => import("./pages/admin/NewsletterManagement"));
 const OrderManagement = lazy(() => import("./pages/admin/OrderManagement"));
 const CourierManagement = lazy(() => import("./pages/admin/CourierManagement"));
 const CustomerManagement = lazy(() => import("./pages/admin/CustomerManagement"));
@@ -144,6 +147,9 @@ export default function App() {
                       <Route path="/admin" element={<AdminLayout />}>
                         <Route index element={<AdminDashboard />} />
                         <Route path="products" element={<ProductManagement />} />
+                        <Route path="stock" element={<StockManagement />} />
+                        <Route path="payments" element={<PaymentsManagement />} />
+                        <Route path="newsletter" element={<NewsletterManagement />} />
                         <Route path="orders" element={<OrderManagement />} />
                         <Route path="courier" element={<CourierManagement />} />
                         <Route path="customers" element={<CustomerManagement />} />

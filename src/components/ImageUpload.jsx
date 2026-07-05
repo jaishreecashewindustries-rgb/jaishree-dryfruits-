@@ -27,15 +27,41 @@ export default function ImageUpload({ value, onChange, folder = "content", label
   // Re-test a new value (e.g. parent swapped in a different URL/slot)
   useEffect(() => { setBroken(false); }, [value]);
 
-  const handleFile = (file) => {
+  // Uploads used to go straight to Storage at whatever size the phone/camera
+  // produced (routinely 2-4MB PNGs) — that's what was making every product
+  // page slow to load. Resizing to a sane max width and re-encoding as JPEG
+  // here cuts that by ~95% before it ever leaves the browser.
+  const resizeImage = (file) => new Promise((resolve) => {
+    const img = new window.Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const MAX_W = 1200;
+      const scale = Math.min(1, MAX_W / img.width);
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(
+        (blob) => resolve(blob || file),
+        "image/jpeg",
+        0.8
+      );
+    };
+    img.onerror = () => resolve(file);
+    img.src = url;
+  });
+
+  const handleFile = async (file) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) { alert("Please select an image file"); return; }
     if (file.size > 5 * 1024 * 1024) { alert("Image must be under 5MB"); return; }
 
-    const ext = file.name.split(".").pop();
-    const filename = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    const toUpload = await resizeImage(file);
+    const filename = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
     const storageRef = ref(storage, filename);
-    const task = uploadBytesResumable(storageRef, file);
+    const task = uploadBytesResumable(storageRef, toUpload, { contentType: "image/jpeg" });
 
     setUploading(true);
     setProgress(0);

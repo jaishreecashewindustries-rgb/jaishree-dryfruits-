@@ -24,37 +24,40 @@ export default function ImageLightbox({ images = [], alt = "" }) {
 
   return (
     <>
-      {/* Main image */}
-      <div className="relative group cursor-zoom-in" onClick={() => setOpen(true)}>
+      {/* Main image — object-contain (not cover) so non-square product photos
+          display in full instead of being cropped to fit the square frame. */}
+      <div className="relative group cursor-zoom-in w-full aspect-square bg-gray-50 rounded-2xl overflow-hidden" onClick={() => setOpen(true)}>
         <AnimatePresence mode="wait">
           <motion.img
             key={active}
             src={images[active]}
             alt={alt}
-            className="w-full aspect-square object-cover rounded-2xl"
+            loading="eager"
+            fetchpriority="high"
+            className="w-full h-full object-contain"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
           />
         </AnimatePresence>
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all rounded-2xl flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all flex items-center justify-center">
           <ZoomIn size={28} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
         </div>
       </div>
 
-      {/* Thumbnails */}
+      {/* Thumbnails — side-scrollable row */}
       {images.length > 1 && (
         <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
           {images.map((img, i) => (
             <button
               key={i}
               onClick={() => setActive(i)}
-              className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+              className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 bg-gray-50 transition-all ${
                 active === i ? "border-brand-gold shadow-md" : "border-transparent opacity-60 hover:opacity-100"
               }`}
             >
-              <img src={img} alt="" className="w-full h-full object-cover" />
+              <img src={img} alt="" loading="lazy" className="w-full h-full object-contain" />
             </button>
           ))}
         </div>

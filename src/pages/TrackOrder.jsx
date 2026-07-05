@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { Package, Search, CheckCircle2, Clock, Truck, MapPin, ArrowLeft } from "lucide-react";
+import { Package, Search, CheckCircle2, Clock, Truck, MapPin, ArrowLeft, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { formatPrice } from "../utils/helpers";
+import { openInvoice } from "../utils/invoice";
 import { Link } from "react-router-dom";
 
 const STATUS_STEPS = [
@@ -111,6 +112,13 @@ export default function TrackOrder() {
                 "bg-yellow-100 text-yellow-700"
               }`}>{order.status || "pending"}</span>
             </div>
+
+            <button
+              onClick={() => openInvoice(order, order.id)}
+              className="flex items-center gap-2 text-sm text-brand-gold hover:underline mb-6 -mt-3"
+            >
+              <FileText size={14} /> View / Download Invoice
+            </button>
 
             {/* Timeline */}
             <div className="relative pl-12 mb-8">

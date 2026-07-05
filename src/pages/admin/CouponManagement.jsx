@@ -38,7 +38,7 @@ export default function CouponManagement() {
       minOrder: parseInt(form.minOrder) || 0,
       maxUses: parseInt(form.maxUses) || 0,
       active: form.active,
-      uses: editing?.uses || 0,
+      usedCount: editing?.usedCount || 0,
       expiry: form.expiry ? new Date(form.expiry) : null,
     };
     try {
@@ -115,7 +115,7 @@ export default function CouponManagement() {
         {[
           { label: "Total Coupons", val: coupons.length, color: "bg-blue-500" },
           { label: "Active", val: coupons.filter(c => c.active).length, color: "bg-green-500" },
-          { label: "Total Uses", val: coupons.reduce((a, c) => a + (c.uses || 0), 0), color: "bg-amber-500" },
+          { label: "Total Uses", val: coupons.reduce((a, c) => a + (c.usedCount || 0), 0), color: "bg-amber-500" },
         ].map(s => (
           <div key={s.label} className="bg-white p-4 border border-gray-100 rounded-xl">
             <div className={`w-2 h-2 rounded-full ${s.color} mb-2`} />
@@ -207,7 +207,7 @@ export default function CouponManagement() {
                     <td><span className="font-mono font-bold text-brand-brown bg-brand-cream px-2 py-1 text-sm">{c.code}</span></td>
                     <td><span className="text-green-600 font-semibold">{(c.discountType || c.type) === "percent" ? `${c.discountValue ?? c.discount}% OFF` : `₹${c.discountValue ?? c.discount} OFF`}</span></td>
                     <td>₹{c.minOrder || 0}</td>
-                    <td>{c.uses || 0}{c.maxUses ? ` / ${c.maxUses}` : " / ∞"}</td>
+                    <td>{c.usedCount || 0}{c.maxUses ? ` / ${c.maxUses}` : " / ∞"}</td>
                     <td className="text-xs">{c.expiry?.toDate ? c.expiry.toDate().toLocaleDateString("en-IN") : "No expiry"}</td>
                     <td>
                       <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 font-semibold ${c.active ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>

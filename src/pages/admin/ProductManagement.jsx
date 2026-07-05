@@ -57,6 +57,13 @@ export default function ProductManagement() {
 
   const addImage = () => setForm({ ...form, images: [...form.images, ""] });
   const removeImage = (i) => setForm({ ...form, images: form.images.filter((_, idx) => idx !== i) });
+  const moveImage = (i, dir) => {
+    const j = i + dir;
+    if (j < 0 || j >= form.images.length) return;
+    const imgs = [...form.images];
+    [imgs[i], imgs[j]] = [imgs[j], imgs[i]];
+    setForm({ ...form, images: imgs });
+  };
 
   const openAdd = () => { setForm(EMPTY_PRODUCT); setEditingId(null); setShowForm(true); };
   const openEdit = (p) => {
@@ -203,12 +210,12 @@ export default function ProductManagement() {
         <>
           <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setShowForm(false)} />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
                 <h2 className="font-serif text-xl font-bold text-brand-brown">{editingId ? "Edit Product" : "Add New Product"}</h2>
                 <button onClick={() => setShowForm(false)} className="p-1.5 hover:bg-gray-100 rounded-lg"><X size={18} /></button>
               </div>
-              <div className="p-6 space-y-5">
+              <div className="p-6 space-y-5 overflow-y-auto">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
                     <label className="text-xs font-semibold text-gray-500 block mb-1">Product Name *</label>
@@ -250,6 +257,7 @@ export default function ProductManagement() {
                       <Image size={12} /> Add Image Slot
                     </button>
                   </div>
+                  <p className="text-[11px] text-gray-400 mb-2">First image is the main product photo. Use the arrows to reorder.</p>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {form.images.map((img, i) => (
                       <div key={`${i}-${img || "empty"}`} className="relative">
@@ -267,6 +275,31 @@ export default function ProductManagement() {
                           >
                             <X size={12} />
                           </button>
+                        )}
+                        {form.images.length > 1 && (
+                          <div className="absolute bottom-1 left-1 flex gap-1 z-10">
+                            <button
+                              type="button"
+                              onClick={() => moveImage(i, -1)}
+                              disabled={i === 0}
+                              className="bg-white/90 shadow rounded px-1.5 py-0.5 text-xs disabled:opacity-30 hover:bg-white"
+                              title="Move left"
+                            >
+                              ◀
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveImage(i, 1)}
+                              disabled={i === form.images.length - 1}
+                              className="bg-white/90 shadow rounded px-1.5 py-0.5 text-xs disabled:opacity-30 hover:bg-white"
+                              title="Move right"
+                            >
+                              ▶
+                            </button>
+                          </div>
+                        )}
+                        {i === 0 && (
+                          <span className="absolute top-1 left-1 bg-brand-gold text-white text-[9px] px-1.5 py-0.5 rounded-full font-semibold z-10">MAIN</span>
                         )}
                       </div>
                     ))}
@@ -298,7 +331,7 @@ export default function ProductManagement() {
                   </div>
                 </div>
               </div>
-              <div className="px-6 py-4 border-t border-gray-100 flex gap-3 justify-end">
+              <div className="px-6 py-4 border-t border-gray-100 flex gap-3 justify-end flex-shrink-0">
                 <button onClick={() => setShowForm(false)} className="btn-outline py-2.5 px-5">Cancel</button>
                 <button onClick={handleSave} disabled={saving} className="btn-primary flex items-center gap-2 py-2.5 px-5">
                   <Save size={16} /> {saving ? "Saving..." : "Save Product"}

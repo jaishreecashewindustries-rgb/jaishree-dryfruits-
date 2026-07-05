@@ -253,14 +253,14 @@ export default function CourierManagement() {
         <>
           <div className="fixed inset-0 bg-black/50 z-40" onClick={()=>setTrackingModal(null)}/>
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-              <div className="px-5 py-4 border-b border-gray-100">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col">
+              <div className="px-5 py-4 border-b border-gray-100 flex-shrink-0">
                 <h3 className="font-serif font-bold text-brand-brown">
                   🚚 Courier Assign — #{trackingModal.id.slice(0,8).toUpperCase()}
                 </h3>
                 <p className="text-sm text-gray-500 mt-1">{trackingModal.customerName} • {trackingModal.address?.city}</p>
               </div>
-              <div className="p-5 space-y-4">
+              <div className="p-5 space-y-4 overflow-y-auto">
                 {/* Courier Selection */}
                 <div>
                   <label className="text-xs font-semibold text-gray-500 block mb-2">Courier Company</label>
@@ -293,7 +293,7 @@ export default function CourierManagement() {
                   <span>Customer ko automatically WhatsApp par tracking details bhej di jayegi!</span>
                 </div>
               </div>
-              <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+              <div className="px-5 py-4 border-t border-gray-100 flex gap-3 flex-shrink-0">
                 <button onClick={()=>setTrackingModal(null)} className="btn-outline py-2.5 px-4">Cancel</button>
                 <button onClick={()=>assignCourier(trackingModal.id)}
                   disabled={updating===trackingModal.id}

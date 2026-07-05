@@ -91,7 +91,7 @@ export default function ProductCard({ product }) {
           <img
             src={product.images?.[0]}
             alt={product.name}
-            className="w-full h-full object-cover product-image-zoom"
+            className="w-full h-full object-contain product-image-zoom"
             loading="lazy"
           />
         </Link>

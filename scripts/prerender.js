@@ -72,11 +72,30 @@ function needsDataReadyMarker(route) {
   return route.startsWith("/product/") || route.startsWith("/products");
 }
 
+// Demo-catalogue products that only ever live in src/utils/helpers.js
+// (DEMO_PRODUCTS), never written to Firestore unless an admin edits them.
+// This script runs as plain CommonJS post-build and can't `require()` an ES
+// module source file, so the id/name pairs needed for routing + prerender's
+// title-match check are kept in sync here by hand. Without this, these
+// pages were never in the sitemap and never prerendered — Googlebot saw a
+// blank JS shell for them, same class of bug the prerendering step exists
+// to prevent everywhere else.
+const DEMO_ONLY_PRODUCTS = [
+  { id: "p2", name: "Whole Cashews W320" },
+  { id: "p3", name: "Iranian Green Pistachios" },
+  { id: "p4", name: "Kashmiri Walnuts (Akhrot)" },
+  { id: "p5", name: "Royal Gift Hamper" },
+  { id: "p6", name: "Premium Mix Dry Fruits" },
+];
+
 async function fetchProductsForPrerender() {
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const snap = await getDocs(collection(db, "products"));
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const live = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const liveIds = new Set(live.map((p) => p.id));
+  const demoOnly = DEMO_ONLY_PRODUCTS.filter((p) => !liveIds.has(p.id));
+  return [...live, ...demoOnly];
 }
 
 function startStaticServer() {
@@ -100,15 +119,15 @@ function startStaticServer() {
   });
 }
 
-function routeToFilePath(route) {
+function routeToFilePath(route, baseDir = STAGING_DIR) {
   const clean = route.split("?")[0].split("#")[0];
-  if (clean === "/") return path.join(STAGING_DIR, "index.html");
+  if (clean === "/") return path.join(baseDir, "index.html");
   // Query-param routes (category pages) all share one path — encode the
   // query into the directory name so each variant gets its own static file.
   const suffix = route.includes("?")
     ? "__" + route.split("?")[1].replace(/[^a-zA-Z0-9=_-]/g, "_")
     : "";
-  return path.join(STAGING_DIR, clean.replace(/^\//, ""), suffix, "index.html");
+  return path.join(baseDir, clean.replace(/^\//, ""), suffix, "index.html");
 }
 
 async function prerenderRoute(browser, route, expectedText) {
@@ -202,6 +221,60 @@ function generateSitemap(routes) {
   fs.writeFileSync(path.join(BUILD_DIR, "sitemap.xml"), xml);
 }
 
+// Google Merchant Center product feed (RSS 2.0 / Google Shopping spec) —
+// built from the exact same Product JSON-LD (<script id="sd-product">)
+// SEO.jsx already injects into every prerendered product page, rather than
+// re-deriving product data a third time. Guarantees the feed can never drift
+// from what's actually live on the page Google/shoppers see.
+function xmlEscape(s) {
+  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function generateMerchantFeed(productRoutes) {
+  const items = [];
+  for (const { route } of productRoutes) {
+    const filePath = routeToFilePath(route, BUILD_DIR);
+    if (!fs.existsSync(filePath)) continue;
+    const html = fs.readFileSync(filePath, "utf8");
+    const match = html.match(/<script[^>]*id="sd-product"[^>]*>([\s\S]*?)<\/script>/);
+    if (!match) continue;
+    let sd;
+    try { sd = JSON.parse(match[1]); } catch { continue; }
+    if (!sd?.name || !sd?.offers?.price) continue;
+
+    const id = route.replace("/product/", "");
+    const availability = sd.offers.availability?.includes("OutOfStock") ? "out_of_stock" : "in_stock";
+    const image = Array.isArray(sd.image) ? sd.image[0] : sd.image;
+
+    items.push(`    <item>
+      <g:id>${xmlEscape(id)}</g:id>
+      <title>${xmlEscape(sd.name)}</title>
+      <description>${xmlEscape((sd.description || "").slice(0, 5000))}</description>
+      <link>${xmlEscape(SITE_URL + route)}</link>
+      <g:image_link>${xmlEscape(image)}</g:image_link>
+      <g:availability>${availability}</g:availability>
+      <g:price>${sd.offers.price} INR</g:price>
+      <g:brand>${xmlEscape(sd.brand?.name || "Jai Shree Dryfruits")}</g:brand>
+      <g:condition>new</g:condition>
+      <g:identifier_exists>no</g:identifier_exists>
+      <g:google_product_category>Food, Beverages &amp; Tobacco &gt; Food Items &gt; Nuts &amp; Seeds</g:google_product_category>
+    </item>`);
+  }
+
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:g="http://base.google.com/ns/1.0" version="2.0">
+  <channel>
+    <title>Jai Shree Dryfruits — Product Feed</title>
+    <link>${SITE_URL}</link>
+    <description>Premium dry fruits product feed for Google Merchant Center</description>
+${items.join("\n")}
+  </channel>
+</rss>
+`;
+  fs.writeFileSync(path.join(BUILD_DIR, "product-feed.xml"), xml);
+  console.log(`[prerender] generated product-feed.xml with ${items.length} products`);
+}
+
 async function main() {
   console.log("[prerender] fetching product catalogue for route list + content checks...");
   let products = [];
@@ -262,6 +335,9 @@ async function main() {
 
   console.log("[prerender] generating sitemap.xml from the live route list...");
   generateSitemap(allRoutes);
+
+  console.log("[prerender] generating product-feed.xml for Google Merchant Center...");
+  generateMerchantFeed(productRoutes);
 
   const report = {
     generatedAt: new Date().toISOString(),

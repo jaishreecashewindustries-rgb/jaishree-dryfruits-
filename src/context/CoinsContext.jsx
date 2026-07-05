@@ -4,6 +4,11 @@ import { db } from "../firebase/config";
 import { useAuth } from "./AuthContext";
 
 // ── JS Coins Rules — 2.5% sweet-spot math ──
+// This object is mutated in place (not reassigned) once the live values load
+// from settings/coins in Firestore — every file that imports COINS_RULES
+// reads its properties at call-time, so the mutation is picked up everywhere
+// automatically without needing every consumer to switch to the useCoins()
+// hook. Defaults here are the fallback until that doc loads (or if it's empty).
 export const COINS_RULES = {
   perOrderRupee: 1,          // 1 coin per ₹1 spent (earn 1,000 coins on ₹1,000 order)
   signup: 50,                // 50 coins on signup
@@ -24,6 +29,24 @@ export function CoinsProvider({ children }) {
   const [coins, setCoins] = useState(0);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [rulesVersion, setRulesVersion] = useState(0);
+
+  // Load the admin-editable rules once on mount — independent of login state,
+  // since even guests need the correct minCartValue/redeemRate to see accurate
+  // "earn X coins" messaging before they sign in.
+  useEffect(() => {
+    (async () => {
+      try {
+        const snap = await getDoc(doc(db, "settings", "coins"));
+        if (snap.exists()) {
+          Object.assign(COINS_RULES, snap.data());
+          setRulesVersion((v) => v + 1);
+        }
+      } catch (e) {
+        console.warn("Coins rules load error:", e);
+      }
+    })();
+  }, []);
 
   // Load coins when user logs in
   useEffect(() => {
@@ -121,7 +144,7 @@ export function CoinsProvider({ children }) {
   const coinsValue = coinsWorth; // alias kept for backwards compatibility
 
   return (
-    <CoinsContext.Provider value={{ coins, coinsValue, coinsWorth, history, loading, earnCoinsForOrder, earnCoinsForReview, redeemCoins, COINS_RULES, loadHistory }}>
+    <CoinsContext.Provider value={{ coins, coinsValue, coinsWorth, history, loading, earnCoinsForOrder, earnCoinsForReview, redeemCoins, COINS_RULES, rulesVersion, loadHistory }}>
       {children}
     </CoinsContext.Provider>
   );

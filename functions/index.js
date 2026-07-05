@@ -1,4 +1,5 @@
 const { onRequest } = require("firebase-functions/v2/https");
+const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { defineSecret } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 const crypto = require("crypto");
@@ -8,6 +9,23 @@ const admin = require("firebase-admin");
 
 admin.initializeApp();
 const firestore = admin.firestore();
+
+// Verifies the caller is a logged-in admin (same rule as firestore.rules'
+// isAdmin()) from an Authorization: Bearer <idToken> header. Used by HTTP
+// functions that need admin-only access but aren't reachable via
+// firestore.rules (e.g. calling a third-party API like Razorpay).
+async function requireAdmin(req) {
+  const authHeader = req.headers.authorization || "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  if (!token) return false;
+  try {
+    const decoded = await admin.auth().verifyIdToken(token);
+    const userDoc = await firestore.collection("users").doc(decoded.uid).get();
+    return userDoc.exists && userDoc.data().role === "admin";
+  } catch {
+    return false;
+  }
+}
 
 const RAZORPAY_KEY_ID = defineSecret("RAZORPAY_KEY_ID");
 const RAZORPAY_KEY_SECRET = defineSecret("RAZORPAY_KEY_SECRET");
@@ -111,6 +129,62 @@ exports.verifyPayment = onRequest(
     } catch (err) {
       logger.error("verifyPayment failed", err);
       return res.status(500).json({ error: "Verification failed" });
+    }
+  }
+);
+
+// ── Firestore trigger: orders/{orderId} created → decrement variant stock ──
+// Stock can't be decremented from the client (products are admin-write-only
+// per firestore.rules), so it happens here with the Admin SDK, which bypasses
+// rules safely — nothing else touches this order document to trigger it twice.
+exports.onOrderCreated = onDocumentCreated(
+  { region: REGION, document: "orders/{orderId}" },
+  async (event) => {
+    const order = event.data?.data();
+    if (!order?.items?.length) return;
+
+    for (const item of order.items) {
+      if (!item.id || !item.variantId) continue;
+      const productRef = firestore.collection("products").doc(item.id);
+      try {
+        await firestore.runTransaction(async (tx) => {
+          const snap = await tx.get(productRef);
+          if (!snap.exists) return;
+          const variants = snap.data().variants || [];
+          const idx = variants.findIndex((v) => v.id === item.variantId);
+          if (idx === -1) return;
+          const newVariants = variants.map((v, i) =>
+            i === idx ? { ...v, stock: Math.max(0, (Number(v.stock) || 0) - (Number(item.qty) || 0)) } : v
+          );
+          tx.update(productRef, { variants: newVariants });
+        });
+      } catch (err) {
+        logger.error("Stock decrement failed", { productId: item.id, variantId: item.variantId, err });
+      }
+    }
+  }
+);
+
+// ── GET /getRazorpayPayments — admin-only, lists recent payments from Razorpay ──
+exports.getRazorpayPayments = onRequest(
+  { region: REGION, secrets: [RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET], cors: true },
+  async (req, res) => {
+    setCors(res);
+    if (req.method === "OPTIONS") return res.status(204).send("");
+    if (!(await requireAdmin(req))) return res.status(403).json({ error: "Admin access required" });
+
+    try {
+      const razorpay = new Razorpay({
+        key_id: RAZORPAY_KEY_ID.value(),
+        key_secret: RAZORPAY_KEY_SECRET.value(),
+      });
+      const count = Math.min(Number(req.query.count) || 50, 100);
+      const skip = Number(req.query.skip) || 0;
+      const result = await razorpay.payments.all({ count, skip });
+      return res.status(200).json(result);
+    } catch (err) {
+      logger.error("getRazorpayPayments failed", err);
+      return res.status(500).json({ error: err?.error?.description || err.message || "Failed to fetch payments" });
     }
   }
 );
@@ -254,6 +328,53 @@ exports.sendTemplatedEmail = onRequest(
       logger.error("sendTemplatedEmail failed", err);
       return res.status(500).json({ error: "Send failed" });
     }
+  }
+);
+
+// ── POST /sendBulkEmail — admin-only, { subject, html, recipients: [{email,name}] } ──
+// Sends one Brevo call per recipient (no bulk-recipient API call, so one
+// bounced/invalid address can't take the whole batch down) with a small
+// delay between sends to stay well under Brevo's rate limits.
+exports.sendBulkEmail = onRequest(
+  { region: REGION, secrets: [BREVO_API_KEY], cors: true, timeoutSeconds: 540 },
+  async (req, res) => {
+    setCors(res);
+    if (req.method === "OPTIONS") return res.status(204).send("");
+    if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+    if (!(await requireAdmin(req))) return res.status(403).json({ error: "Admin access required" });
+
+    const { subject, html, recipients } = req.body || {};
+    if (!subject || !html || !Array.isArray(recipients) || recipients.length === 0) {
+      return res.status(400).json({ error: "subject, html and a non-empty recipients array are required" });
+    }
+    if (recipients.length > 500) {
+      return res.status(400).json({ error: "Max 500 recipients per send — split into smaller batches" });
+    }
+
+    let sent = 0;
+    const failed = [];
+    for (const r of recipients) {
+      if (!r.email) continue;
+      try {
+        const brevoRes = await fetch(`${BREVO_API}/smtp/email`, {
+          method: "POST",
+          headers: { "api-key": BREVO_API_KEY.value(), "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sender: SENDER,
+            to: [{ email: r.email, name: r.name || undefined }],
+            subject,
+            htmlContent: html,
+          }),
+        });
+        if (brevoRes.ok) sent++;
+        else failed.push(r.email);
+      } catch {
+        failed.push(r.email);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    }
+
+    return res.status(200).json({ sent, failed });
   }
 );
 

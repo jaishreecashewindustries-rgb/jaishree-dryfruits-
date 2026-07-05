@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { CheckCircle, ChevronRight, Lock, Package, CreditCard, Banknote, MapPin, Loader2, AlertCircle, CheckCircle2, ShoppingCart, ChevronDown, Tag, Coins, X, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, doc, setDoc, getDoc, serverTimestamp, query, where, getDocs } from "firebase/firestore";
+import { collection, doc, setDoc, getDoc, updateDoc, increment, serverTimestamp, query, where, getDocs } from "firebase/firestore";
 import { db, verifyAuth } from "../firebase/config";
 import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { useCart } from "../context/CartContext";
@@ -168,18 +168,25 @@ export default function Checkout() {
     if (appliedCoupon) { toast.error("Remove current coupon first"); return; }
     setCouponLoading(true);
     try {
-      const q = query(collection(db, "coupons"), where("code", "==", code), where("active", "==", true));
+      // Look up by code only — see Cart.jsx for why filtering on active here
+      // would let a deactivated admin coupon silently fall through to the
+      // hardcoded fallback if the codes match.
+      const q = query(collection(db, "coupons"), where("code", "==", code));
       const snap = await getDocs(q);
       let coupon = null;
       if (!snap.empty) {
         const data = snap.docs[0].data();
-        if (data.expiry && new Date(data.expiry) < new Date()) {
+        if (!data.active) {
+          toast.error("This coupon is no longer active"); setCouponLoading(false); return;
+        }
+        const expiryDate = data.expiry?.toDate ? data.expiry.toDate() : (data.expiry ? new Date(data.expiry) : null);
+        if (expiryDate && expiryDate < new Date()) {
           toast.error("This coupon has expired"); setCouponLoading(false); return;
         }
         if (data.maxUses && (data.usedCount || 0) >= data.maxUses) {
           toast.error("This coupon has reached its usage limit"); setCouponLoading(false); return;
         }
-        coupon = { code: data.code, type: data.discountType || "percent", value: data.discountValue || data.discount || 10, minOrder: data.minOrder || 0 };
+        coupon = { id: snap.docs[0].id, code: data.code, type: data.discountType || "percent", value: data.discountValue || data.discount || 10, minOrder: data.minOrder || 0 };
       } else {
         coupon = FALLBACK_COUPONS.find(c => c.code === code) || null;
       }
@@ -368,6 +375,13 @@ export default function Checkout() {
     }
     const ref = doc(db, "orders", code);
     await setDoc(ref, { ...order, orderNumber: code });
+    // Track usage against the admin-managed coupon so maxUses actually works.
+    if (appliedCoupon?.id) {
+      updateDoc(doc(db, "coupons", appliedCoupon.id), { usedCount: increment(1) }).catch(() => {});
+    }
+    // Stock is decremented server-side by the onOrderCreated Cloud Function
+    // (functions/index.js) — products can only be written by admin per
+    // firestore.rules, so this can't safely happen from the client.
     return ref.id;
   };
 

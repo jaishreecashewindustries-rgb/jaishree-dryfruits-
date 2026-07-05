@@ -111,6 +111,15 @@ export default function ProductDetail() {
   const related = DEMO_PRODUCTS.filter((p) => p.id !== product.id && p.category === product.category).slice(0, 4);
   const discount = selectedVariant?.originalPrice ? discountPercent(selectedVariant.originalPrice, selectedVariant.price) : 0;
 
+  // `selectedVariant` is seeded from whatever `product` is at mount time —
+  // which is the DEMO_PRODUCTS[0] fallback if Firestore hasn't resolved yet.
+  // Without this, the price/variant shown stays stuck on the fallback
+  // product forever once the real product loads, since useState's initial
+  // value is only read once.
+  useEffect(() => {
+    setSelectedVariant(product.variants[0]);
+  }, [product.id]);
+
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => setStickyVisible(!entry.isIntersecting), { threshold: 0 });
     if (buyRef.current) observer.observe(buyRef.current);
@@ -292,6 +301,12 @@ export default function ProductDetail() {
                 {formatPrice(selectedVariant.price)}
               </motion.span>
             </AnimatePresence>
+            {selectedVariant.originalPrice > selectedVariant.price && (
+              <>
+                <span className="text-lg text-gray-400 line-through font-sans">{formatPrice(selectedVariant.originalPrice)}</span>
+                <span className="text-sm font-bold text-green-600">{discount}% OFF</span>
+              </>
+            )}
           </div>
 
           {/* Variants */}

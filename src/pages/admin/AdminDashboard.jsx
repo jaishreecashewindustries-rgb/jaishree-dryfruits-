@@ -36,7 +36,9 @@ export default function AdminDashboard() {
     try {
       const snap = await getDocs(query(collection(db, "orders"), orderBy("createdAt", "desc")));
       setOrders(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    } catch {
+    } catch (e) {
+      console.error("AdminDashboard loadOrders failed:", e);
+      toast.error(`Orders load failed: ${e.code || e.message}`);
       setOrders([]);
     } finally {
       setLoading(false);

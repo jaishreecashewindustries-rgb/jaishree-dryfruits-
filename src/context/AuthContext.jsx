@@ -3,6 +3,8 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut,
   onAuthStateChanged,
   updateProfile,
@@ -90,7 +92,18 @@ export const AuthProvider = ({ children }) => {
     return res;
   };
 
+  // Mobile browsers (especially Chrome on Android) frequently block or
+  // silently fail signInWithPopup — third-party cookie restrictions and the
+  // popup's own focus/lifecycle inside a mobile webview make it flaky,
+  // hence needing "2-3 tries" to actually log in. Redirect-based sign-in
+  // sidesteps all of that since there's no popup window involved.
+  const isMobileBrowser = () => /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+
   const loginWithGoogle = async () => {
+    if (isMobileBrowser()) {
+      await signInWithRedirect(auth, googleProvider);
+      return; // page navigates away; result is picked up by getRedirectResult on return
+    }
     const res = await signInWithPopup(auth, googleProvider);
     await createUserDoc(res.user);
     toast.success(`Welcome, ${res.user.displayName}!`);
@@ -167,6 +180,24 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isAdmin = userProfile?.role === "admin";
+
+  useEffect(() => {
+    // Completes the redirect-based Google sign-in started in loginWithGoogle
+    // on mobile — runs once on mount when the browser navigates back from
+    // Google's auth page.
+    getRedirectResult(auth)
+      .then(async (res) => {
+        if (res?.user) {
+          await createUserDoc(res.user);
+          toast.success(`Welcome, ${res.user.displayName}!`);
+        }
+      })
+      .catch((err) => {
+        if (err?.code && err.code !== "auth/no-current-user") {
+          toast.error("Google sign-in failed — please try again");
+        }
+      });
+  }, []);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {

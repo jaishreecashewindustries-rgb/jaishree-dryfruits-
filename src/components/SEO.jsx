@@ -129,18 +129,20 @@ export default function SEO({
     // Product structured data
     if (product) {
       const lowestPrice = Math.min(...(product.variants || [{ price: 0 }]).map((v) => v.price));
+      const inStock = (product.variants || []).some((v) => (Number(v.stock) ?? 1) > 0);
       injectStructuredData("sd-product", {
         "@context": "https://schema.org",
         "@type": "Product",
         name: product.name,
         description: product.description,
         image: product.images || [],
+        sku: product.id,
         brand: { "@type": "Brand", name: SITE_NAME },
         offers: {
           "@type": "Offer",
           priceCurrency: "INR",
           price: lowestPrice,
-          availability: "https://schema.org/InStock",
+          availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
           seller: { "@type": "Organization", name: SITE_NAME },
         },
         aggregateRating: product.rating

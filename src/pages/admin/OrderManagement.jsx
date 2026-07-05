@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { collection, getDocs, doc, updateDoc, orderBy, query } from "firebase/firestore";
 import { db } from "../../firebase/config";
-import { Search, ChevronDown, MessageCircle, Eye, X } from "lucide-react";
+import { Search, ChevronDown, MessageCircle, Eye, X, FileText } from "lucide-react";
 import { formatPrice, formatDate, getStatusStyle, ORDER_STATUSES, whatsappOrderLink } from "../../utils/helpers";
+import { openInvoice } from "../../utils/invoice";
 import toast from "react-hot-toast";
 
 // Same Cloud Functions backend used elsewhere in the app.
@@ -13,7 +15,8 @@ const FUNCTIONS_BASE_URL =
 export default function OrderManagement() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get("search") || "");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState(null);
 
@@ -143,6 +146,9 @@ export default function OrderManagement() {
                       <div className="flex gap-1">
                         <button onClick={() => setSelectedOrder(order)} className="p-1.5 hover:bg-blue-50 text-blue-500 rounded-lg">
                           <Eye size={14} />
+                        </button>
+                        <button onClick={() => openInvoice(order, order.id)} className="p-1.5 hover:bg-amber-50 text-brand-gold rounded-lg" title="View Invoice">
+                          <FileText size={14} />
                         </button>
                         <a
                           href={whatsappOrderLink(`Order #${order.id.slice(0,8).toUpperCase()} — ${formatPrice(order.total)}`)}

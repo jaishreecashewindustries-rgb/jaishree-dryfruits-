@@ -1,13 +1,27 @@
 import React, { useState, useEffect } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
+import { Link } from "react-router-dom";
 import { db } from "../../firebase/config";
-import { Search, MessageCircle, User } from "lucide-react";
+import { Search, MessageCircle, User, Mail, ShoppingBag, ShieldCheck, ShieldOff } from "lucide-react";
 import { formatDate, WHATSAPP_NUMBER } from "../../utils/helpers";
+import toast from "react-hot-toast";
 
 export default function CustomerManagement() {
   const [customers, setCustomers] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+
+  const toggleAdmin = async (c) => {
+    const makingAdmin = c.role !== "admin";
+    if (!window.confirm(`${makingAdmin ? "Make" : "Remove"} ${c.displayName || c.email} ${makingAdmin ? "an admin" : "as admin"}?`)) return;
+    try {
+      await updateDoc(doc(db, "users", c.id), { role: makingAdmin ? "admin" : "customer" });
+      setCustomers((prev) => prev.map((u) => (u.id === c.id ? { ...u, role: makingAdmin ? "admin" : "customer" } : u)));
+      toast.success(makingAdmin ? "Made admin" : "Admin access removed");
+    } catch {
+      toast.error("Failed to update role");
+    }
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -78,15 +92,41 @@ export default function CustomerManagement() {
                     <td className="px-4 py-3 font-semibold text-brand-gold">{c.loyaltyPoints || 0} pts</td>
                     <td className="px-4 py-3 text-xs text-gray-400">{formatDate(c.createdAt)}</td>
                     <td className="px-4 py-3">
-                      {c.phone && (
-                        <a
-                          href={`https://wa.me/${c.phone.replace(/\D/g, "")}?text=${encodeURIComponent("Hello! This is JAI SHREE DRYFRUITS team.")}`}
-                          target="_blank" rel="noreferrer"
-                          className="p-1.5 hover:bg-green-50 text-green-500 rounded-lg inline-flex"
+                      <div className="flex gap-1">
+                        {c.phone && (
+                          <a
+                            href={`https://wa.me/${c.phone.replace(/\D/g, "")}?text=${encodeURIComponent("Hello! This is JAI SHREE DRYFRUITS team.")}`}
+                            target="_blank" rel="noreferrer"
+                            className="p-1.5 hover:bg-green-50 text-green-500 rounded-lg inline-flex"
+                            title="WhatsApp"
+                          >
+                            <MessageCircle size={14} />
+                          </a>
+                        )}
+                        {c.email && (
+                          <a
+                            href={`mailto:${c.email}`}
+                            className="p-1.5 hover:bg-blue-50 text-blue-500 rounded-lg inline-flex"
+                            title="Email"
+                          >
+                            <Mail size={14} />
+                          </a>
+                        )}
+                        <Link
+                          to={`/admin/orders?search=${encodeURIComponent(c.email || "")}`}
+                          className="p-1.5 hover:bg-amber-50 text-brand-gold rounded-lg inline-flex"
+                          title="View Orders"
                         >
-                          <MessageCircle size={14} />
-                        </a>
-                      )}
+                          <ShoppingBag size={14} />
+                        </Link>
+                        <button
+                          onClick={() => toggleAdmin(c)}
+                          className={`p-1.5 rounded-lg inline-flex ${c.role === "admin" ? "hover:bg-red-50 text-red-500" : "hover:bg-purple-50 text-purple-500"}`}
+                          title={c.role === "admin" ? "Remove admin access" : "Make admin"}
+                        >
+                          {c.role === "admin" ? <ShieldOff size={14} /> : <ShieldCheck size={14} />}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
