@@ -229,6 +229,7 @@ export default function ProductDetail() {
         image={product.images?.[0]}
         type="product"
         product={product}
+        keywords={`buy ${product.name.toLowerCase()}, ${product.category.toLowerCase()} online India, ${product.category.toLowerCase()} price, premium ${product.category.toLowerCase()}, FSSAI certified ${product.category.toLowerCase()}, Jai Shree Dryfruits`}
         breadcrumb={[
           { name: "Home", url: "https://jaishreedryfruits.com/" },
           { name: "Products", url: "https://jaishreedryfruits.com/products" },

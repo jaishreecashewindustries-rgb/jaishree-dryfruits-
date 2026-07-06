@@ -5,9 +5,12 @@ import { db } from "../firebase/config";
 import { ArrowLeft, Clock, User, Tag, Calendar } from "lucide-react";
 import { motion } from "framer-motion";
 import { SEED_POSTS } from "./Blog";
+import { useProducts } from "../context/ProductsContext";
+import ProductCard from "../components/ProductCard";
 
 export default function BlogPost() {
   const { id } = useParams();
+  const { products } = useProducts();
   const [post, setPost] = useState(null);
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -183,6 +186,26 @@ export default function BlogPost() {
             </div>
           </div>
         )}
+
+        {/* Shop Related Products — matched by tag/category against this
+            post's tags, so a post tagged "Almonds" links straight to
+            almond products instead of a generic /products CTA. Real
+            internal linking between content and catalog pages, which
+            search engines weight for topical relevance. */}
+        {(() => {
+          const postTags = (Array.isArray(post.tags) ? post.tags : (post.tags || "").split(",")).map((t) => t.trim().toLowerCase()).filter(Boolean);
+          const shopRelated = products.filter((p) =>
+            postTags.some((t) => p.category?.toLowerCase().includes(t) || p.name?.toLowerCase().includes(t))
+          ).slice(0, 4);
+          return shopRelated.length > 0 ? (
+            <div className="mt-14 pt-8 border-t border-gray-100">
+              <h2 className="font-serif text-xl font-bold text-brand-brown mb-6">Shop What's Mentioned</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {shopRelated.map((p) => <ProductCard key={p.id} product={p} />)}
+              </div>
+            </div>
+          ) : null;
+        })()}
 
         {/* CTA */}
         <div

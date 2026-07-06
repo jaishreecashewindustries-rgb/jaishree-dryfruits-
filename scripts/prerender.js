@@ -88,9 +88,29 @@ const DEMO_ONLY_PRODUCTS = [
   { id: "p6", name: "Premium Mix Dry Fruits" },
 ];
 
-async function fetchProductsForPrerender() {
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
+// Built-in seed blog posts (src/pages/Blog.jsx SEED_POSTS) — same CJS/ESM
+// mismatch reason as DEMO_ONLY_PRODUCTS above prevents requiring that file
+// directly. Individual /blog/:id pages were never prerendered at all before
+// this (only the /blog listing was) — Googlebot saw a blank shell for every
+// single blog post.
+const SEED_BLOG_IDS = [
+  "almond-benefits", "cashew-grades-explained", "diwali-gifting-guide",
+  "walnuts-brain-food", "dates-ramadan", "dry-fruits-for-kids",
+];
+
+async function fetchBlogRoutesForPrerender(db) {
+  let firestoreIds = [];
+  try {
+    const snap = await getDocs(collection(db, "blog_posts"));
+    firestoreIds = snap.docs.filter((d) => d.data().published).map((d) => d.id);
+  } catch {
+    // keep seed-only if Firestore read fails — non-fatal
+  }
+  const allIds = [...new Set([...SEED_BLOG_IDS, ...firestoreIds])];
+  return allIds.map((id) => ({ route: `/blog/${id}`, expectedText: null }));
+}
+
+async function fetchProductsForPrerender(db) {
   const snap = await getDocs(collection(db, "products"));
   const live = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
   const liveIds = new Set(live.map((p) => p.id));
@@ -277,9 +297,13 @@ ${items.join("\n")}
 
 async function main() {
   console.log("[prerender] fetching product catalogue for route list + content checks...");
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
   let products = [];
+  let blogRoutes = [];
   try {
-    products = await fetchProductsForPrerender();
+    products = await fetchProductsForPrerender(db);
+    blogRoutes = await fetchBlogRoutesForPrerender(db);
   } catch (err) {
     console.error("[prerender] FATAL — could not fetch products, aborting prerender (build/deploy will continue with plain SPA output):", err.message);
     process.exit(0); // Non-fatal to the overall build — just skip prerendering entirely this run. Explicit exit for the same reason as below.
@@ -290,6 +314,7 @@ async function main() {
     ...STATIC_ROUTES.map((r) => ({ route: r, expectedText: null })),
     ...CATEGORY_ROUTES.map((r) => ({ route: r, expectedText: null })),
     ...productRoutes,
+    ...blogRoutes,
   ];
 
   fs.rmSync(STAGING_DIR, { recursive: true, force: true }); // clean up any leftover from a crashed previous run

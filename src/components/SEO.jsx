@@ -58,6 +58,12 @@ function injectStructuredData(id, data) {
  *   itemList    — optional [{ name, url }] of products on a listing page —
  *                 signals to Google this is a browsable catalog, not a single item
  */
+const DEFAULT_KEYWORDS = [
+  "dry fruits online", "buy dry fruits India", "premium almonds", "cashews online",
+  "pistachios online", "kashmiri walnuts", "FSSAI certified dry fruits",
+  "dry fruits Jaipur", "dry fruits gift hampers", "Jai Shree Dryfruits",
+].join(", ");
+
 export default function SEO({
   title,
   description = DEFAULT_DESC,
@@ -69,6 +75,7 @@ export default function SEO({
   noIndex = false,
   breadcrumb,
   itemList,
+  keywords,
 }) {
   const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} — India's Finest Dry Fruits`;
   // Always anchor to the real production origin, never window.location.href —
@@ -85,6 +92,7 @@ export default function SEO({
 
     // Basic meta
     setMeta("description", description);
+    setMeta("keywords", keywords || DEFAULT_KEYWORDS);
     setMeta("robots", noIndex ? "noindex, nofollow" : "index, follow, max-snippet:-1, max-image-preview:large");
 
     // Open Graph
@@ -105,14 +113,20 @@ export default function SEO({
     // Canonical
     setLinkCanonical(canonicalURL);
 
-    // Organization structured data (always present)
+    // Organization + LocalBusiness structured data (always present) — using
+    // both @types on the same entity (rather than a second, separate
+    // LocalBusiness block) so Google treats it as one business with local
+    // "near me" / Jaipur-search eligibility, not two conflicting entities.
     injectStructuredData("sd-org", {
       "@context": "https://schema.org",
-      "@type": "Organization",
+      "@type": ["Organization", "Store"],
       name: SITE_NAME,
       url: SITE_URL,
       logo: `${SITE_URL}/logo.png`,
+      image: `${SITE_URL}/logo.png`,
       foundingDate: "1999",
+      priceRange: "₹₹",
+      telephone: "+91-75685-77968",
       address: {
         "@type": "PostalAddress",
         streetAddress: "41, Barah Ji Ki Gali, Gangauri Bazar",
@@ -120,6 +134,17 @@ export default function SEO({
         addressRegion: "Rajasthan",
         postalCode: "302001",
         addressCountry: "IN",
+      },
+      geo: {
+        "@type": "GeoCoordinates",
+        latitude: 26.9239,
+        longitude: 75.8267,
+      },
+      openingHoursSpecification: {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+        opens: "10:00",
+        closes: "20:00",
       },
       contactPoint: [
         {
@@ -254,7 +279,7 @@ export default function SEO({
       const el = document.getElementById("sd-itemlist");
       if (el) el.remove();
     }
-  }, [fullTitle, description, image, canonicalURL, type, noIndex, product, article, breadcrumb, itemList]);
+  }, [fullTitle, description, image, canonicalURL, type, noIndex, product, article, breadcrumb, itemList, keywords]);
 
   return null;
 }
