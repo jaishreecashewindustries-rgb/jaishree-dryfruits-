@@ -543,8 +543,8 @@ export default function ProductDetail() {
               {DUMMY_REVIEWS.map((r, i) => (
                 <motion.div
                   key={r.id}
-                  initial={{ opacity: 0, y: 18 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  initial={{ y: 18 }}
+                  whileInView={{ y: 0 }}
                   viewport={{ once: true, margin: "-40px" }}
                   transition={{ duration: 0.4, delay: Math.min(i, 6) * 0.06, ease: [0.22, 1, 0.36, 1] }}
                   className="p-5 border border-gray-100 rounded-xl"

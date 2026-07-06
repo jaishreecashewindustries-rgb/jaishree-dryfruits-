@@ -22,14 +22,19 @@ import { useProducts } from "../context/ProductsContext";
 import { useSiteSettings } from "../context/SiteSettingsContext";
 
 /* ── Framer helpers ─────────────────────────────────────────── */
+// Content starts fully visible (no opacity:0) and only slides/scales into
+// its final position — a scroll-triggered reveal that never actually fires
+// (no real scroll, e.g. Googlebot's renderer) used to leave whole sections
+// permanently invisible in what Google crawls. Keeping the motion but
+// dropping the opacity animation means there's no "never revealed" state.
 function FadeUp({ children, delay = 0, className = "" }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-60px" });
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 24 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
+      initial={{ y: 24 }}
+      animate={inView ? { y: 0 } : {}}
       transition={{ duration: 0.4, delay: Math.min(delay, 0.25), ease: [0.22, 1, 0.36, 1] }}
       className={className}
     >
@@ -44,8 +49,8 @@ function ScaleIn({ children, delay = 0, className = "" }) {
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, scale: 0.93 }}
-      animate={inView ? { opacity: 1, scale: 1 } : {}}
+      initial={{ scale: 0.93 }}
+      animate={inView ? { scale: 1 } : {}}
       transition={{ duration: 0.35, delay: Math.min(delay, 0.25), ease: [0.22, 1, 0.36, 1] }}
       className={className}
     >
@@ -199,7 +204,6 @@ export default function Home() {
   }, []);
   const { scrollYProgress: heroScroll } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroContentY = useTransform(heroScroll, [0, 1], [0, -70]);
-  const heroContentOpacity = useTransform(heroScroll, [0, 0.65], [1, 0]);
   const liveTestimonials = useLiveTestimonials();
   const { tr } = useLanguage();
 
@@ -249,8 +253,12 @@ export default function Home() {
         ))}
 
 
-        {/* Center content — parallax lift on scroll */}
-        <motion.div style={{ y: heroContentY, opacity: heroContentOpacity }} className="relative z-20 text-center px-6 flex flex-col items-center">
+        {/* Center content — parallax lift on scroll. No opacity fade here —
+            this wraps the main H1 heading, and a scroll-linked fade-to-0
+            (however briefly, on however few crawls) is the single worst
+            place for content to intermittently vanish from what Google
+            captures. */}
+        <motion.div style={{ y: heroContentY }} className="relative z-20 text-center px-6 flex flex-col items-center">
 
           {/* Headline */}
           <motion.h1
@@ -436,7 +444,7 @@ export default function Home() {
               { goal: "Skin & Hair",    Icon: Sparkles,   link: "/products?goal=skin" },
               { goal: "Kids",           Icon: Users,      link: "/products?goal=kids" },
             ].map((item, i) => (
-              <motion.div key={item.goal} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.35, delay: i * 0.04 }}>
+              <motion.div key={item.goal} initial={{ y: 12 }} whileInView={{ y: 0 }} viewport={{ once: true }} transition={{ duration: 0.35, delay: i * 0.04 }}>
                 <Link
                   to={item.link}
                   className="group flex flex-col items-center gap-2.5 py-4 px-2 transition-all duration-200 hover:-translate-y-1"
@@ -520,8 +528,8 @@ export default function Home() {
             ].map((combo, i) => (
               <motion.div
                 key={combo.name}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ y: 20 }}
+                whileInView={{ y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.06 }}
                 className="flex flex-col overflow-hidden group bg-white rounded-xl border border-gray-100 hover:shadow-lg transition-shadow duration-300"
@@ -650,7 +658,7 @@ export default function Home() {
             {WHY_US.map((item) => (
               <motion.div
                 key={item.title}
-                variants={{ hidden: { opacity: 0, y: 28, scale: 0.94 }, visible: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.48, ease: [0.22, 1, 0.36, 1] } } }}
+                variants={{ hidden: { y: 28, scale: 0.94 }, visible: { y: 0, scale: 1, transition: { duration: 0.48, ease: [0.22, 1, 0.36, 1] } } }}
               >
                 <div
                   className="group relative h-full rounded-2xl p-5 md:p-6 cursor-default overflow-hidden transition-all duration-300 hover:-translate-y-1"
@@ -822,8 +830,8 @@ export default function Home() {
       <section className="py-14 md:py-20 px-4 overflow-hidden" style={{ background: "#FDFAF3", borderTop: "1px solid rgba(201,168,76,0.18)", borderBottom: "1px solid rgba(201,168,76,0.18)" }}>
         <div className="max-w-5xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ y: 24 }}
+            whileInView={{ y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
             className="flex flex-col md:grid md:grid-cols-[auto_1fr_auto] gap-8 md:gap-12 items-center"
@@ -858,8 +866,8 @@ export default function Home() {
               ].map((step, i) => (
                 <motion.div
                   key={step.step}
-                  initial={{ opacity: 0, y: 16 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  initial={{ y: 16 }}
+                  whileInView={{ y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1, duration: 0.4 }}
                   className="text-center"
@@ -945,8 +953,8 @@ export default function Home() {
             ].map((post, i) => (
               <motion.div
                 key={post.slug}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ y: 20 }}
+                whileInView={{ y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
               >

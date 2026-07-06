@@ -78,8 +78,8 @@ export default function AboutPage() {
       <section className="max-w-6xl mx-auto px-4 py-20">
         <div className="grid md:grid-cols-2 gap-0 border border-gray-100 overflow-hidden" style={{ boxShadow: "0 8px 40px rgba(27,46,75,0.06)" }}>
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ x: -30 }}
+            whileInView={{ x: 0 }}
             viewport={{ once: true, margin: "-60px" }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             className="relative overflow-hidden"
@@ -93,8 +93,8 @@ export default function AboutPage() {
             />
           </motion.div>
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
+            initial={{ x: 30 }}
+            whileInView={{ x: 0 }}
             viewport={{ once: true, margin: "-60px" }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             className="p-10 md:p-12 flex flex-col justify-center"
@@ -120,8 +120,8 @@ export default function AboutPage() {
       <section className="py-20 px-4" style={{ background: "#F9F7F2" }}>
         <div className="max-w-6xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ y: 20 }}
+            whileInView={{ y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
             className="text-center mb-14"
@@ -135,8 +135,8 @@ export default function AboutPage() {
             {PROMISES.map((p, i) => (
               <motion.div
                 key={p.title}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ y: 24 }}
+                whileInView={{ y: 0 }}
                 viewport={{ once: true, margin: "-40px" }}
                 transition={{ duration: 0.55, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
                 className="bg-white rounded-2xl p-7 border border-gray-100 hover:shadow-lg transition-shadow duration-300"
@@ -155,8 +155,8 @@ export default function AboutPage() {
       {/* Founders — photo cards + quote */}
       <section className="max-w-6xl mx-auto px-4 py-20">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ y: 24 }}
+          whileInView={{ y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
           className="grid md:grid-cols-2 overflow-hidden border border-gray-100"

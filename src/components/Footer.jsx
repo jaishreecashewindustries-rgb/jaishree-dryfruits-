@@ -14,10 +14,14 @@ const FUNCTIONS_BASE_URL =
   process.env.REACT_APP_FUNCTIONS_BASE_URL ||
   "http://127.0.0.1:5001/jaishreedryfruits-973dd/asia-south1";
 
+// No opacity animation — the footer is on every page, so leaving content at
+// opacity:0 until scrolled into view meant it (and every link in it,
+// including the city pages linked here) was invisible in what crawlers that
+// don't scroll (Googlebot's renderer included) actually see.
 const FadeIn = ({ children, delay = 0, className = "" }) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    whileInView={{ opacity: 1, y: 0 }}
+    initial={{ y: 20 }}
+    whileInView={{ y: 0 }}
     viewport={{ once: true, margin: "-60px" }}
     transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] }}
     className={className}

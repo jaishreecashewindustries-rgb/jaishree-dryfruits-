@@ -123,8 +123,8 @@ export default function SourcingStory() {
       {/* Origins */}
       <section className="max-w-6xl mx-auto px-4 py-20">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ y: 20 }}
+          whileInView={{ y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
@@ -138,8 +138,8 @@ export default function SourcingStory() {
           {ORIGINS.map((o, i) => (
             <motion.div
               key={o.country}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ y: 30 }}
+              whileInView={{ y: 0 }}
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.65, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
               className={`grid md:grid-cols-2 border-b border-gray-100 last:border-b-0 ${i % 2 === 1 ? "md:[&>*:first-child]:order-2" : ""}`}
@@ -174,8 +174,8 @@ export default function SourcingStory() {
       <section className="py-20 px-4" style={{ background: "linear-gradient(160deg, #0D1B2A 0%, #1B2E4B 100%)" }}>
         <div className="max-w-6xl mx-auto">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ y: 20 }}
+            whileInView={{ y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
             className="text-center mb-14"
@@ -191,8 +191,8 @@ export default function SourcingStory() {
             {PROCESS_STEPS.map((s, i) => (
               <motion.div
                 key={s.step}
-                initial={{ opacity: 0, y: 24 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={{ y: 24 }}
+                whileInView={{ y: 0 }}
                 viewport={{ once: true, margin: "-40px" }}
                 transition={{ duration: 0.55, delay: i * 0.09, ease: [0.22, 1, 0.36, 1] }}
                 className="p-8 group hover:bg-white/5 transition-colors"
@@ -217,8 +217,8 @@ export default function SourcingStory() {
       {/* Certifications */}
       <section className="max-w-5xl mx-auto px-4 py-20">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ y: 20 }}
+          whileInView={{ y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
@@ -232,8 +232,8 @@ export default function SourcingStory() {
           {CERTIFICATIONS.map((c, i) => (
             <motion.div
               key={c.name}
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ y: 16 }}
+              whileInView={{ y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1, duration: 0.5 }}
               className="text-center p-8 bg-white hover:bg-brand-cream transition-colors"
@@ -252,8 +252,8 @@ export default function SourcingStory() {
       {/* Founders CTA */}
       <section className="max-w-6xl mx-auto px-4 pb-20">
         <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ y: 24 }}
+          whileInView={{ y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7 }}
           className="grid md:grid-cols-2 overflow-hidden border border-gray-100"
