@@ -318,7 +318,7 @@ export default function Footer() {
           We Deliver Dry Fruits To
         </p>
         <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center md:justify-start">
-          {["mumbai", "delhi", "bangalore", "hyderabad", "chennai", "pune", "kolkata", "ahmedabad", "jaipur", "lucknow", "surat", "nagpur"].map((slug) => (
+          {["mumbai", "delhi", "bangalore", "hyderabad", "chennai", "pune", "kolkata", "ahmedabad", "jaipur", "lucknow", "surat", "nagpur", "kochi", "chandigarh", "indore", "coimbatore", "noida", "patna", "bhopal", "varanasi"].map((slug) => (
             <Link
               key={slug}
               to={`/dry-fruits-delivery/${slug}`}

@@ -72,6 +72,10 @@ const CITY_ROUTES = [
   "mumbai", "delhi", "bangalore", "hyderabad", "chennai", "pune", "kolkata",
   "ahmedabad", "surat", "jaipur", "lucknow", "kanpur", "nagpur", "indore",
   "thane", "bhopal", "visakhapatnam", "patna", "vadodara", "ghaziabad",
+  "coimbatore", "kochi", "chandigarh", "ludhiana", "agra", "nashik",
+  "faridabad", "meerut", "rajkot", "varanasi", "amritsar", "prayagraj",
+  "ranchi", "jodhpur", "gwalior", "vijayawada", "madurai", "raipur",
+  "kota", "guwahati", "dehradun", "jabalpur", "aurangabad", "noida", "mysore",
 ].map((c) => `/dry-fruits-delivery/${c}`);
 
 // Routes whose content depends on the async products fetch — must wait for
