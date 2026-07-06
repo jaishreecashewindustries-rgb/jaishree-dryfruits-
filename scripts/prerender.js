@@ -81,7 +81,7 @@ const CITY_ROUTES = [
 // Routes whose content depends on the async products fetch — must wait for
 // the explicit data-prerender-ready marker, never a generic network-idle wait.
 function needsDataReadyMarker(route) {
-  return route.startsWith("/product/") || route.startsWith("/products");
+  return route.startsWith("/product/") || route.startsWith("/products") || route.startsWith("/dry-fruits-delivery/");
 }
 
 // Demo-catalogue products that only ever live in src/utils/helpers.js
