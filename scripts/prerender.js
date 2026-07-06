@@ -66,6 +66,14 @@ const CATEGORY_ROUTES = [
   "Figs", "Apricots", "Combo Packs", "Gift Hampers", "Seeds", "Mixed Nuts",
 ].map((c) => `/products?category=${encodeURIComponent(c)}`);
 
+// Must match the slugs in src/pages/CityLanding.jsx (CITIES) — kept as a
+// plain string list here for the same CJS/ESM reason as DEMO_ONLY_PRODUCTS.
+const CITY_ROUTES = [
+  "mumbai", "delhi", "bangalore", "hyderabad", "chennai", "pune", "kolkata",
+  "ahmedabad", "surat", "jaipur", "lucknow", "kanpur", "nagpur", "indore",
+  "thane", "bhopal", "visakhapatnam", "patna", "vadodara", "ghaziabad",
+].map((c) => `/dry-fruits-delivery/${c}`);
+
 // Routes whose content depends on the async products fetch — must wait for
 // the explicit data-prerender-ready marker, never a generic network-idle wait.
 function needsDataReadyMarker(route) {
@@ -313,6 +321,7 @@ async function main() {
   const allRoutes = [
     ...STATIC_ROUTES.map((r) => ({ route: r, expectedText: null })),
     ...CATEGORY_ROUTES.map((r) => ({ route: r, expectedText: null })),
+    ...CITY_ROUTES.map((r) => ({ route: r, expectedText: null })),
     ...productRoutes,
     ...blogRoutes,
   ];

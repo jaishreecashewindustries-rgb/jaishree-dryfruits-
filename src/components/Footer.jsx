@@ -309,6 +309,30 @@ export default function Footer() {
         </div>
       </FadeIn>
 
+      {/* We Deliver To — internal links so crawlers can discover the city
+          landing pages; sitemap.xml lists them too, but pages with zero
+          inbound links from elsewhere on the site rank far worse even when
+          they're technically indexed. */}
+      <div className="max-w-7xl mx-auto px-4 pb-6">
+        <p className="text-[10px] uppercase tracking-[2.5px] mb-3 text-center md:text-left" style={{ color: "rgba(255,255,255,0.3)" }}>
+          We Deliver Dry Fruits To
+        </p>
+        <div className="flex flex-wrap gap-x-4 gap-y-2 justify-center md:justify-start">
+          {["mumbai", "delhi", "bangalore", "hyderabad", "chennai", "pune", "kolkata", "ahmedabad", "jaipur", "lucknow", "surat", "nagpur"].map((slug) => (
+            <Link
+              key={slug}
+              to={`/dry-fruits-delivery/${slug}`}
+              className="capitalize transition-colors duration-200"
+              style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}
+              onMouseEnter={(e) => { e.currentTarget.style.color = "#C9A84C"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(255,255,255,0.4)"; }}
+            >
+              {slug}
+            </Link>
+          ))}
+        </div>
+      </div>
+
       {/* Bottom bar */}
       <div className="py-6 px-4">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
