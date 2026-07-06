@@ -129,7 +129,14 @@ export default function SEO({
           availableLanguage: ["en", "hi"],
         },
       ],
-      sameAs: [],
+      // Links Google's Knowledge Graph entity for this business to its real
+      // social profiles — without this, Google has no way to associate the
+      // Instagram/Facebook presence with the website as "the same business",
+      // which is part of what a Knowledge Panel needs to appear at all.
+      sameAs: [
+        "https://www.instagram.com/jaishreedryfruits",
+        "https://www.facebook.com/jaishreedryfruits",
+      ],
     });
 
     // Product structured data
@@ -150,6 +157,28 @@ export default function SEO({
           price: lowestPrice,
           availability: inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
           seller: { "@type": "Organization", name: SITE_NAME },
+          // Lets Google show "Free shipping above ₹499" / "Easy returns"
+          // badges directly on the search/shopping result, same as
+          // established brands — without these two blocks Offer is valid
+          // but loses that visibility.
+          shippingDetails: {
+            "@type": "OfferShippingDetails",
+            shippingRate: { "@type": "MonetaryAmount", value: lowestPrice >= 499 ? 0 : 49, currency: "INR" },
+            shippingDestination: { "@type": "DefinedRegion", addressCountry: "IN" },
+            deliveryTime: {
+              "@type": "ShippingDeliveryTime",
+              handlingTime: { "@type": "QuantitativeValue", minValue: 0, maxValue: 1, unitCode: "DAY" },
+              transitTime: { "@type": "QuantitativeValue", minValue: 2, maxValue: 6, unitCode: "DAY" },
+            },
+          },
+          hasMerchantReturnPolicy: {
+            "@type": "MerchantReturnPolicy",
+            applicableCountry: "IN",
+            returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+            merchantReturnDays: 7,
+            returnMethod: "https://schema.org/ReturnByMail",
+            returnFees: "https://schema.org/FreeReturn",
+          },
         },
         aggregateRating: product.rating
           ? {

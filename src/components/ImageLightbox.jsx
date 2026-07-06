@@ -57,7 +57,7 @@ export default function ImageLightbox({ images = [], alt = "" }) {
                 active === i ? "border-brand-gold shadow-md" : "border-transparent opacity-60 hover:opacity-100"
               }`}
             >
-              <img src={img} alt="" loading="lazy" className="w-full h-full object-contain" />
+              <img src={img} alt={`${alt} — photo ${i + 1}`} loading="lazy" className="w-full h-full object-contain" />
             </button>
           ))}
         </div>

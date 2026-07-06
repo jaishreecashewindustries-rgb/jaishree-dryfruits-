@@ -826,7 +826,7 @@ export default function ProductDetail() {
       <div className={`fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ${stickyVisible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"}`}
         style={{ background: "linear-gradient(135deg, #0D1B35, #1A2744)", borderTop: "1px solid rgba(201,168,76,0.2)", paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
-          <img src={product.images[0]} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0 hidden sm:block" />
+          <img src={product.images[0]} alt={product.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0 hidden sm:block" />
           <div className="flex-1 min-w-0">
             <p className="text-white font-semibold text-sm truncate">{product.name}</p>
             <p className="text-brand-gold text-sm font-bold">{formatPrice(selectedVariant.price)} <span className="text-white/40 text-xs font-normal">/ {selectedVariant.weight}</span></p>

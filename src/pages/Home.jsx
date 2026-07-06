@@ -370,7 +370,7 @@ export default function Home() {
                     }}>
                     <img
                       src={cat.img}
-                      alt=""
+                      alt={cat.name}
                       className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
                       style={{ borderRadius: "50%" }}
                     />
