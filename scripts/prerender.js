@@ -174,6 +174,43 @@ async function prerenderRoute(browser, route, expectedText) {
       await page.waitForSelector("footer", { timeout: 8000 });
     }
 
+    // Framer Motion's whileInView animations (used throughout Home.jsx and
+    // elsewhere) start at opacity:0 and only fire once their element
+    // scrolls into the viewport — which never happens here since Puppeteer
+    // never scrolls. Without this, every below-the-fold whileInView section
+    // gets captured frozen at opacity:0 in the static HTML Google actually
+    // crawls (confirmed via Search Console's URL Inspection screenshot
+    // cutting off content mid-page). Scrolling through in steps before
+    // capture lets every section's IntersectionObserver fire for real.
+    await page.setViewport({ width: 1280, height: 1024 });
+    await page.evaluate(async () => {
+      const step = Math.floor(window.innerHeight * 0.8);
+      const height = document.body.scrollHeight;
+      for (let y = 0; y < height; y += step) {
+        window.scrollTo(0, y);
+        await new Promise((r) => setTimeout(r, 350));
+      }
+      await new Promise((r) => setTimeout(r, 300));
+      // Some elements (the hero) use scroll-linked parallax (useScroll/
+      // useTransform), not a one-time whileInView trigger — their opacity
+      // is a direct function of current scroll position, so ending the pass
+      // scrolled to the bottom left the hero itself captured at opacity:0.
+      // Scrolling back to top restores those to their correct top-of-page
+      // state without undoing the once:true whileInView reveals below.
+      // Framer Motion's useScroll(target: ref) measures the target
+      // element's bounding rect against the viewport on scroll/resize
+      // events — jumping straight back to 0 can leave it holding a stale
+      // progress value from the last measured position. A tiny nudge forces
+      // a fresh scroll event (and thus a fresh measurement) at the final
+      // resting position.
+      window.scrollTo(0, 0);
+      await new Promise((r) => setTimeout(r, 300));
+      window.scrollTo(0, 2);
+      await new Promise((r) => setTimeout(r, 150));
+      window.scrollTo(0, 0);
+      await new Promise((r) => setTimeout(r, 500));
+    });
+
     const bodyText = await page.evaluate(() => document.body.innerText || "");
     if (expectedText && !bodyText.includes(expectedText)) {
       result.status = "mismatch";
