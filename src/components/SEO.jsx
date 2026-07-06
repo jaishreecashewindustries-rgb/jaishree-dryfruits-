@@ -113,6 +113,22 @@ export default function SEO({
     // Canonical
     setLinkCanonical(canonicalURL);
 
+    // WebSite + SearchAction — this is the prerequisite for Google's
+    // "Sitelinks Search Box" (a search bar shown directly under the site's
+    // main result when someone searches the brand name). Wired to the site's
+    // real search route (Navbar search -> /products?search=...).
+    injectStructuredData("sd-website", {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: SITE_NAME,
+      url: SITE_URL,
+      potentialAction: {
+        "@type": "SearchAction",
+        target: `${SITE_URL}/products?search={search_term_string}`,
+        "query-input": "required name=search_term_string",
+      },
+    });
+
     // Organization + LocalBusiness structured data (always present) — using
     // both @types on the same entity (rather than a second, separate
     // LocalBusiness block) so Google treats it as one business with local
