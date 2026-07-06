@@ -53,6 +53,10 @@ function injectStructuredData(id, data) {
  *   product     — optional product object for Product structured data
  *   article     — optional article metadata { publishedAt, modifiedAt }
  *   noIndex     — set true for admin/private pages
+ *   breadcrumb  — optional [{ name, url }] trail, shown by Google instead of
+ *                 a raw URL under the search result (e.g. Home > Products > Cashews)
+ *   itemList    — optional [{ name, url }] of products on a listing page —
+ *                 signals to Google this is a browsable catalog, not a single item
  */
 export default function SEO({
   title,
@@ -63,6 +67,8 @@ export default function SEO({
   product,
   article,
   noIndex = false,
+  breadcrumb,
+  itemList,
 }) {
   const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} — India's Finest Dry Fruits`;
   // Always anchor to the real production origin, never window.location.href —
@@ -179,7 +185,47 @@ export default function SEO({
       const el = document.getElementById("sd-article");
       if (el) el.remove();
     }
-  }, [fullTitle, description, image, canonicalURL, type, noIndex, product, article]);
+
+    // Breadcrumb structured data — this is what gets Google to show
+    // "jaishreedryfruits.com > Products > Cashews" under the search result
+    // instead of the raw URL, and is a prerequisite for any sitelinks-style
+    // display of the catalog under the main site listing.
+    if (breadcrumb?.length) {
+      injectStructuredData("sd-breadcrumb", {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: breadcrumb.map((b, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          name: b.name,
+          item: b.url,
+        })),
+      });
+    } else {
+      const el = document.getElementById("sd-breadcrumb");
+      if (el) el.remove();
+    }
+
+    // ItemList structured data — tells Google this page is a browsable
+    // product catalog (not a single item), which is what makes a page
+    // eligible for a product carousel/grid rich result instead of a plain
+    // blue link.
+    if (itemList?.length) {
+      injectStructuredData("sd-itemlist", {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        itemListElement: itemList.map((p, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          url: p.url,
+          name: p.name,
+        })),
+      });
+    } else {
+      const el = document.getElementById("sd-itemlist");
+      if (el) el.remove();
+    }
+  }, [fullTitle, description, image, canonicalURL, type, noIndex, product, article, breadcrumb, itemList]);
 
   return null;
 }

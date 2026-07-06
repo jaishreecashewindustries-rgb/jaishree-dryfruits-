@@ -59,6 +59,11 @@ export default function Products() {
       <SEO
         title={pageTitle !== "All Products" ? `${pageTitle} — Buy Online` : "All Products — Premium Dry Fruits"}
         description={`Buy premium ${pageTitle.toLowerCase()} online. FSSAI certified, free shipping above ₹499. Direct from Kashmir, California & Iran. Delivered across India.`}
+        breadcrumb={[
+          { name: "Home", url: "https://jaishreedryfruits.com/" },
+          { name: pageTitle, url: "https://jaishreedryfruits.com/products" },
+        ]}
+        itemList={filtered.map((p) => ({ name: p.name, url: `https://jaishreedryfruits.com/product/${p.id}` }))}
       />
       {/* Breadcrumb */}
       <div className="text-xs text-gray-400 mb-6">

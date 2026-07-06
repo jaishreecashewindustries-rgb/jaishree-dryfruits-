@@ -229,6 +229,12 @@ export default function ProductDetail() {
         image={product.images?.[0]}
         type="product"
         product={product}
+        breadcrumb={[
+          { name: "Home", url: "https://jaishreedryfruits.com/" },
+          { name: "Products", url: "https://jaishreedryfruits.com/products" },
+          { name: product.category, url: `https://jaishreedryfruits.com/products?category=${encodeURIComponent(product.category)}` },
+          { name: product.name, url: `https://jaishreedryfruits.com/product/${product.id}` },
+        ]}
       />
       {/* Breadcrumb */}
       <div className="flex items-center gap-2 text-xs text-gray-400 mb-6">
