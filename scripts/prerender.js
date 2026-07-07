@@ -274,6 +274,11 @@ const STATIC_PRIORITIES = {
 const NOINDEX_ROUTES = ["/privacy", "/terms"]; // must match `noIndex` on these pages' <SEO> — no point listing pages we told Google not to index
 
 function generateSitemap(routes) {
+  // Bing's guidelines explicitly call out <lastmod> as a freshness signal
+  // it uses to decide how often to re-crawl a URL — every entry regenerates
+  // on every build, so "now" is an honest value (this file is rewritten
+  // fresh each deploy, never hand-edited/stale).
+  const lastmod = new Date().toISOString().split("T")[0];
   // Routes are already correctly percent-encoded where it matters (see
   // CATEGORY_ROUTES' encodeURIComponent above) — just XML-escape the
   // remaining sitemap-unsafe character (&) and prefix with the real domain.
@@ -284,7 +289,7 @@ function generateSitemap(routes) {
       const isCategory = route.includes("category=");
       const priority = isCategory ? "0.7" : (STATIC_PRIORITIES[routePath] || (routePath.startsWith("/product/") ? "0.8" : "0.7"));
       const loc = (SITE_URL + route).replace(/&/g, "&amp;");
-      return `  <url><loc>${loc}</loc><priority>${priority}</priority></url>`;
+      return `  <url><loc>${loc}</loc><lastmod>${lastmod}</lastmod><priority>${priority}</priority></url>`;
     });
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`;
   fs.writeFileSync(path.join(BUILD_DIR, "sitemap.xml"), xml);

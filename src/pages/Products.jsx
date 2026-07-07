@@ -59,6 +59,12 @@ export default function Products() {
       <SEO
         title={pageTitle !== "All Products" ? `${pageTitle} — Buy Online` : "All Products — Premium Dry Fruits"}
         description={`Buy premium ${pageTitle.toLowerCase()} online. FSSAI certified, free shipping above ₹499. Direct from Kashmir, California & Iran. Delivered across India.`}
+        // Only ?category=X is a real indexed page (see CATEGORY_ROUTES in
+        // scripts/prerender.js) — ?search=/?badge=/?goal= produce thin,
+        // near-infinite URL variations that would otherwise self-canonicalize
+        // and dilute crawl signal per Bing/Google's duplicate-URL guidance.
+        canonical={activeCategory ? `https://jaishreedryfruits.com/products?category=${encodeURIComponent(activeCategory)}` : "https://jaishreedryfruits.com/products"}
+        noIndex={!!(search || activeBadge || activeGoal)}
         breadcrumb={[
           { name: "Home", url: "https://jaishreedryfruits.com/" },
           { name: pageTitle, url: "https://jaishreedryfruits.com/products" },
