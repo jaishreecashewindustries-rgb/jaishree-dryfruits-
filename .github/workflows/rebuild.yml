@@ -43,7 +43,11 @@ jobs:
           REACT_APP_FUNCTIONS_BASE_URL=https://asia-south1-jaishreedryfruits-973dd.cloudfunctions.net
           EOF
 
-      - run: npm ci
+      # --legacy-peer-deps: react-scripts (CRA) wants typescript ^3-4 as a
+      # type-checking peer, i18next (added for the now-removed language
+      # switcher, see src/i18n.js) wants ^5-6 — a real conflict but only over
+      # optional TS typings, not runtime behavior, so ignoring it is safe.
+      - run: npm ci --legacy-peer-deps
 
       - name: Build (includes prerender postbuild step)
         # CI=true (GitHub Actions' default) makes react-scripts treat ESLint
