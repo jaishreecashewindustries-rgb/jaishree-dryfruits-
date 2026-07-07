@@ -234,7 +234,12 @@ async function prerenderRoute(browser, route, expectedText) {
       // Meta Pixel's fbevents.js reads window.location.hostname at init time
       // and injects its own config-fetch <script src="...&domain=..."> tag —
       // during prerendering that freezes in "domain=localhost" too.
-      .split("domain=localhost&").join(`domain=${new URL(SITE_URL).hostname}&`);
+      .split("domain=localhost&").join(`domain=${new URL(SITE_URL).hostname}&`)
+      // Google Ads' gtag conversion pixel does the same thing but bakes the
+      // page URL in as a URL-encoded query param (url=http%3A%2F%2Flocalhost...),
+      // which the plain BASE->SITE_URL replace above doesn't match at all —
+      // found this leaking into the live homepage's static snapshot.
+      .split(encodeURIComponent(BASE)).join(encodeURIComponent(SITE_URL));
     const filePath = routeToFilePath(route);
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, html);
