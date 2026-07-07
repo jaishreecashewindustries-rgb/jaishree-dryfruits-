@@ -63,6 +63,10 @@ jobs:
       - name: Deploy to Firebase Hosting
         run: npx firebase-tools deploy --only hosting,firestore,storage --token "${{ secrets.FIREBASE_TOKEN }}" --non-interactive
 
+      - name: Notify Bing IndexNow of all live URLs
+        if: success()
+        run: node scripts/submit-indexnow.js
+
       - name: File an issue if this workflow run itself failed
         if: failure()
         env:
