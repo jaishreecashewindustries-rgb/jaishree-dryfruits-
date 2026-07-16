@@ -333,12 +333,21 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Login always visible, never scrolls out of view */}
-          <div className="px-4 py-3 border-t border-gray-100 flex-shrink-0 space-y-2.5 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.04)]">
-            {!user && (
-              <Link to="/login" className="btn-primary text-center block py-2.5 text-sm rounded-lg">{tr("loginRegister")}</Link>
-            )}
-          </div>
+          {/* Account CTA — always visible, never scrolls out of view */}
+          {!user && (
+            <div className="px-4 py-4 border-t border-gray-100 flex-shrink-0 bg-white shadow-[0_-4px_20px_rgba(0,0,0,0.04)]">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-brand-cream flex items-center justify-center flex-shrink-0">
+                  <User size={18} className="text-brand-brown" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-brand-brown">Sign in for a faster checkout</p>
+                  <p className="text-xs text-gray-400">Track orders, save wishlist &amp; earn JS Coins</p>
+                </div>
+              </div>
+              <Link to="/login" className="btn-primary text-center block py-3 text-sm">{tr("loginRegister")}</Link>
+            </div>
+          )}
         </div>
       )}
     </>
