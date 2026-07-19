@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ShoppingBag, Minus, Plus, Trash2, ArrowRight } from "lucide-react";
@@ -11,6 +11,15 @@ export default function CartSidebar() {
 
   // Lock body scroll when sidebar is open
   useBodyScrollLock(isOpen);
+
+  // Keyboard support (spec §9) — Escape closes the drawer, matching
+  // MobileCartSheet's existing behavior.
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e) => { if (e.key === "Escape") closeCart(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [isOpen, closeCart]);
 
   return (
     <>
@@ -30,7 +39,7 @@ export default function CartSidebar() {
               <span className="bg-brand-gold text-white text-xs px-2 py-0.5 rounded-full">{totalItems}</span>
             )}
           </div>
-          <button onClick={closeCart} className="p-1.5 hover:bg-white/20 rounded-lg transition-colors text-white">
+          <button onClick={closeCart} aria-label="Close cart" className="w-11 h-11 flex items-center justify-center hover:bg-white/20 rounded-lg transition-colors text-white">
             <X size={20} />
           </button>
         </div>
@@ -80,7 +89,7 @@ export default function CartSidebar() {
                   <p className="text-brand-gold font-bold text-sm mt-1">{formatPrice(item.price)}</p>
                   <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center gap-2">
-                      <motion.button whileTap={{ scale: 0.85 }} className="qty-btn w-7 h-7 text-base" onClick={() => updateQty(item.id, item.variantId, item.qty - 1)}>
+                      <motion.button whileTap={{ scale: 0.85 }} aria-label="Decrease quantity" className="qty-btn w-11 h-11 text-base" onClick={() => updateQty(item.id, item.variantId, item.qty - 1)}>
                         <Minus size={14} />
                       </motion.button>
                       <AnimatePresence mode="wait">
@@ -95,11 +104,11 @@ export default function CartSidebar() {
                           {item.qty}
                         </motion.span>
                       </AnimatePresence>
-                      <motion.button whileTap={{ scale: 0.85 }} className="qty-btn w-7 h-7 text-base" onClick={() => updateQty(item.id, item.variantId, item.qty + 1)}>
+                      <motion.button whileTap={{ scale: 0.85 }} aria-label="Increase quantity" className="qty-btn w-11 h-11 text-base" onClick={() => updateQty(item.id, item.variantId, item.qty + 1)}>
                         <Plus size={14} />
                       </motion.button>
                     </div>
-                    <motion.button whileTap={{ scale: 0.85 }} onClick={() => removeFromCart(item.id, item.variantId)} className="text-red-400 hover:text-red-600 transition-colors p-1">
+                    <motion.button whileTap={{ scale: 0.85 }} onClick={() => removeFromCart(item.id, item.variantId)} aria-label="Remove item" className="text-red-400 hover:text-red-600 transition-colors w-11 h-11 flex items-center justify-center flex-shrink-0">
                       <Trash2 size={16} />
                     </motion.button>
                   </div>
@@ -126,7 +135,7 @@ export default function CartSidebar() {
                 <span>Total</span><span>{formatPrice(total)}</span>
               </div>
             </div>
-            <Link to="/checkout" onClick={closeCart} className="btn-primary w-full flex items-center justify-center gap-2">
+            <Link to="/checkout" onClick={closeCart} className="btn-primary btn-sheen w-full flex items-center justify-center gap-2">
               Checkout <ArrowRight size={16} />
             </Link>
             <Link to="/cart" onClick={closeCart} className="block text-center text-sm text-brand-brown hover:text-brand-gold transition-colors">

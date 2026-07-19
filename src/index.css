@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:wght@300;400;500;600;700&family=Caveat:wght@500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -29,6 +29,13 @@ html {
   /* Prevent any scroll-jacking: native momentum on all platforms */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  /* Every Tailwind text-* / spacing utility is rem-based, sized off THIS
+     root font-size — not body's. Bumping body's font-size alone (below)
+     only affected raw unstyled text; it never touched text-xs/text-sm/etc,
+     which is why most of the site (footer included) looked unchanged after
+     that fix. Scaling the root instead raises every rem-based size sitewide
+     in one shot, footer included. */
+  font-size: 112.5%;
 }
 html, body { overflow-x: hidden; max-width: 100vw; }
 body {
@@ -36,17 +43,86 @@ body {
   background-color: #FFFFFF;
   color: var(--text);
   -webkit-font-smoothing: antialiased;
-  font-size: 15px;
+  font-size: 1rem;
+  font-weight: 500;
   line-height: 1.6;
 }
 img { display: block; max-width: 100%; }
+h1, h2, h3, h4, h5, h6 { font-weight: 700; }
+strong, b { font-weight: 700; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: #f0f0f0; }
 ::-webkit-scrollbar-thumb { background: var(--navy); border-radius: 0; }
 
+/* ── Accessibility (design-system spec §9) ──────────────────────────── */
+/* Visible keyboard focus ring, brand-colored, everywhere — mouse/touch
+   clicks never show it (:focus-visible, not :focus), so it doesn't add
+   visual noise for pointer users. */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible,
+textarea:focus-visible, [tabindex]:focus-visible {
+  outline: 2.5px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 12px;
+  z-index: 9999;
+  background: var(--navy);
+  color: #fff;
+  padding: 10px 18px;
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 4px;
+  transition: top .2s ease;
+}
+.skip-link:focus {
+  top: 12px;
+}
+/* Minimum 44×44 tap target (spec §9) for otherwise-small icon buttons —
+   expands the hit area via padding without changing the visible icon size. */
+.touch-target {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @layer components {
+  /* ── Shared button states — every .btn-* class below gets these for
+     free (disabled + loading), so Cart/Checkout never needs a second
+     implementation (spec §5 "no duplicate implementations"). */
+  .btn-primary:disabled, .btn-gold:disabled, .btn-outline:disabled, .btn-brown:disabled,
+  .btn-primary.is-disabled, .btn-gold.is-disabled, .btn-outline.is-disabled, .btn-brown.is-disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: none;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  .btn-primary.is-loading, .btn-gold.is-loading, .btn-outline.is-loading, .btn-brown.is-loading {
+    color: transparent !important;
+    pointer-events: none;
+    position: relative;
+  }
+  .btn-primary.is-loading::after, .btn-gold.is-loading::after,
+  .btn-outline.is-loading::after, .btn-brown.is-loading::after {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2.5px solid currentColor;
+    border-top-color: transparent;
+    color: inherit;
+    animation: btnSpin .7s linear infinite;
+  }
+  .btn-outline.is-loading::after { color: var(--navy); }
+  @keyframes btnSpin { to { transform: rotate(360deg); } }
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 text-white font-semibold py-3 px-6 transition-all duration-300;
     background: linear-gradient(135deg, #243D63 0%, #1B2E4B 100%);
@@ -67,7 +143,7 @@ img { display: block; max-width: 100%; }
     background: var(--gold);
     color: var(--navy);
     letter-spacing: 1.5px;
-    font-size: 11.5px;
+    font-size: 13px;
     text-transform: uppercase;
   }
   .btn-gold:hover {
@@ -114,7 +190,7 @@ img { display: block; max-width: 100%; }
   }
   .section-title {
     font-family: 'Cormorant Garamond', Georgia, serif;
-    font-size: clamp(30px, 4vw, 52px);
+    font-size: clamp(34px, 4.4vw, 56px);
     font-weight: 400;
     color: var(--text);
     line-height: 1.1;
@@ -126,8 +202,8 @@ img { display: block; max-width: 100%; }
   }
   .sec-tag {
     font-family: 'DM Sans', sans-serif;
-    font-size: 10px;
-    letter-spacing: 3.5px;
+    font-size: 11.5px;
+    letter-spacing: 3px;
     color: var(--gold);
     text-transform: uppercase;
     display: flex;
@@ -149,7 +225,7 @@ img { display: block; max-width: 100%; }
   .badge-gold {
     background: var(--navy);
     color: var(--gold2);
-    font-size: 9px;
+    font-size: 10.5px;
     letter-spacing: 1.5px;
     padding: 4px 10px;
     font-weight: 700;
@@ -157,7 +233,7 @@ img { display: block; max-width: 100%; }
   .badge-new {
     background: #27ae60;
     color: white;
-    font-size: 9px;
+    font-size: 10.5px;
     letter-spacing: 1px;
     padding: 4px 10px;
     font-weight: 700;
@@ -165,7 +241,7 @@ img { display: block; max-width: 100%; }
   .badge-sale {
     background: #e74c3c;
     color: white;
-    font-size: 9px;
+    font-size: 10.5px;
     letter-spacing: 1px;
     padding: 4px 10px;
     font-weight: 700;
@@ -173,7 +249,7 @@ img { display: block; max-width: 100%; }
   .badge-premium {
     background: var(--gold2);
     color: var(--navy);
-    font-size: 9px;
+    font-size: 10.5px;
     letter-spacing: 1.5px;
     padding: 4px 10px;
     font-weight: 700;
@@ -181,7 +257,7 @@ img { display: block; max-width: 100%; }
   .badge-limited {
     background: #9E7A2E;
     color: white;
-    font-size: 9px;
+    font-size: 10.5px;
     letter-spacing: 1px;
     padding: 4px 10px;
     font-weight: 700;
@@ -190,12 +266,12 @@ img { display: block; max-width: 100%; }
     @apply w-full border border-brand-border rounded-none px-4 py-3 focus:outline-none focus:border-brand-brown transition-all;
     background: var(--bg2);
     font-family: 'DM Sans', sans-serif;
-    font-size: 14px;
+    font-size: 15.5px;
     color: var(--text);
   }
   .input-field:focus { background: white; }
   .nav-link {
-    font-size: 11px;
+    font-size: 12.5px;
     letter-spacing: 1.8px;
     font-weight: 600;
     text-transform: uppercase;
@@ -219,7 +295,10 @@ img { display: block; max-width: 100%; }
   .nav-link:hover::after,
   .nav-link.active::after { width: 100%; }
   .qty-btn {
-    @apply w-7 h-7 flex items-center justify-center transition-all;
+    /* w-11/h-11 = 44px — spec §9 minimum touch target, applies everywhere
+       this class is used (Cart.jsx, ProductDetail.jsx, CartSidebar.jsx) so
+       there's one definition instead of per-instance overrides. */
+    @apply w-11 h-11 flex items-center justify-center transition-all;
     border: 1px solid var(--border);
     background: none;
     color: var(--text);
@@ -278,6 +357,17 @@ img { display: block; max-width: 100%; }
   50% { opacity: .5; transform: scale(1.5); }
 }
 
+/* Origins map — radar ping ring per pin (replaces the old connect-the-dots
+   route line) */
+@keyframes originPing {
+  0% { transform: scale(0.85); opacity: 0.55; }
+  75%, 100% { transform: scale(1.7); opacity: 0; }
+}
+.origin-ping {
+  background: var(--gold);
+  animation: originPing 2.2s cubic-bezier(0,0,0.2,1) infinite;
+}
+
 /* ── GPU-accelerated marquee (CSS-only, no JS interval) ─────────────── */
 @keyframes marquee {
   from { transform: translate3d(0, 0, 0); }
@@ -287,7 +377,7 @@ img { display: block; max-width: 100%; }
   will-change: transform;
   backface-visibility: hidden;
   perspective: 1000px;
-  animation: marquee 30s linear infinite;
+  animation: marquee 55s linear infinite;
 }
 .marquee-track-fast {
   will-change: transform;
@@ -368,4 +458,76 @@ img { display: block; max-width: 100%; }
   display: inline-flex;
   align-items: center;
   gap: 4px;
+}
+
+/* ── Sitewide small-text bump ──────────────────────────────────────────
+   Dozens of components (Footer, Navbar, ProductCard, MobileBottomNav,
+   Checkout, ProductDetail, OriginsMap, etc.) hardcode Tailwind arbitrary
+   text-[Npx] classes for labels/captions. Those compile to a literal
+   font-size in px, so bumping the root %  (above) never touched them —
+   that's why most of the site still looked unchanged after that fix.
+   Overriding the compiled utility classes here fixes every one of those
+   call sites sitewide in a single place instead of editing 60+ files.
+   Same specificity as Tailwind's own utility (one class selector) — this
+   wins purely because it's declared later in the stylesheet. */
+.text-\[9px\]  { font-size: 12px !important; }
+.text-\[10px\] { font-size: 13px !important; }
+.text-\[11px\] { font-size: 13.5px !important; }
+.text-\[12px\] { font-size: 14.5px !important; }
+
+/* ── Global button light-sweep — primary CTAs only (Shop Now, Buy Now,
+   Add to Cart, Checkout, Newsletter Subscribe). A diagonal highlight
+   drifts across the button on a loop, like light catching polished
+   glass/metal — never text-obscuring (opacity capped ~20-25%), and one
+   extra sweep fires immediately on hover via a second, hover-only layer
+   so it doesn't fight the looping one. Never applied to secondary/
+   outline/icon/pagination/qty-stepper buttons. */
+.btn-sheen {
+  position: relative;
+  overflow: hidden;
+}
+.btn-sheen::after,
+.btn-sheen::before {
+  content: "";
+  position: absolute;
+  top: -60%;
+  left: -60%;
+  width: 30%;
+  height: 220%;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.45), transparent);
+  transform: skewX(-20deg);
+  pointer-events: none;
+}
+.btn-sheen::after {
+  /* the idle loop: sweeps once in the first ~1.8s of every 7s cycle, then
+     sits invisible off-canvas until the cycle repeats */
+  animation: btnSheenLoop 7s ease-in-out infinite;
+}
+.btn-sheen::before {
+  /* the hover-triggered extra sweep — a separate one-shot layer so hovering
+     mid-loop doesn't reset/cut off the ambient animation */
+  opacity: 0;
+}
+.btn-sheen:hover::before {
+  animation: btnSheenHover 1.7s ease-in-out;
+}
+@keyframes btnSheenLoop {
+  0%   { left: -60%; opacity: 0; }
+  4%   { opacity: .22; }
+  22%  { opacity: .22; }
+  26%  { left: 130%; opacity: 0; }
+  100% { left: 130%; opacity: 0; }
+}
+@keyframes btnSheenHover {
+  0%   { left: -60%; opacity: .25; }
+  75%  { opacity: .25; }
+  100% { left: 130%; opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-sheen::after, .btn-sheen::before { animation: none !important; content: none !important; }
+}
+
+/* ── Micro-interactions — quality/responsiveness cues, not decoration */
+.nav-link, .badge-gold, .badge-new, .badge-sale, .badge-premium, .badge-limited {
+  transition: transform .2s cubic-bezier(.4,0,.2,1), color .2s, background-color .2s;
 }

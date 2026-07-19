@@ -121,7 +121,7 @@ export default function CityLanding() {
             FSSAI certified almonds, cashews, pistachios & walnuts — direct-sourced from Kashmir, California & Iran,
             delivered to your doorstep in {cityData.name} within {cityData.days} days.
           </p>
-          <Link to="/products" className="btn-gold inline-block px-8 py-3">Shop Now</Link>
+          <Link to="/products" className="btn-gold btn-sheen inline-block px-8 py-3">Shop Now</Link>
         </div>
       </div>
 

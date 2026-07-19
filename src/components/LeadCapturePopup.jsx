@@ -114,7 +114,7 @@ export default function LeadCapturePopup() {
                         type="submit"
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        className="w-full py-3 rounded-xl font-semibold text-sm text-brand-brown"
+                        className="btn-sheen w-full py-3 rounded-xl font-semibold text-sm text-brand-brown"
                         style={{ background: "linear-gradient(135deg, #C9A84C, #E8C96A)" }}
                       >
                         Claim My 15% Discount

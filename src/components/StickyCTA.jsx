@@ -9,10 +9,18 @@ export default function StickyCTA() {
   const { totalItems } = useCart();
 
   useEffect(() => {
+    // Throttled via rAF — a bare scroll listener firing setState on every
+    // event (dozens of times per second) was a real source of scroll jank.
+    let ticking = false;
     const handler = () => {
-      const nearBottom =
-        window.innerHeight + window.scrollY > document.documentElement.scrollHeight - 500;
-      setVisible(window.scrollY > 500 && !nearBottom);
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const nearBottom =
+          window.innerHeight + window.scrollY > document.documentElement.scrollHeight - 500;
+        setVisible(window.scrollY > 500 && !nearBottom);
+        ticking = false;
+      });
     };
     window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
@@ -36,7 +44,6 @@ export default function StickyCTA() {
                 background: "linear-gradient(135deg, #C9A84C 0%, #E8C96A 50%, #C9A84C 100%)",
                 color: "#1B2E4B",
                 boxShadow: "0 8px 32px rgba(201,168,76,0.45), 0 2px 8px rgba(0,0,0,0.15)",
-                backdropFilter: "blur(10px)",
               }}
             >
               <ShoppingBag size={16} />

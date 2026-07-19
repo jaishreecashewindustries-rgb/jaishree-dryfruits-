@@ -13,6 +13,7 @@ import ImageLightbox from "../components/ImageLightbox";
 import MobileCartSheet from "../components/MobileCartSheet";
 import PincodeEstimator from "../components/PincodeEstimator";
 import MagneticButton from "../components/MagneticButton";
+import { trackProductView } from "../hooks/useRecentlyViewed";
 import SlotCounter from "../components/SlotCounter";
 import { collection, query, where, orderBy, limit, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase/config";
@@ -102,6 +103,10 @@ export default function ProductDetail() {
   const [notifying, setNotifying] = useState(false);
   const [notified, setNotified] = useState(false);
   const [viewerCount, setViewerCount] = useState(() => 8 + (product.id.charCodeAt(0) % 18));
+  // Buy Now is blocked once a checked PIN comes back non-serviceable, per
+  // the Pincode Serviceability spec (Add to Cart stays enabled — the spec
+  // marks that one as optional/business-rule, Buy Now as mandatory).
+  const [pincodeBlocked, setPincodeBlocked] = useState(false);
   const DUMMY_REVIEWS = useProductReviews(product.name);
   const buyRef = useRef(null);
   const { addToCart } = useCart();
@@ -119,6 +124,12 @@ export default function ProductDetail() {
   useEffect(() => {
     setSelectedVariant(product.variants[0]);
   }, [product.id]);
+
+  // Only record once the real product has actually resolved (not the
+  // fallback demo product shown while Firestore is still loading).
+  useEffect(() => {
+    if (productReadyForPrerender || !productsLoading) trackProductView(product.id);
+  }, [product.id, productReadyForPrerender, productsLoading]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => setStickyVisible(!entry.isIntersecting), { threshold: 0 });
@@ -181,6 +192,7 @@ export default function ProductDetail() {
   };
 
   const handleBuyNow = () => {
+    if (pincodeBlocked) { toast.error("Delivery not available at the checked PIN code."); return; }
     addToCart({ id: product.id, variantId: selectedVariant.id, name: product.name, variant: selectedVariant.weight, price: selectedVariant.price, image: product.images[0], qty });
     navigate("/checkout");
   };
@@ -270,21 +282,21 @@ export default function ProductDetail() {
         {/* Product info */}
         <div className="space-y-5">
           <div>
-            <p className="text-brand-gold text-xs font-bold uppercase tracking-widest">{product.category}</p>
-            <h1 className="font-serif text-3xl font-bold text-brand-brown mt-1">{product.name}</h1>
+            <p className="text-brand-gold text-sm font-extrabold uppercase tracking-widest">{product.category}</p>
+            <h1 className="font-serif text-4xl md:text-5xl font-extrabold text-brand-brown mt-2 leading-tight">{product.name}</h1>
             {/* Rating row */}
-            <div className="flex items-center gap-3 mt-3">
+            <div className="flex items-center gap-3 mt-4 flex-wrap">
               <div className="flex gap-0.5">
                 {[1,2,3,4,5].map((s) => (
-                  <Star key={s} size={16} className={s <= Math.round(Number(avgRating)) ? "fill-amber-400 text-amber-400" : "text-gray-200 fill-gray-200"} />
+                  <Star key={s} size={20} className={s <= Math.round(Number(avgRating)) ? "fill-amber-400 text-amber-400" : "text-gray-200 fill-gray-200"} />
                 ))}
               </div>
-              <span className="text-sm font-semibold text-brand-brown">{avgRating}</span>
-              <a href="#reviews" className="text-sm text-blue-500 hover:underline">{DUMMY_REVIEWS.length} reviews</a>
-              <span className="text-xs text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full font-medium flex items-center gap-1"><Flame size={10} /> Popular</span>
-              <span className="text-sm text-green-600 font-medium flex items-center gap-1"><CheckCircle size={13} /> In Stock</span>
+              <span className="text-base font-bold text-brand-brown">{avgRating}</span>
+              <a href="#reviews" className="text-base font-semibold text-blue-600 hover:underline">{DUMMY_REVIEWS.length} reviews</a>
+              <span className="text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full flex items-center gap-1"><Flame size={11} /> Popular</span>
+              <span className="text-sm font-bold text-green-600 flex items-center gap-1"><CheckCircle size={14} /> In Stock</span>
             </div>
-            <p className="text-xs text-orange-500 font-medium mt-2 flex items-center gap-1.5">
+            <p className="text-sm text-orange-500 font-semibold mt-2.5 flex items-center gap-1.5">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-orange-500" />
@@ -294,7 +306,7 @@ export default function ProductDetail() {
           </div>
 
           {/* Price */}
-          <div className="flex items-baseline gap-3 py-3 border-y border-gray-100" style={{ perspective: 400 }}>
+          <div className="flex items-baseline gap-3 py-4 border-y border-gray-100 flex-wrap" style={{ perspective: 400 }}>
             <AnimatePresence mode="wait">
               <motion.span
                 key={selectedVariant.id}
@@ -302,7 +314,7 @@ export default function ProductDetail() {
                 animate={{ rotateX: 0, opacity: 1 }}
                 exit={{ rotateX: 90, opacity: 0 }}
                 transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                className="font-serif font-semibold text-3xl text-brand-brown inline-block"
+                className="font-serif font-extrabold text-5xl text-brand-brown inline-block"
                 style={{ transformOrigin: "center" }}
               >
                 {formatPrice(selectedVariant.price)}
@@ -310,10 +322,13 @@ export default function ProductDetail() {
             </AnimatePresence>
             {selectedVariant.originalPrice > selectedVariant.price && (
               <>
-                <span className="text-lg text-gray-400 line-through font-sans">{formatPrice(selectedVariant.originalPrice)}</span>
-                <span className="text-sm font-bold text-green-600">{discount}% OFF</span>
+                <span className="text-xl text-gray-400 line-through font-sans font-semibold">{formatPrice(selectedVariant.originalPrice)}</span>
+                <span className="text-base font-extrabold text-green-600 bg-green-50 px-2.5 py-1 rounded-full">{discount}% OFF</span>
               </>
             )}
+            {(() => { const pp = per100g(selectedVariant.price, selectedVariant.weight); return pp != null ? (
+              <span className="w-full text-sm font-semibold text-gray-500">₹{pp} / 100g</span>
+            ) : null; })()}
           </div>
 
           {/* Variants */}
@@ -332,16 +347,16 @@ export default function ProductDetail() {
                     <button
                       key={v.id || `${product.id}-${i}`}
                       onClick={() => setSelectedVariant(v)}
-                      className={`relative px-4 py-2.5 rounded-xl border-2 text-sm font-medium transition-all ${selectedVariant.id === v.id ? "border-brand-gold bg-brand-cream text-brand-brown font-bold" : "border-gray-200 text-gray-600 hover:border-brand-gold"}`}
+                      className={`relative px-5 py-3 rounded-full border-2 text-sm font-semibold transition-all ${selectedVariant.id === v.id ? "border-brand-gold bg-brand-cream text-brand-brown font-extrabold" : "border-gray-200 text-gray-700 hover:border-brand-gold"}`}
                     >
                       {isBest && (
-                        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-brand-gold text-white whitespace-nowrap">
+                        <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-brand-gold text-white whitespace-nowrap">
                           Best Value
                         </span>
                       )}
-                      <div className="font-serif">{v.weight}</div>
-                      <div className="text-xs text-gray-500 font-sans">{formatPrice(v.price)}</div>
-                      {pp != null && <div className="text-[10px] text-gray-400 font-sans">₹{pp}/100g</div>}
+                      <div className="font-serif font-bold">{v.weight}</div>
+                      <div className="text-xs text-gray-600 font-sans font-semibold">{formatPrice(v.price)}</div>
+                      {pp != null && <div className="text-[11px] text-gray-500 font-sans">₹{pp}/100g</div>}
                     </button>
                   );
                 });
@@ -356,12 +371,12 @@ export default function ProductDetail() {
           <div>
             <p className="text-sm font-semibold text-brand-brown mb-2">Quantity</p>
             <div className="flex items-center gap-3">
-              <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden">
-                <button onClick={() => setQty(Math.max(1, qty - 1))} className="w-10 h-10 flex items-center justify-center hover:bg-brand-cream transition-colors">
+              <div className="flex items-center border-2 border-gray-200 rounded-full overflow-hidden">
+                <button onClick={() => setQty(Math.max(1, qty - 1))} className="w-11 h-11 flex items-center justify-center hover:bg-brand-cream transition-colors">
                   <Minus size={16} />
                 </button>
-                <span className="w-10 text-center font-semibold text-brand-brown">{qty}</span>
-                <button onClick={() => setQty(Math.min(selectedVariant.stock, qty + 1))} className="w-10 h-10 flex items-center justify-center hover:bg-brand-cream transition-colors">
+                <span className="w-10 text-center font-bold text-brand-brown">{qty}</span>
+                <button onClick={() => setQty(Math.min(selectedVariant.stock, qty + 1))} className="w-11 h-11 flex items-center justify-center hover:bg-brand-cream transition-colors">
                   <Plus size={16} />
                 </button>
               </div>
@@ -378,16 +393,16 @@ export default function ProductDetail() {
             {selectedVariant.stock > 0 ? (
               <>
                 <MagneticButton className="flex-1" strength={0.25} onClick={handleAddToCart}>
-                  <span className="btn-brown flex items-center justify-center gap-2 py-3.5 w-full">
+                  <span className="btn-brown btn-sheen rounded-full flex items-center justify-center gap-2 py-4 w-full text-base font-bold">
                     <ShoppingCart size={18} /> Add to Cart
                   </span>
                 </MagneticButton>
-                <button onClick={handleBuyNow} className="flex-1 btn-primary flex items-center justify-center gap-2 py-3.5">
+                <button onClick={handleBuyNow} disabled={pincodeBlocked} className="flex-1 btn-primary btn-sheen rounded-full flex items-center justify-center gap-2 py-4 text-base font-bold disabled:opacity-40 disabled:cursor-not-allowed">
                   <Zap size={18} /> Buy Now
                 </button>
               </>
             ) : (
-              <button onClick={handleNotifyMe} disabled={notifying || notified} className="flex-1 btn-brown flex items-center justify-center gap-2 py-3.5">
+              <button onClick={handleNotifyMe} disabled={notifying || notified} className="flex-1 btn-brown rounded-full flex items-center justify-center gap-2 py-4 text-base font-bold">
                 {notified ? "We'll notify you" : notifying ? "Saving..." : "Notify Me When Available"}
               </button>
             )}
@@ -409,22 +424,22 @@ export default function ProductDetail() {
           </div>
 
           {/* Trust badges */}
-          <div className="grid grid-cols-3 gap-3 py-4 border-t border-gray-100">
+          <div className="grid grid-cols-3 gap-3 py-5 border-t border-gray-100">
             {[
-              { icon: <Truck size={18} />, text: "Free shipping ₹499+" },
-              { icon: <Shield size={18} />, text: "100% Authentic" },
-              { icon: <Share2 size={18} />, text: "Easy Returns" },
+              { icon: <Truck size={22} />, text: "Free shipping ₹499+" },
+              { icon: <Shield size={22} />, text: "100% Authentic" },
+              { icon: <Share2 size={22} />, text: "Easy Returns" },
             ].map((b) => (
-              <div key={b.text} className="flex flex-col items-center gap-1.5 text-center">
+              <div key={b.text} className="flex flex-col items-center gap-2 text-center">
                 <div className="text-brand-gold">{b.icon}</div>
-                <span className="text-xs text-gray-500">{b.text}</span>
+                <span className="text-xs font-bold text-gray-600">{b.text}</span>
               </div>
             ))}
           </div>
 
           {/* Delivery estimate by pincode */}
           <div className="mt-4">
-            <PincodeEstimator />
+            <PincodeEstimator onServiceabilityChange={(s) => setPincodeBlocked(s.checked && !s.serviceable)} />
           </div>
         </div>
       </motion.div>
@@ -432,13 +447,13 @@ export default function ProductDetail() {
       {/* Tabs: Description / Nutrition / Reviews */}
       <div className="mb-16">
         <div className="flex border-b border-gray-200 mb-6 overflow-x-auto">
-          {["description", "nutrition", "reviews", "passport"].map((tab) => (
+          {["description", "nutrition", "shipping", "reviews", "passport"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-5 py-3 text-sm font-semibold capitalize transition-all border-b-2 -mb-px whitespace-nowrap ${activeTab === tab ? "border-brand-gold text-brand-gold" : "border-transparent text-gray-500 hover:text-brand-brown"}`}
+              className={`px-5 py-3 text-base font-bold capitalize transition-all border-b-2 -mb-px whitespace-nowrap ${activeTab === tab ? "border-brand-gold text-brand-gold" : "border-transparent text-gray-500 hover:text-brand-brown"}`}
             >
-              {tab === "passport" ? "Provenance Passport" : tab}
+              {tab === "passport" ? "Provenance Passport" : tab === "shipping" ? "Shipping & Returns" : tab}
               {tab === "reviews" ? ` (${DUMMY_REVIEWS.length})` : ""}
             </button>
           ))}
@@ -481,6 +496,25 @@ export default function ProductDetail() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {activeTab === "shipping" && (
+          <div className="max-w-md space-y-4">
+            {[
+              { icon: <Truck size={16} />, title: "Delivery", text: "2–5 business days depending on PIN code. Free above ₹499." },
+              { icon: <Package size={16} />, title: "Dispatch", text: "Orders placed before 2 PM IST ship the same day (Mon–Sat)." },
+              { icon: <Shield size={16} />, title: "Returns", text: "7-day hassle-free return or replacement if you're not satisfied." },
+              { icon: <BadgeCheck size={16} />, title: "COD", text: "Available on most serviceable PIN codes — checked at checkout." },
+            ].map((r) => (
+              <div key={r.title} className="flex gap-3 items-start">
+                <span className="text-brand-gold mt-0.5 flex-shrink-0">{r.icon}</span>
+                <div>
+                  <p className="text-sm font-semibold text-brand-brown">{r.title}</p>
+                  <p className="text-sm text-gray-500 leading-relaxed">{r.text}</p>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -835,12 +869,12 @@ export default function ProductDetail() {
           {/* On mobile: open bottom sheet. On desktop: add directly */}
           <button
             onClick={() => window.innerWidth < 768 ? setMobileSheetOpen(true) : handleAddToCart()}
-            className="flex items-center gap-2 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all hover:scale-105 flex-shrink-0"
+            className="btn-sheen flex items-center gap-2 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all hover:scale-105 flex-shrink-0"
             style={{ background: "linear-gradient(135deg, #2C4B8C, #1A2744)", border: "1px solid rgba(201,168,76,0.3)", boxShadow: "0 4px 16px rgba(26,39,68,0.5)" }}>
             <ShoppingCart size={16} /> Add to Cart
           </button>
-          <button onClick={handleBuyNow}
-            className="flex items-center gap-2 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all hover:scale-105 flex-shrink-0"
+          <button onClick={handleBuyNow} disabled={pincodeBlocked}
+            className="btn-sheen flex items-center gap-2 text-white font-bold px-5 py-2.5 rounded-xl text-sm transition-all hover:scale-105 flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{ background: "linear-gradient(135deg, #C9A84C, #9E7A2E)", boxShadow: "0 4px 16px rgba(201,168,76,0.3)" }}>
             <Zap size={16} /> Buy Now
           </button>

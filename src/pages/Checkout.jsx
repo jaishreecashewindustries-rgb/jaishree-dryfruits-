@@ -9,6 +9,7 @@ import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useCoins, COINS_RULES } from "../context/CoinsContext";
 import { formatPrice } from "../utils/helpers";
+import { checkPincodeServiceability } from "../utils/serviceability";
 import toast from "react-hot-toast";
 
 const STEPS = ["Address", "Payment", "Confirm"];
@@ -103,6 +104,11 @@ export default function Checkout() {
   const [pinLoading, setPinLoading] = useState(false);
   const [pinVerified, setPinVerified] = useState(false);
   const [pinError, setPinError] = useState("");
+  // Separate from pinVerified (postal-format lookup) — this is the actual
+  // business serviceability check, same source as ProductDetail/Cart, and
+  // is what actually blocks payment (spec: "Revalidate the PIN code before
+  // payment").
+  const [serviceability, setServiceability] = useState(null); // null | {serviceable, reason, codAvailable}
   const [fieldErrors, setFieldErrors] = useState({});
   const [payMethod, setPayMethod] = useState("razorpay");
   const [loading, setLoading] = useState(false);
@@ -240,20 +246,26 @@ export default function Checkout() {
       setOtp(["", "", "", "", "", ""]);
     }
 
-    // Pincode auto-fill
+    // Pincode auto-fill + serviceability check
     if (name === "pincode") {
       setPinVerified(false);
       setPinError("");
+      setServiceability(null);
       if (value.length === 6 && /^\d{6}$/.test(value)) {
         setPinLoading(true);
-        const result = await lookupPincode(value);
+        const [result, service] = await Promise.all([lookupPincode(value), checkPincodeServiceability(value)]);
         setPinLoading(false);
+        setServiceability(service);
         if (result) {
           setAddress(prev => ({ ...prev, city: result.city, state: result.state }));
           setPinVerified(true);
+        }
+        if (!service.serviceable) {
+          setPinError(service.reason);
+        } else if (result) {
           toast.success(`Pincode verified — ${result.city}, ${result.state}`);
         } else {
-          setPinError("Invalid PIN code or not serviceable. Please check.");
+          setPinError("Invalid PIN code. Please check.");
         }
       }
     }
@@ -598,8 +610,24 @@ export default function Checkout() {
   };
 
   const handlePlaceOrder = async () => {
-    if (payMethod === "razorpay") { handleRazorpay(); return; }
+    // Revalidate before payment (spec: "Revalidate the PIN code before
+    // payment") — a stale/cached client state should never be trusted for
+    // the actual gate; re-check against the live serviceability data.
     setLoading(true);
+    const service = await checkPincodeServiceability(address.pincode);
+    setServiceability(service);
+    if (!service.serviceable) {
+      setLoading(false);
+      setPinError(service.reason);
+      toast.error(service.reason);
+      return;
+    }
+    if (payMethod === "cod" && service.codAvailable === false) {
+      setLoading(false);
+      toast.error("Cash on Delivery is not available for this PIN code. Please choose online payment.");
+      return;
+    }
+    if (payMethod === "razorpay") { setLoading(false); handleRazorpay(); return; }
     try {
       const oid = await saveOrder();
       await earnCoinsForOrder(finalTotal);
@@ -739,7 +767,7 @@ export default function Checkout() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 min-h-screen pb-28 md:pb-10">
-      <h1 className="font-serif text-3xl font-normal text-brand-brown mb-8">Checkout</h1>
+      <h1 className="font-serif text-3xl md:text-4xl font-extrabold text-brand-brown mb-8">Checkout</h1>
 
       {/* Progress */}
       <div className="flex items-center mb-10">
@@ -1097,8 +1125,8 @@ export default function Checkout() {
 
               <div className="flex gap-3">
                 <button onClick={() => setStep(1)} className="btn-outline">← Back</button>
-                <button onClick={handlePlaceOrder} disabled={loading}
-                  className="btn-primary flex items-center gap-2 flex-1 justify-center">
+                <button onClick={handlePlaceOrder} disabled={loading || serviceability?.serviceable === false}
+                  className="btn-primary btn-sheen flex items-center gap-2 flex-1 justify-center disabled:opacity-40 disabled:cursor-not-allowed">
                   {loading
                     ? <><Loader2 size={15} className="animate-spin" /> Processing...</>
                     : <><Lock size={15} /> {payMethod === "razorpay" ? "Pay" : "Place Order"} — {formatPrice(finalTotal)}</>}

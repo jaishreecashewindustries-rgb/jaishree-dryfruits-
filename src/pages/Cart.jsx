@@ -9,6 +9,7 @@ import { useCoins, COINS_RULES } from "../context/CoinsContext";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { formatPrice } from "../utils/helpers";
+import PincodeEstimator from "../components/PincodeEstimator";
 import toast from "react-hot-toast";
 
 // Fallback hardcoded coupons (used if Firestore is empty) — mirrors Checkout.jsx
@@ -30,6 +31,9 @@ export default function Cart() {
   const [coinsDiscount, setCoinsDiscount] = useState(0);
   const [coinsRedeemed, setCoinsRedeemed] = useState(0);
   const [coinsLoading, setCoinsLoading] = useState(false);
+  // Same serviceability gate as ProductDetail/Checkout — blocks proceeding
+  // to checkout once a checked PIN comes back non-serviceable.
+  const [cartPincodeBlocked, setCartPincodeBlocked] = useState(false);
 
   const couponDiscount = appliedCoupon
     ? appliedCoupon.type === "percent"
@@ -172,7 +176,7 @@ export default function Cart() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10 min-h-screen">
-      <h1 className="font-serif text-3xl font-bold text-brand-brown mb-4">Shopping Cart</h1>
+      <h1 className="font-serif text-3xl md:text-4xl font-extrabold text-brand-brown mb-4">Shopping Cart</h1>
 
       {/* Free shipping progress bar */}
       <div className="p-4 mb-6" style={{ background: progress >= 100 ? "linear-gradient(135deg, #0D4B2C, #166534)" : "linear-gradient(135deg, #1A2744, #1B2E4B)" }}>
@@ -377,13 +381,24 @@ export default function Cart() {
                 <span>Total</span><span>{formatPrice(finalTotal)}</span>
               </div>
             </div>
-            <Link
-              to="/checkout"
-              state={{ discount: couponDiscount, appliedCoupon: appliedCoupon?.code || null, coinsDiscount, coinsRedeemed }}
-              className="btn-primary w-full mt-5 flex items-center justify-center gap-2"
-            >
-              Proceed to Checkout <ArrowRight size={16} />
-            </Link>
+
+            <div className="mt-5">
+              <PincodeEstimator onServiceabilityChange={(s) => setCartPincodeBlocked(s.checked && !s.serviceable)} />
+            </div>
+
+            {cartPincodeBlocked ? (
+              <button disabled className="w-full mt-5 btn-primary opacity-40 cursor-not-allowed flex items-center justify-center gap-2">
+                Proceed to Checkout <ArrowRight size={16} />
+              </button>
+            ) : (
+              <Link
+                to="/checkout"
+                state={{ discount: couponDiscount, appliedCoupon: appliedCoupon?.code || null, coinsDiscount, coinsRedeemed }}
+                className="btn-primary btn-sheen w-full mt-5 flex items-center justify-center gap-2"
+              >
+                Proceed to Checkout <ArrowRight size={16} />
+              </Link>
+            )}
             <Link to="/products" className="block text-center text-xs text-gray-400 hover:text-brand-brown transition-colors mt-3">
               ← Continue Shopping
             </Link>

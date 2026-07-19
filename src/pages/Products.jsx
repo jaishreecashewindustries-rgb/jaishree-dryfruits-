@@ -1,11 +1,14 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { SlidersHorizontal, X, ChevronDown } from "lucide-react";
+import { SlidersHorizontal, X, ChevronDown, Search } from "lucide-react";
 import { motion } from "framer-motion";
 import ProductCard from "../components/ProductCard";
+import { SkeletonCard } from "../components/SkeletonCard";
 import SEO from "../components/SEO";
 import { PRODUCT_CATEGORIES } from "../utils/helpers";
 import { useProducts } from "../context/ProductsContext";
+
+const PAGE_SIZE = 12;
 
 const SORT_OPTIONS = [
   { value: "featured", label: "Featured" },
@@ -26,6 +29,10 @@ export default function Products() {
   const activeGoal = params.get("goal") || "";
   const search = params.get("search") || "";
   const [priceRange, setPriceRange] = useState([0, 5000]);
+  const [inStockOnly, setInStockOnly] = useState(false);
+  const [activeWeight, setActiveWeight] = useState("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [seoOpen, setSeoOpen] = useState(false);
 
   const setCategory = (c) => {
     const p = new URLSearchParams(params);
@@ -33,12 +40,20 @@ export default function Products() {
     setParams(p);
   };
 
+  const weightOptions = useMemo(() => {
+    const set = new Set();
+    DEMO_PRODUCTS.forEach((p) => p.variants.forEach((v) => set.add(v.weight)));
+    return [...set].sort((a, b) => parseFloat(a) - parseFloat(b));
+  }, [DEMO_PRODUCTS]);
+
   const filtered = useMemo(() => {
     let list = [...DEMO_PRODUCTS];
     if (activeCategory) list = list.filter((p) => p.category === activeCategory);
     if (activeBadge) list = list.filter((p) => p.badge === activeBadge);
     if (activeGoal) list = list.filter((p) => Array.isArray(p.goals) && p.goals.includes(activeGoal));
     if (search) list = list.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()));
+    if (activeWeight) list = list.filter((p) => p.variants.some((v) => v.weight === activeWeight));
+    if (inStockOnly) list = list.filter((p) => p.variants.some((v) => v.stock > 0));
     list = list.filter((p) => {
       const minPrice = Math.min(...p.variants.map((v) => v.price));
       return minPrice >= priceRange[0] && minPrice <= priceRange[1];
@@ -49,7 +64,25 @@ export default function Products() {
       case "rating": return [...list].sort((a, b) => b.rating - a.rating);
       default: return list;
     }
-  }, [DEMO_PRODUCTS, activeCategory, activeBadge, activeGoal, search, priceRange, sort]);
+  }, [DEMO_PRODUCTS, activeCategory, activeBadge, activeGoal, search, priceRange, sort, activeWeight, inStockOnly]);
+
+  const visible = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
+
+  // Reset pagination whenever the active filter set changes, not on every
+  // render — otherwise "Load More" clicks would immediately get wiped out
+  // by the next filtered-array recompute.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [activeCategory, activeBadge, activeGoal, search, activeWeight, inStockOnly, priceRange[1], sort]);
+
+  const resetFilters = () => {
+    setParams({});
+    setPriceRange([0, 5000]);
+    setInStockOnly(false);
+    setActiveWeight("");
+    setVisibleCount(PAGE_SIZE);
+  };
 
   const GOAL_LABELS = { heart: "Heart Health", brain: "Brain Power", energy: "Energy Boost", immunity: "Immunity", weight: "Weight Loss", bones: "Bone Strength", skin: "Skin & Hair", kids: "Kids" };
   const pageTitle = activeCategory || (activeGoal ? GOAL_LABELS[activeGoal] || activeGoal : "") || activeBadge || (search ? `"${search}"` : "All Products");
@@ -77,16 +110,33 @@ export default function Products() {
         <span className="text-brand-brown font-medium">{pageTitle}</span>
       </div>
 
+      {/* ── Collection Hero — image + title only, no promo/shipping copy ── */}
+      <div className="relative rounded-2xl overflow-hidden mb-8" style={{ aspectRatio: "21/6", background: "var(--navy)" }}>
+        <img
+          src="https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?w=1600&q=80"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover opacity-50"
+        />
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+          <h1 className="font-serif font-extrabold text-2xl md:text-4xl text-white">{pageTitle}</h1>
+          {activeCategory && (
+            <p className="text-white/70 text-sm mt-1.5 hidden md:block">Premium {activeCategory.toLowerCase()}, sourced direct.</p>
+          )}
+        </div>
+      </div>
+
       <div className="flex flex-col md:flex-row gap-8">
         {/* Sidebar filters (desktop) */}
         <aside className="hidden md:block w-56 flex-shrink-0">
           <div className="sticky top-24 space-y-6">
             <div>
-              <h3 className="font-semibold text-brand-brown text-sm mb-3 uppercase tracking-wide">Categories</h3>
-              <div className="space-y-1">
+              <h3 className="font-semibold text-brand-brown text-xs mb-3 uppercase tracking-[2px]">Categories</h3>
+              <div className="space-y-0.5">
                 <button
                   onClick={() => setCategory("")}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${!activeCategory ? "bg-brand-gold text-white font-semibold" : "text-gray-600 hover:bg-brand-cream hover:text-brand-brown"}`}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${!activeCategory ? "font-semibold" : "text-gray-500 hover:bg-brand-cream/50"}`}
+                  style={!activeCategory ? { background: "var(--cream)", color: "var(--navy)" } : undefined}
                 >
                   All Products ({DEMO_PRODUCTS.length})
                 </button>
@@ -97,7 +147,8 @@ export default function Products() {
                     <button
                       key={c}
                       onClick={() => setCategory(c)}
-                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${activeCategory === c ? "bg-brand-gold text-white font-semibold" : "text-gray-600 hover:bg-brand-cream hover:text-brand-brown"}`}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${activeCategory === c ? "font-semibold" : "text-gray-500 hover:bg-brand-cream/50"}`}
+                      style={activeCategory === c ? { background: "var(--cream)", color: "var(--navy)" } : undefined}
                     >
                       {c} ({count})
                     </button>
@@ -107,7 +158,7 @@ export default function Products() {
             </div>
 
             <div>
-              <h3 className="font-semibold text-brand-brown text-sm mb-3 uppercase tracking-wide">Price Range</h3>
+              <h3 className="font-semibold text-brand-brown text-xs mb-3 uppercase tracking-[2px]">Price Range</h3>
               <input
                 type="range"
                 min={0}
@@ -117,36 +168,63 @@ export default function Products() {
                 onChange={(e) => setPriceRange([0, Number(e.target.value)])}
                 className="w-full accent-brand-gold"
               />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <div className="flex justify-between text-xs text-gray-400 mt-1">
                 <span>₹0</span><span>Up to ₹{priceRange[1]}</span>
               </div>
             </div>
 
             <div>
-              <h3 className="font-semibold text-brand-brown text-sm mb-3 uppercase tracking-wide">Collections</h3>
-              <div className="space-y-1">
+              <h3 className="font-semibold text-brand-brown text-xs mb-3 uppercase tracking-[2px]">Collections</h3>
+              <div className="space-y-0.5">
                 {["Best Seller", "New", "Premium", "Limited"].map((b) => (
                   <button
                     key={b}
                     onClick={() => { const p = new URLSearchParams(params); if (activeBadge === b) p.delete("badge"); else p.set("badge", b); setParams(p); }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${activeBadge === b ? "bg-brand-gold text-white font-semibold" : "text-gray-600 hover:bg-brand-cream"}`}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${activeBadge === b ? "font-semibold" : "text-gray-500 hover:bg-brand-cream/50"}`}
+                    style={activeBadge === b ? { background: "var(--cream)", color: "var(--navy)" } : undefined}
                   >
                     {b}
                   </button>
                 ))}
               </div>
             </div>
+
+            <div>
+              <h3 className="font-semibold text-brand-brown text-xs mb-3 uppercase tracking-[2px]">Pack Size</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {weightOptions.map((w) => (
+                  <button
+                    key={w}
+                    onClick={() => setActiveWeight(activeWeight === w ? "" : w)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${activeWeight === w ? "border-brand-gold bg-brand-cream text-brand-brown" : "border-gray-200 text-gray-500 hover:border-brand-gold"}`}
+                  >
+                    {w}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-brand-brown text-xs mb-3 uppercase tracking-[2px]">Availability</h3>
+              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer min-h-[44px]">
+                <input type="checkbox" checked={inStockOnly} onChange={(e) => setInStockOnly(e.target.checked)} className="accent-brand-gold w-4 h-4" />
+                In Stock Only
+              </label>
+            </div>
+
+            {(activeCategory || activeBadge || activeGoal || search || activeWeight || inStockOnly || priceRange[1] < 5000) && (
+              <button onClick={resetFilters} className="w-full text-center text-xs font-semibold text-brand-gold hover:underline py-2">
+                Reset Filters
+              </button>
+            )}
           </div>
         </aside>
 
         {/* Main content */}
         <div className="flex-1">
-          {/* Toolbar */}
+          {/* Toolbar — compact: product count + sort only (title lives in the Collection Hero above) */}
           <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-            <div>
-              <h1 className="font-serif text-2xl font-bold text-brand-brown">{pageTitle}</h1>
-              <p className="text-sm text-gray-500">{filtered.length} products found</p>
-            </div>
+            <p className="text-sm text-gray-500">{filtered.length} products found</p>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setFiltersOpen(true)}
@@ -168,7 +246,7 @@ export default function Products() {
           </div>
 
           {/* Active filters */}
-          {(activeCategory || activeBadge || activeGoal || search) && (
+          {(activeCategory || activeBadge || activeGoal || search || activeWeight || inStockOnly) && (
             <div className="flex flex-wrap gap-2 mb-5">
               {activeCategory && (
                 <span className="flex items-center gap-1.5 bg-brand-cream border border-brand-gold/30 text-brand-brown text-xs px-3 py-1.5 rounded-full font-medium">
@@ -188,30 +266,74 @@ export default function Products() {
                   <button onClick={() => { const p = new URLSearchParams(params); p.delete("badge"); setParams(p); }}><X size={12} /></button>
                 </span>
               )}
+              {activeWeight && (
+                <span className="flex items-center gap-1.5 bg-brand-cream border border-brand-gold/30 text-brand-brown text-xs px-3 py-1.5 rounded-full font-medium">
+                  {activeWeight}
+                  <button onClick={() => setActiveWeight("")}><X size={12} /></button>
+                </span>
+              )}
+              {inStockOnly && (
+                <span className="flex items-center gap-1.5 bg-brand-cream border border-brand-gold/30 text-brand-brown text-xs px-3 py-1.5 rounded-full font-medium">
+                  In Stock Only
+                  <button onClick={() => setInStockOnly(false)}><X size={12} /></button>
+                </span>
+              )}
             </div>
           )}
 
           {/* Grid */}
-          {filtered.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-3 gap-5">
-              {filtered.map((p, i) => (
-                <motion.div
-                  key={p.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.35, delay: Math.min(i, 8) * 0.04, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <ProductCard product={p} />
-                </motion.div>
-              ))}
+          {productsLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {[...Array(8)].map((_, i) => <SkeletonCard key={i} />)}
             </div>
+          ) : filtered.length > 0 ? (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+                {visible.map((p, i) => (
+                  <motion.div
+                    key={p.id}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: Math.min(i, 8) * 0.04, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    <ProductCard product={p} />
+                  </motion.div>
+                ))}
+              </div>
+              {hasMore && (
+                <div className="text-center mt-10">
+                  <button onClick={() => setVisibleCount((c) => c + PAGE_SIZE)} className="btn-outline px-8 py-3">
+                    Load More
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
-            <div className="text-center py-20">
-              <p className="text-5xl mb-4">🔍</p>
+            <div className="text-center py-24">
+              <Search size={36} className="mx-auto mb-4 text-gray-300" />
               <p className="text-gray-500 font-medium">No products found</p>
-              <button onClick={() => { setParams({}); setPriceRange([0, 5000]); }} className="mt-4 btn-outline">
+              <button onClick={resetFilters} className="mt-4 btn-outline">
                 Clear Filters
               </button>
+            </div>
+          )}
+
+          {/* SEO content — collapsed by default, doesn't interrupt shopping */}
+          {!productsLoading && filtered.length > 0 && (
+            <div className="mt-14 pt-6 border-t border-gray-100">
+              <button
+                onClick={() => setSeoOpen((v) => !v)}
+                className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-gray-400 hover:text-brand-gold transition-colors"
+              >
+                About {pageTitle} <ChevronDown size={14} className={`transition-transform ${seoOpen ? "rotate-180" : ""}`} />
+              </button>
+              {seoOpen && (
+                <p className="text-sm text-gray-500 leading-relaxed mt-3 max-w-3xl">
+                  Shop premium {pageTitle.toLowerCase()} online at Jai Shree Dryfruits — sourced direct from origin
+                  farms in Kashmir, California &amp; Iran, FSSAI certified, lab-tested for purity, and vacuum-sealed
+                  fresh. Free shipping on orders above ₹499, delivered across India within 2–5 business days.
+                </p>
+              )}
             </div>
           )}
         </div>
@@ -239,7 +361,30 @@ export default function Products() {
                   </button>
                 ))}
               </div>
-              <button onClick={() => setFiltersOpen(false)} className="btn-primary w-full mt-4">Apply Filters</button>
+
+              <p className="text-xs font-semibold text-gray-500 uppercase pt-2">Pack Size</p>
+              <div className="flex flex-wrap gap-2">
+                {weightOptions.map((w) => (
+                  <button
+                    key={w}
+                    onClick={() => setActiveWeight(activeWeight === w ? "" : w)}
+                    className={`px-3 py-2 rounded-full text-sm border ${activeWeight === w ? "border-brand-gold bg-brand-cream text-brand-gold font-semibold" : "border-gray-200 text-gray-600"}`}
+                  >
+                    {w}
+                  </button>
+                ))}
+              </div>
+
+              <p className="text-xs font-semibold text-gray-500 uppercase pt-2">Availability</p>
+              <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer min-h-[44px]">
+                <input type="checkbox" checked={inStockOnly} onChange={(e) => setInStockOnly(e.target.checked)} className="accent-brand-gold w-4 h-4" />
+                In Stock Only
+              </label>
+
+              <div className="flex gap-3 mt-4">
+                <button onClick={() => { resetFilters(); setFiltersOpen(false); }} className="btn-outline flex-1">Reset</button>
+                <button onClick={() => setFiltersOpen(false)} className="btn-primary flex-1">Apply Filters</button>
+              </div>
             </div>
           </div>
         </>

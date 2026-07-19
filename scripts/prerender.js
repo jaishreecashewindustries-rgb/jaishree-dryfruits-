@@ -130,25 +130,36 @@ async function fetchProductsForPrerender(db) {
   return [...live, ...demoOnly];
 }
 
-function startStaticServer() {
+function waitForPort(port, timeoutMs) {
+  const net = require("net");
+  const deadline = Date.now() + timeoutMs;
   return new Promise((resolve, reject) => {
-    const server = spawn("npx", ["serve", "-s", BUILD_DIR, "-l", String(PORT)], {
-      stdio: "pipe",
-    });
-    let ready = false;
-    const onData = (data) => {
-      if (!ready && data.toString().toLowerCase().includes("accepting connections")) {
-        ready = true;
-        resolve(server);
-      }
+    const attempt = () => {
+      const socket = net.connect(port, "127.0.0.1");
+      socket.once("connect", () => { socket.destroy(); resolve(); });
+      socket.once("error", () => {
+        socket.destroy();
+        if (Date.now() >= deadline) reject(new Error(`Timed out waiting for port ${port}`));
+        else setTimeout(attempt, 200);
+      });
     };
-    server.stdout.on("data", onData);
-    server.stderr.on("data", onData);
-    server.on("error", reject);
-    // `serve` doesn't always print the exact string above on every version —
-    // fall back to "assume ready" after 3s so we don't hang forever.
-    setTimeout(() => { if (!ready) { ready = true; resolve(server); } }, 3000);
+    attempt();
   });
+}
+
+async function startStaticServer() {
+  const server = spawn("npx", ["serve", "-s", BUILD_DIR, "-l", String(PORT)], {
+    stdio: "pipe",
+    shell: process.platform === "win32",
+  });
+  let spawnError = null;
+  server.on("error", (e) => { spawnError = e; });
+  // `serve`'s "Accepting connections" stdout line isn't consistent across
+  // versions/platforms — polling the port for an actual TCP accept is the
+  // only reliable readiness signal (fixed timeouts were flaky on Windows,
+  // where npx's extra shell/cmd.exe hop can push startup past 3s).
+  await waitForPort(PORT, 20000).catch((e) => { throw spawnError || e; });
+  return server;
 }
 
 function routeToFilePath(route, baseDir = STAGING_DIR) {

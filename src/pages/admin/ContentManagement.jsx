@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase/config";
-import { Save, Loader2, LayoutDashboard, Users, Home, MapPin, Phone, Star } from "lucide-react";
+import { Save, Loader2, LayoutDashboard, Users, Home, MapPin, Phone, Star, Plus, Trash2 } from "lucide-react";
 import ImageUpload from "../../components/ImageUpload";
 import toast from "react-hot-toast";
 
@@ -22,6 +22,22 @@ const DEFAULTS = {
     headline: "India's Finest\nDry Fruits",
     subheadline: "Kashmir · California · Iran",
     backgroundImage: "",
+    desktopImage: "https://firebasestorage.googleapis.com/v0/b/jaishreedryfruits-973dd.firebasestorage.app/o/content%2Fhero%2Fhero-desktop-1-goodness.webp?alt=media&token=8d37a2d6-ce92-481f-827a-b594828dfc4a",
+    mobileImage: "https://firebasestorage.googleapis.com/v0/b/jaishreedryfruits-973dd.firebasestorage.app/o/content%2Fhero%2Fhero-mobile-1-goodness.webp?alt=media&token=c5a84343-9595-47db-bdaa-4dc7032187d1",
+    slides: [
+      {
+        desktopImage: "https://firebasestorage.googleapis.com/v0/b/jaishreedryfruits-973dd.firebasestorage.app/o/content%2Fhero%2Fhero-desktop-1-goodness.webp?alt=media&token=8d37a2d6-ce92-481f-827a-b594828dfc4a",
+        mobileImage: "https://firebasestorage.googleapis.com/v0/b/jaishreedryfruits-973dd.firebasestorage.app/o/content%2Fhero%2Fhero-mobile-1-goodness.webp?alt=media&token=c5a84343-9595-47db-bdaa-4dc7032187d1",
+      },
+      {
+        desktopImage: "https://firebasestorage.googleapis.com/v0/b/jaishreedryfruits-973dd.firebasestorage.app/o/content%2Fhero%2Fhero-desktop-2-notevery.webp?alt=media&token=1c55d809-5467-4102-ae47-fd4b5e9db76b",
+        mobileImage: "https://firebasestorage.googleapis.com/v0/b/jaishreedryfruits-973dd.firebasestorage.app/o/content%2Fhero%2Fhero-mobile-2-notevery.webp?alt=media&token=76707db0-5d62-4849-b1da-32fe6dab4301",
+      },
+      {
+        desktopImage: "https://firebasestorage.googleapis.com/v0/b/jaishreedryfruits-973dd.firebasestorage.app/o/content%2Fhero%2Fhero-desktop-3-goodfood.webp?alt=media&token=e6628c17-2603-47b1-a4c8-a20c693110b8",
+        mobileImage: "https://firebasestorage.googleapis.com/v0/b/jaishreedryfruits-973dd.firebasestorage.app/o/content%2Fhero%2Fhero-mobile-3-goodfood.webp?alt=media&token=b0ffc6bd-81c5-48c2-a3fa-e5f58d7c434b",
+      },
+    ],
     ctaText: "Shop Now",
     ctaSecondary: "Gift Hampers",
   },
@@ -121,6 +137,18 @@ export default function ContentManagement() {
     });
   };
 
+  const addArrayItem = (tab, arrayField, blank) => {
+    setData((prev) => ({ ...prev, [tab]: { ...prev[tab], [arrayField]: [...(prev[tab][arrayField] || []), blank] } }));
+  };
+
+  const removeArrayItem = (tab, arrayField, index) => {
+    setData((prev) => {
+      const arr = [...(prev[tab][arrayField] || [])];
+      arr.splice(index, 1);
+      return { ...prev, [tab]: { ...prev[tab], [arrayField]: arr } };
+    });
+  };
+
   if (loading) return (
     <div className="flex items-center justify-center h-60">
       <Loader2 size={32} className="animate-spin text-brand-gold" />
@@ -165,19 +193,63 @@ export default function ContentManagement() {
         {activeTab === "hero" && (
           <>
             <Section title="Homepage Hero Banner">
-              <Field label="Main Headline">
+              <p className="text-xs text-gray-400 -mt-2 mb-1">
+                Each slide has its own headline/CTA baked into the image design — upload a desktop (wide) and a mobile (tall/portrait) version per slide. The site auto-rotates through all slides, shows dots to jump between them, and always picks the right image per device.
+              </p>
+              <div className="space-y-4">
+                {(data.hero.slides || []).map((slide, i) => (
+                  <div key={i} className="border border-gray-100 rounded-2xl p-4 relative">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-xs font-bold uppercase tracking-widest text-gray-500">Slide {i + 1}</p>
+                      <button
+                        type="button"
+                        onClick={() => removeArrayItem("hero", "slides", i)}
+                        className="text-red-500 hover:text-red-600 flex items-center gap-1 text-xs font-semibold"
+                      >
+                        <Trash2 size={13} /> Remove
+                      </button>
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <ImageUpload label="Desktop / Web Image (wide)" value={slide.desktopImage} onChange={url => updateNested("hero", "slides", i, "desktopImage", url)} folder="content/hero" />
+                        <label className="block text-xs font-semibold text-gray-500 mt-2 mb-1">Desktop crop position</label>
+                        <select
+                          value={slide.desktopFocus || "center"}
+                          onChange={e => updateNested("hero", "slides", i, "desktopFocus", e.target.value)}
+                          className="input-field"
+                        >
+                          <option value="top">Top</option>
+                          <option value="center">Center</option>
+                          <option value="bottom">Bottom</option>
+                        </select>
+                      </div>
+                      <div>
+                        <ImageUpload label="Mobile Image (tall / portrait)" value={slide.mobileImage} onChange={url => updateNested("hero", "slides", i, "mobileImage", url)} folder="content/hero" />
+                        <label className="block text-xs font-semibold text-gray-500 mt-2 mb-1">Mobile crop position</label>
+                        <select
+                          value={slide.mobileFocus || "center"}
+                          onChange={e => updateNested("hero", "slides", i, "mobileFocus", e.target.value)}
+                          className="input-field"
+                        >
+                          <option value="top">Top</option>
+                          <option value="center">Center</option>
+                          <option value="bottom">Bottom</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => addArrayItem("hero", "slides", { desktopImage: "", mobileImage: "" })}
+                className="flex items-center gap-2 text-sm font-semibold text-brand-gold hover:underline"
+              >
+                <Plus size={15} /> Add Another Slide
+              </button>
+              <Field label="Accessible Headline (for search engines &amp; screen readers only, not shown visually)">
                 <textarea value={data.hero.headline} onChange={e => update("hero", "headline", e.target.value)} rows={2} className="input-field resize-none" />
               </Field>
-              <Field label="Subheadline">
-                <input value={data.hero.subheadline} onChange={e => update("hero", "subheadline", e.target.value)} className="input-field" />
-              </Field>
-              <Field label="Primary CTA Button Text">
-                <input value={data.hero.ctaText} onChange={e => update("hero", "ctaText", e.target.value)} className="input-field" />
-              </Field>
-              <Field label="Secondary CTA Text">
-                <input value={data.hero.ctaSecondary} onChange={e => update("hero", "ctaSecondary", e.target.value)} className="input-field" />
-              </Field>
-              <ImageUpload label="Hero Background Image" value={data.hero.backgroundImage} onChange={url => update("hero", "backgroundImage", url)} folder="content/hero" />
             </Section>
           </>
         )}

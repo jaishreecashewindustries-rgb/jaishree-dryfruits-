@@ -22,7 +22,6 @@ import ScrollToTop from "./components/ScrollToTop";
 import AbandonedCartReminder from "./components/AbandonedCartReminder";
 import LiveSocialProof from "./components/LiveSocialProof";
 import LeadCapturePopup from "./components/LeadCapturePopup";
-import CustomCursor from "./components/CustomCursor";
 import PageTransition from "./components/PageTransition";
 import SEO from "./components/SEO";
 
@@ -65,6 +64,7 @@ const InquiryManagement = lazy(() => import("./pages/admin/InquiryManagement"));
 const CoinsManagement = lazy(() => import("./pages/admin/CoinsManagement"));
 const ContentManagement = lazy(() => import("./pages/admin/ContentManagement"));
 const LoginSettings = lazy(() => import("./pages/admin/LoginSettings"));
+const PincodeManagement = lazy(() => import("./pages/admin/PincodeManagement"));
 
 // Same Cloud Functions backend used elsewhere (Checkout.jsx, Footer.jsx, AuthContext.jsx).
 const FUNCTIONS_BASE_URL =
@@ -82,10 +82,11 @@ function RouteLoader() {
 function MainLayout({ children }) {
   return (
     <>
+      <a href="#main-content" className="skip-link">Skip to content</a>
       <ScrollProgress />
       <Navbar />
       <CartSidebar />
-      <main><PageTransition>{children}</PageTransition></main>
+      <main id="main-content"><PageTransition>{children}</PageTransition></main>
       <Footer />
       <StickyCTA />
       <CompareBar />
@@ -100,7 +101,6 @@ function MainLayout({ children }) {
 export default function App() {
   return (
     <BrowserRouter>
-      <CustomCursor />
       <SiteSettingsProvider>
         <ProductsProvider>
         <AuthProvider>
@@ -162,6 +162,7 @@ export default function App() {
                         <Route path="inquiries" element={<InquiryManagement />} />
                         <Route path="coins" element={<CoinsManagement />} />
                         <Route path="content" element={<ContentManagement />} />
+                        <Route path="pincodes" element={<PincodeManagement />} />
                         <Route path="settings" element={<LoginSettings />} />
                       </Route>
 

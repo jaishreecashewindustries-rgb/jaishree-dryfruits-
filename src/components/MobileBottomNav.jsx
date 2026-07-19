@@ -31,7 +31,7 @@ export default function MobileBottomNav() {
   return (
     <nav className="mobile-bottom-nav md:hidden fixed bottom-0 left-0 right-0 z-50">
       {/* Glass background */}
-      <div className="absolute inset-0 bg-white/95 backdrop-blur-xl border-t border-brand-gold/20 shadow-[0_-4px_30px_rgba(201,168,76,0.15)]" />
+      <div className="absolute inset-0 bg-white border-t border-brand-gold/20 shadow-[0_-4px_30px_rgba(201,168,76,0.15)]" />
 
       <div className="relative flex items-center justify-around px-2 py-2 pb-safe">
         {NAV_ITEMS.map((item) => {

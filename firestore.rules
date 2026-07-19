@@ -37,6 +37,15 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // ── SERVICEABLE PINCODES ────────────────────────────────────────────────
+    // Public read (Product Page / Cart / Checkout all check this before
+    // allowing a purchase) — write restricted to admin (enable/disable,
+    // bulk import/export happen from /admin/pincodes).
+    match /serviceable_pincodes/{pincode} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // ── ORDERS ───────────────────────────────────────────────────────────────
     match /orders/{orderId} {
       allow create: if true;

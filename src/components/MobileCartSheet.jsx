@@ -118,10 +118,10 @@ export default function MobileCartSheet({ product, open, onClose }) {
             </div>
             <button
               onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-full bg-white/70 flex-shrink-0 mt-0.5"
+              className="w-11 h-11 flex items-center justify-center rounded-full bg-white/70 flex-shrink-0 mt-0.5"
               aria-label="Close"
             >
-              <X size={14} className="text-gray-500" />
+              <X size={16} className="text-gray-500" />
             </button>
           </div>
 
@@ -185,7 +185,7 @@ export default function MobileCartSheet({ product, open, onClose }) {
             <button
               onClick={handleAddToCart}
               disabled={added}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold text-sm transition-all"
+              className="btn-sheen flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold text-sm transition-all"
               style={{
                 background: added ? "#22C55E" : "linear-gradient(135deg, #243D63, #1B2E4B)",
                 color: "#fff",
@@ -196,7 +196,7 @@ export default function MobileCartSheet({ product, open, onClose }) {
             </button>
             <button
               onClick={handleBuyNow}
-              className="flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold text-sm transition-all"
+              className="btn-sheen flex-1 flex items-center justify-center gap-2 py-3.5 rounded-2xl font-semibold text-sm transition-all"
               style={{
                 background: "linear-gradient(135deg, #C9A84C, #E2C06A)",
                 color: "#1B2E4B",

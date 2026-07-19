@@ -65,7 +65,16 @@ export default function Login() {
         navigate(from, { replace: true });
       }
     } catch (err) {
-      toast.error(err.message?.replace("Firebase: ", "").split(" (auth/")[0] || "Something went wrong");
+      // Existing-user sign-in failing because there's no account with these
+      // details is a very different situation from a wrong password — point
+      // them at Create Account instead of a generic Firebase error string.
+      const noAccountCodes = ["auth/user-not-found", "auth/invalid-credential", "auth/wrong-password"];
+      if (mode === "login" && noAccountCodes.includes(err.code)) {
+        toast.error("No account found with these details. Please create a new account first.");
+        setMode("register");
+      } else {
+        toast.error(err.message?.replace("Firebase: ", "").split(" (auth/")[0] || "Something went wrong");
+      }
     } finally {
       setLoading(false);
     }

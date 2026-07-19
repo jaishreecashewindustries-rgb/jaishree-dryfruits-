@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, Navigate, Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingBag, Users, Star, Tag, LogOut, Menu, ChevronRight, MessageSquare, BookOpen, Coins, Image, TrendingUp, FileText, Settings, Truck, Boxes, CreditCard, Mail } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, Users, Star, Tag, LogOut, Menu, ChevronRight, MessageSquare, BookOpen, Coins, Image, TrendingUp, FileText, Settings, Truck, Boxes, CreditCard, Mail, MapPin } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
 const NAV_LINKS = [
@@ -18,6 +18,7 @@ const NAV_LINKS = [
   { to: "/admin/payments", label: "Payments", icon: CreditCard },
   { to: "/admin/newsletter", label: "Newsletter", icon: Mail },
   { to: "/admin/content", label: "Content", icon: FileText },
+  { to: "/admin/pincodes", label: "Pincode Serviceability", icon: MapPin },
   { to: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

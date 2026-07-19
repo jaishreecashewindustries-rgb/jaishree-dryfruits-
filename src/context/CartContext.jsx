@@ -98,8 +98,29 @@ export const CartProvider = ({ children }) => {
   };
 
   const removeFromCart = (id, variantId) => {
+    // Captured before dispatch so the Undo action below can restore the
+    // exact item (name, price, qty) — it won't exist in state anymore
+    // once REMOVE_ITEM runs.
+    const removed = state.items.find((i) => i.id === id && i.variantId === variantId);
     dispatch({ type: "REMOVE_ITEM", id, variantId });
-    toast.error("Item removed from cart");
+    toast(
+      (t) => (
+        <span className="flex items-center gap-3">
+          Item removed from cart
+          <button
+            onClick={() => {
+              if (removed) dispatch({ type: "ADD_ITEM", item: removed });
+              toast.dismiss(t.id);
+            }}
+            className="font-bold underline underline-offset-2"
+            style={{ color: "#C9A84C" }}
+          >
+            Undo
+          </button>
+        </span>
+      ),
+      { style: { background: "#3E2723", color: "white" }, duration: 5000 }
+    );
   };
 
   const updateQty = (id, variantId, qty) => dispatch({ type: "UPDATE_QTY", id, variantId, qty });

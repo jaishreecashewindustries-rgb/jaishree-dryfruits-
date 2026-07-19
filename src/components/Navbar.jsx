@@ -6,8 +6,22 @@ import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useLanguage } from "../context/LanguageContext";
 import { useSiteSettings } from "../context/SiteSettingsContext";
-import { PRODUCT_CATEGORIES } from "../utils/helpers";
+import { useProducts } from "../context/ProductsContext";
+import { PRODUCT_CATEGORIES, formatPrice } from "../utils/helpers";
 import useBodyScrollLock from "../hooks/useBodyScrollLock";
+
+const RECENT_SEARCHES_KEY = "jsd_recent_searches";
+const TRENDING_SEARCHES = ["Almonds", "Cashews", "Pistachios", "Gift Hampers", "Dates"];
+
+function loadRecentSearches() {
+  try { return JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY)) || []; } catch { return []; }
+}
+function saveRecentSearch(term) {
+  const cur = loadRecentSearches().filter((t) => t.toLowerCase() !== term.toLowerCase());
+  const next = [term, ...cur].slice(0, 5);
+  try { localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next)); } catch {}
+  return next;
+}
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -21,14 +35,47 @@ export default function Navbar() {
   const { user, userProfile, isAdmin, logout } = useAuth();
   const { totalItems, toggleCart } = useCart();
   const { tr } = useLanguage();
-  const { siteContent } = useSiteSettings() || {};
+  const { siteContent, categories } = useSiteSettings() || {};
   const trustItems = siteContent?.trust?.items || [];
   const navigate = useNavigate();
   const location = useLocation();
+  const { products } = useProducts();
+  const [recentSearches, setRecentSearches] = useState([]);
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 50);
-    window.addEventListener("scroll", handler);
+    if (searchOpen) setRecentSearches(loadRecentSearches());
+  }, [searchOpen]);
+
+  // Predictive matches — filters the already-loaded catalogue client-side
+  // (no extra network call / search index needed) against name and category.
+  const liveMatches = searchQuery.trim().length >= 2
+    ? products.filter((p) =>
+        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.category.toLowerCase().includes(searchQuery.toLowerCase())
+      ).slice(0, 5)
+    : [];
+
+  const runSearch = (term) => {
+    if (!term.trim()) return;
+    setRecentSearches(saveRecentSearch(term.trim()));
+    navigate(`/products?search=${encodeURIComponent(term.trim())}`);
+    setSearchOpen(false);
+    setSearchQuery("");
+  };
+
+  useEffect(() => {
+    // rAF-throttled + passive — an unthrottled, non-passive scroll listener
+    // firing setState on every scroll event was a real source of jank.
+    let ticking = false;
+    const handler = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        setScrolled(window.scrollY > 50);
+        ticking = false;
+      });
+    };
+    window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
@@ -44,46 +91,50 @@ export default function Navbar() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/products?search=${encodeURIComponent(searchQuery)}`);
-      setSearchOpen(false);
-      setSearchQuery("");
-    }
+    runSearch(searchQuery);
   };
 
   return (
     <>
-      {/* ── Announcement Bar — one clean, brand-colour bar (was two mismatched
-             marquees stacked, in a dark-green gradient that didn't match the
-             site's actual navy/gold palette anywhere else) ── */}
-      <div className="overflow-hidden bg-brand-brown">
-        <div
-          className="marquee-track flex items-center whitespace-nowrap py-2"
-          style={{ width: "max-content" }}
-        >
-          {(() => {
-            const messages = [
-              tr("freeDeliveryBanner"),
-              tr("fssaiBanner"),
-              tr("yearsBanner"),
-              ...trustItems.map((t) => `${t.icon} ${t.text}`),
-            ];
-            return [...messages, ...messages];
-          })().map((msg, i) => (
-            <span key={i} className="inline-flex items-center text-[11px] font-semibold tracking-wide text-white/90 px-6">
-              {msg}
-              <span className="ml-6 text-brand-gold">•</span>
-            </span>
-          ))}
+      {/* Header block — announcement bar + main nav frozen together at the
+          top of the viewport, so the promo strip doesn't disappear on scroll. */}
+      <div className="sticky top-0 z-50">
+        {/* ── Announcement Bar — one clean, brand-colour bar (was two mismatched
+               marquees stacked, in a dark-green gradient that didn't match the
+               site's actual navy/gold palette anywhere else) ── */}
+        <div className="overflow-hidden bg-brand-brown">
+          <div
+            className="marquee-track flex items-center whitespace-nowrap py-2"
+            style={{ width: "max-content" }}
+          >
+            {(() => {
+              const messages = [
+                tr("freeDeliveryBanner"),
+                tr("fssaiBanner"),
+                tr("yearsBanner"),
+                ...trustItems.map((t) => `${t.icon} ${t.text}`),
+              ];
+              return [...messages, ...messages];
+            })().map((msg, i) => (
+              <span key={i} className="inline-flex items-center text-[11px] font-semibold tracking-wide text-white/90 px-6">
+                {msg}
+                <span className="ml-6 text-brand-gold">•</span>
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Main navbar */}
-      <nav className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? "bg-white shadow-md" : "bg-white/95 backdrop-blur-sm"}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        {/* Main navbar */}
+        <nav className={`transition-shadow duration-300 bg-white ${scrolled ? "shadow-md" : ""}`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="relative flex items-center justify-between h-16 md:h-20">
             {/* Mobile menu toggle */}
-            <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)}>
+            <button
+              className="md:hidden w-11 h-11 flex items-center justify-center"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+            >
               {menuOpen ? <X size={24} className="text-brand-brown" /> : <Menu size={24} className="text-brand-brown" />}
             </button>
 
@@ -177,19 +228,19 @@ export default function Navbar() {
             {/* Right icons */}
             <div className="flex items-center gap-1 md:gap-3">
               {/* Search */}
-              <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 hover:bg-brand-cream rounded-lg transition-colors">
+              <button onClick={() => setSearchOpen(!searchOpen)} aria-label="Search" className="w-11 h-11 flex items-center justify-center hover:bg-brand-cream rounded-lg transition-colors">
                 <Search size={20} className="text-brand-brown" />
               </button>
 
               {/* Wishlist (desktop) */}
               {user && (
-                <Link to="/wishlist" className="hidden md:block p-2 hover:bg-brand-cream rounded-lg transition-colors">
+                <Link to="/wishlist" aria-label="Wishlist" className="hidden md:flex w-11 h-11 items-center justify-center hover:bg-brand-cream rounded-lg transition-colors">
                   <Heart size={20} className="text-brand-brown" />
                 </Link>
               )}
 
               {/* Cart */}
-              <button onClick={toggleCart} className="relative p-2 hover:bg-brand-cream rounded-lg transition-colors">
+              <button onClick={toggleCart} aria-label="Cart" className="relative w-11 h-11 flex items-center justify-center hover:bg-brand-cream rounded-lg transition-colors">
                 <ShoppingCart size={20} className="text-brand-brown" />
                 {totalItems > 0 && (
                   <span className="absolute -top-1 -right-1 bg-brand-gold text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
@@ -201,7 +252,7 @@ export default function Navbar() {
               {/* User menu */}
               {user ? (
                 <div className="relative">
-                  <button onClick={() => setUserMenuOpen(!userMenuOpen)} className="flex items-center gap-2 p-2 hover:bg-brand-cream rounded-lg transition-colors">
+                  <button onClick={() => setUserMenuOpen(!userMenuOpen)} aria-label="Account menu" aria-expanded={userMenuOpen} className="flex items-center gap-2 min-w-[44px] min-h-[44px] px-2 hover:bg-brand-cream rounded-lg transition-colors">
                     {userProfile?.photoURL ? (
                       <img src={userProfile.photoURL} alt="" className="w-7 h-7 rounded-full object-cover" />
                     ) : (
@@ -235,15 +286,18 @@ export default function Navbar() {
                   )}
                 </div>
               ) : (
-                <Link to="/login" className="hidden md:flex items-center gap-1 text-sm font-medium text-brand-brown hover:text-brand-gold transition-colors px-3 py-2 hover:bg-brand-cream rounded-lg">
-                  <User size={18} /> {tr("account")}
+                <Link to="/login" className="flex items-center gap-1 text-sm font-medium text-brand-brown hover:text-brand-gold transition-colors p-2 md:px-3 md:py-2 hover:bg-brand-cream rounded-lg">
+                  <User size={20} className="md:hidden" />
+                  <User size={18} className="hidden md:block" />
+                  <span className="hidden md:inline">{tr("account")}</span>
                 </Link>
               )}
             </div>
           </div>
         </div>
 
-        {/* Search bar overlay */}
+        {/* Search bar overlay — predictive matches from the loaded catalogue,
+            recent searches (localStorage), trending searches, empty state */}
         {searchOpen && (
           <div className="border-t border-gray-100 bg-white px-4 py-3 animate-slide-up">
             <form onSubmit={handleSearch} className="max-w-2xl mx-auto flex gap-2">
@@ -255,26 +309,92 @@ export default function Navbar() {
                 placeholder={tr("searchPlaceholder")}
                 className="input-field flex-1"
                 style={{ fontSize: "16px" }}
+                aria-label="Search products"
               />
               <button type="submit" className="btn-primary py-3 px-6">{tr("searchBtn")}</button>
             </form>
+
+            <div className="max-w-2xl mx-auto">
+              {searchQuery.trim().length >= 2 ? (
+                liveMatches.length > 0 ? (
+                  <ul className="mt-2 divide-y divide-gray-100">
+                    {liveMatches.map((p) => (
+                      <li key={p.id}>
+                        <Link
+                          to={`/product/${p.id}`}
+                          onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
+                          className="flex items-center gap-3 py-2.5 min-h-[44px] hover:bg-brand-cream transition-colors rounded-lg px-2"
+                        >
+                          <img src={p.images?.[0]} alt="" className="w-10 h-10 object-cover rounded-lg flex-shrink-0" />
+                          <span className="flex-1 min-w-0">
+                            <span className="block text-sm font-semibold text-brand-brown truncate">{p.name}</span>
+                            <span className="block text-xs text-gray-400">{p.category}</span>
+                          </span>
+                          <span className="text-sm font-bold text-brand-brown flex-shrink-0">{formatPrice(p.variants?.[0]?.price)}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="py-4 text-sm text-gray-400 text-center">
+                    No products found for "{searchQuery}" — try Almonds, Cashews, or Gift Hampers.
+                  </p>
+                )
+              ) : (
+                <div className="pt-3 pb-1 space-y-3">
+                  {recentSearches.length > 0 && (
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">Recent Searches</p>
+                      <div className="flex flex-wrap gap-2">
+                        {recentSearches.map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => runSearch(t)}
+                            className="text-xs font-semibold px-3 py-2 min-h-[36px] rounded-full bg-gray-100 text-gray-600 hover:bg-brand-cream transition-colors"
+                          >
+                            {t}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-gray-400 mb-1.5">Trending Searches</p>
+                    <div className="flex flex-wrap gap-2">
+                      {TRENDING_SEARCHES.map((t) => (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => runSearch(t)}
+                          className="text-xs font-semibold px-3 py-2 min-h-[36px] rounded-full bg-brand-cream text-brand-brown hover:bg-brand-gold hover:text-white transition-colors"
+                        >
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
 
-      </nav>
+        </nav>
+      </div>
 
       {/* Mobile menu — full-screen overlay from the very top (marquee/trust bar height varies,
           so this can't rely on the nav's own height); carries its own header with logo + close. */}
       {menuOpen && (
         <div className="md:hidden fixed inset-0 z-[70] bg-white animate-slide-up flex flex-col">
           <div className="flex items-center justify-between px-4 h-16 border-b border-gray-100 flex-shrink-0">
-            <button className="p-2 -ml-2" onClick={() => setMenuOpen(false)} aria-label="Close menu">
+            <button className="w-11 h-11 flex items-center justify-center -ml-1" onClick={() => setMenuOpen(false)} aria-label="Close menu">
               <X size={24} className="text-brand-brown" />
             </button>
             <Link to="/" onClick={() => setMenuOpen(false)} className="flex items-center">
               <img src="/logo.png" alt="Jai Shree Dry Fruits" style={{ height: 44, width: "auto" }} />
             </Link>
-            <Link to="/cart" onClick={() => setMenuOpen(false)} className="p-2 -mr-2 relative">
+            <Link to="/cart" onClick={() => setMenuOpen(false)} aria-label="Cart" className="w-11 h-11 flex items-center justify-center -mr-1 relative">
               <ShoppingCart size={22} className="text-brand-brown" />
               {totalItems > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 bg-brand-gold text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">{totalItems}</span>
@@ -282,53 +402,64 @@ export default function Navbar() {
             </Link>
           </div>
           <div className="px-4 py-3 space-y-0.5 overflow-y-auto overscroll-contain flex-1 min-h-0">
-            <Link to="/" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
+            <Link to="/" className="flex items-center gap-3 min-h-[44px] px-2 rounded-lg text-sm font-semibold text-brand-brown active:bg-brand-cream transition-colors">
               <Compass size={17} className="text-brand-gold" /> {tr("home")}
             </Link>
             <button
               type="button"
               onClick={() => setMobileCategoriesOpen((v) => !v)}
-              className="w-full flex items-center justify-between py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors"
+              className="w-full flex items-center justify-between min-h-[44px] px-2 rounded-lg text-sm font-semibold text-brand-brown active:bg-brand-cream transition-colors"
             >
               <span className="flex items-center gap-3"><Package size={17} className="text-brand-gold" /> {tr("allProducts")}</span>
-              <ChevronDown size={16} className={`transition-transform ${mobileCategoriesOpen ? "rotate-180" : ""}`} />
+              <ChevronDown size={16} className={`transition-transform duration-300 ${mobileCategoriesOpen ? "rotate-180" : ""}`} />
             </button>
-            {mobileCategoriesOpen && (
-              <div className="pl-9 grid grid-cols-2 gap-x-2">
-                {PRODUCT_CATEGORIES.map((c) => (
-                  <Link key={c} to={`/products?category=${c}`} className="block py-1.5 text-sm text-gray-600 active:text-brand-gold transition-colors">
-                    {c}
-                  </Link>
-                ))}
+            <motion.div
+              initial={false}
+              animate={{ height: mobileCategoriesOpen ? "auto" : 0, opacity: mobileCategoriesOpen ? 1 : 0 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              style={{ overflow: "hidden" }}
+            >
+              <div className="pl-9 pr-2 pb-2 grid grid-cols-3 gap-3">
+                {PRODUCT_CATEGORIES.map((c) => {
+                  const catData = categories?.find((x) => x.name === c);
+                  return (
+                    <Link key={c} to={`/products?category=${c}`} className="flex flex-col items-center gap-1.5 text-center group">
+                      <div className="w-14 h-14 rounded-full overflow-hidden bg-brand-cream flex-shrink-0 border border-transparent group-active:border-brand-gold transition-colors">
+                        {catData?.img && <img src={catData.img} alt="" loading="lazy" className="w-full h-full object-cover" />}
+                      </div>
+                      <span className="text-[11px] text-gray-600 group-active:text-brand-gold transition-colors leading-tight">{c}</span>
+                    </Link>
+                  );
+                })}
               </div>
-            )}
-            <Link to="/products?category=Gift Hampers" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
+            </motion.div>
+            <Link to="/products?category=Gift Hampers" className="flex items-center gap-3 min-h-[44px] px-2 rounded-lg text-sm font-semibold text-brand-brown active:bg-brand-cream transition-colors">
               <ShoppingCart size={17} className="text-brand-gold" /> {tr("giftHampers")}
             </Link>
             {user && (
-              <Link to="/wishlist" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
+              <Link to="/wishlist" className="flex items-center gap-3 min-h-[44px] px-2 rounded-lg text-sm font-semibold text-brand-brown active:bg-brand-cream transition-colors">
                 <Heart size={17} className="text-brand-gold" /> {tr("wishlist")}
               </Link>
             )}
-            <Link to="/track-order" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
+            <Link to="/track-order" className="flex items-center gap-3 min-h-[44px] px-2 rounded-lg text-sm font-semibold text-brand-brown active:bg-brand-cream transition-colors">
               <Truck size={17} className="text-brand-gold" /> {tr("trackOrder")}
             </Link>
 
             <div className="border-t border-gray-100 my-1.5" />
 
-            <Link to="/about" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
+            <Link to="/about" className="flex items-center gap-3 min-h-[44px] px-2 rounded-lg text-sm font-semibold text-brand-brown active:bg-brand-cream transition-colors">
               <BookOpen size={17} className="text-brand-gold" /> {tr("about")}
             </Link>
-            <Link to="/sourcing" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
+            <Link to="/sourcing" className="flex items-center gap-3 min-h-[44px] px-2 rounded-lg text-sm font-semibold text-brand-brown active:bg-brand-cream transition-colors">
               <MapPin size={17} className="text-brand-gold" /> {tr("sourcingStory")}
             </Link>
-            <Link to="/blog" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
+            <Link to="/blog" className="flex items-center gap-3 min-h-[44px] px-2 rounded-lg text-sm font-semibold text-brand-brown active:bg-brand-cream transition-colors">
               <BookOpen size={17} className="text-brand-gold" /> {tr("ourBlog")}
             </Link>
-            <Link to="/contact" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
+            <Link to="/contact" className="flex items-center gap-3 min-h-[44px] px-2 rounded-lg text-sm font-semibold text-brand-brown active:bg-brand-cream transition-colors">
               <HelpCircle size={17} className="text-brand-gold" /> {tr("contact")}
             </Link>
-            <Link to="/faq" className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-sm font-medium text-brand-brown active:bg-brand-cream transition-colors">
+            <Link to="/faq" className="flex items-center gap-3 min-h-[44px] px-2 rounded-lg text-sm font-semibold text-brand-brown active:bg-brand-cream transition-colors">
               <HelpCircle size={17} className="text-brand-gold" /> {tr("faqs")}
             </Link>
           </div>
