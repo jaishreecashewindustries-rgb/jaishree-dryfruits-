@@ -99,8 +99,17 @@ export const AuthProvider = ({ children }) => {
   // sidesteps all of that since there's no popup window involved.
   const isMobileBrowser = () => /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
+  // Safari (desktop AND iOS) enforces Intelligent Tracking Prevention,
+  // which partitions/blocks the third-party storage signInWithPopup's auth
+  // handshake relies on — the popup opens but silently never resolves, no
+  // error, just a login that "does nothing". Same fix as mobile: redirect
+  // instead of popup. Detected by excluding Chrome/Chromium/Android from
+  // the "Safari" UA token, since Chrome on iOS/macOS also includes it.
+  const isSafariBrowser = () =>
+    /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
+
   const loginWithGoogle = async () => {
-    if (isMobileBrowser()) {
+    if (isMobileBrowser() || isSafariBrowser()) {
       await signInWithRedirect(auth, googleProvider);
       return; // page navigates away; result is picked up by getRedirectResult on return
     }

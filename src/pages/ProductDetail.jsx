@@ -739,7 +739,10 @@ export default function ProductDetail() {
       <MobileCartSheet product={product} open={mobileSheetOpen} onClose={() => setMobileSheetOpen(false)} />
 
       {/* ═══ STICKY ADD TO CART BAR ═══════════════════════════════ */}
-      <div className={`fixed bottom-0 left-0 right-0 z-50 transition-all duration-300 ${stickyVisible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"}`}
+      {/* bottom-16 (not bottom-0) on mobile clears MobileBottomNav — same
+          z-50 + later in the DOM meant the nav painted on top of this bar,
+          burying Add to Cart underneath it. */}
+      <div className={`fixed bottom-16 md:bottom-0 left-0 right-0 z-[60] transition-all duration-300 ${stickyVisible ? "translate-y-0 opacity-100" : "translate-y-full opacity-0"}`}
         style={{ background: "linear-gradient(135deg, #0D1B35, #1A2744)", borderTop: "1px solid rgba(201,168,76,0.2)", paddingBottom: "env(safe-area-inset-bottom)" }}>
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
           <img src={product.images[0]} alt={product.name} className="w-12 h-12 rounded-xl object-cover flex-shrink-0 hidden sm:block" />

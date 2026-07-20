@@ -212,29 +212,27 @@ export default function ContentManagement() {
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
                         <ImageUpload label="Desktop / Web Image (wide)" value={slide.desktopImage} onChange={url => updateNested("hero", "slides", i, "desktopImage", url)} folder="content/hero" />
-                        <label className="block text-xs font-semibold text-gray-500 mt-2 mb-1">Desktop crop position</label>
-                        <select
-                          value={slide.desktopFocus || "center"}
-                          onChange={e => updateNested("hero", "slides", i, "desktopFocus", e.target.value)}
-                          className="input-field"
-                        >
-                          <option value="top">Top</option>
-                          <option value="center">Center</option>
-                          <option value="bottom">Bottom</option>
-                        </select>
+                        <label className="block text-xs font-semibold text-gray-500 mt-2 mb-1">
+                          Desktop crop position — {(slide.desktopFocusY ?? 50) < 34 ? "Top" : (slide.desktopFocusY ?? 50) > 66 ? "Bottom" : "Center"}
+                        </label>
+                        <input
+                          type="range" min={0} max={100} step={1}
+                          value={slide.desktopFocusY ?? 50}
+                          onChange={e => updateNested("hero", "slides", i, "desktopFocusY", Number(e.target.value))}
+                          className="w-full accent-brand-gold"
+                        />
                       </div>
                       <div>
                         <ImageUpload label="Mobile Image (tall / portrait)" value={slide.mobileImage} onChange={url => updateNested("hero", "slides", i, "mobileImage", url)} folder="content/hero" />
-                        <label className="block text-xs font-semibold text-gray-500 mt-2 mb-1">Mobile crop position</label>
-                        <select
-                          value={slide.mobileFocus || "center"}
-                          onChange={e => updateNested("hero", "slides", i, "mobileFocus", e.target.value)}
-                          className="input-field"
-                        >
-                          <option value="top">Top</option>
-                          <option value="center">Center</option>
-                          <option value="bottom">Bottom</option>
-                        </select>
+                        <label className="block text-xs font-semibold text-gray-500 mt-2 mb-1">
+                          Mobile crop position — {(slide.mobileFocusY ?? 50) < 34 ? "Top" : (slide.mobileFocusY ?? 50) > 66 ? "Bottom" : "Center"}
+                        </label>
+                        <input
+                          type="range" min={0} max={100} step={1}
+                          value={slide.mobileFocusY ?? 50}
+                          onChange={e => updateNested("hero", "slides", i, "mobileFocusY", Number(e.target.value))}
+                          className="w-full accent-brand-gold"
+                        />
                       </div>
                     </div>
                   </div>

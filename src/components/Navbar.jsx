@@ -145,8 +145,8 @@ export default function Navbar() {
               <img
                 src="/logo.png"
                 alt="Jai Shree Dry Fruits"
-                style={{ height: 52, width: "auto" }}
-                className="flex-shrink-0 transition-transform duration-300 group-hover:scale-105"
+                style={{ width: "auto" }}
+                className="flex-shrink-0 transition-transform duration-300 group-hover:scale-105 h-9 md:h-[52px]"
               />
             </Link>
 

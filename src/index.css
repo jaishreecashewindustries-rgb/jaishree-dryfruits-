@@ -41,7 +41,7 @@ html {
    desktop but was tight enough on narrow viewports to overlap badges,
    pills and touch-target padding that all grew alongside it. */
 @media (max-width: 480px) {
-  html { font-size: 100%; }
+  html { font-size: 92%; }
 }
 html, body { overflow-x: hidden; max-width: 100vw; }
 body {
@@ -372,6 +372,17 @@ textarea:focus-visible, [tabindex]:focus-visible {
 .origin-ping {
   background: var(--gold);
   animation: originPing 2.2s cubic-bezier(0,0,0.2,1) infinite;
+}
+
+/* Hero crop — real zoom + focal-point, admin-driven via --hero-focus-y-*
+   custom properties (see HeroCarousel.jsx for why object-position alone
+   didn't work: the source image already exactly fills the frame). */
+.hero-crop-img {
+  transform: scale(var(--hero-zoom, 1.18));
+  transform-origin: 50% var(--hero-focus-y-mobile, 50%);
+}
+@media (min-width: 768px) {
+  .hero-crop-img { transform-origin: 50% var(--hero-focus-y-desktop, 50%); }
 }
 
 /* ── GPU-accelerated marquee (CSS-only, no JS interval) ─────────────── */

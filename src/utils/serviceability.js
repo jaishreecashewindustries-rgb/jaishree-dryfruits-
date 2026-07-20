@@ -79,16 +79,22 @@ export async function checkPincodeServiceability(pincode) {
     // than failing the whole PIN just because the override lookup failed.
   }
 
-  // 2. No override — verify against India Post's real PIN code directory,
-  // and use it to tell an actual town/city apart from a rural village.
-  // Every post office record carries a BranchType: "Head Post Office" and
-  // "Sub Post Office" are town/city-level (courier-serviceable in
-  // practice); "Branch Post Office" (B.O.) is the rural/village tier most
-  // courier networks don't cover — so a PIN with ONLY branch offices is
-  // treated as not serviceable by default, same as the spec requires
-  // ("villages... must not be accepted unless explicitly marked
-  // serviceable"). An admin can still flip a specific village PIN to
-  // serviceable via the override above if it genuinely is covered.
+  // 2. No override — verify against India Post's real PIN code directory.
+  //
+  // India Post PINs don't cleanly separate "village" from "small town" —
+  // one PIN often bundles a real town with the villages around it (e.g.
+  // 303801 lists 8 "Branch Post Office" villages PLUS "Kaladera", itself a
+  // real town, as a "Sub Post Office" — BranchType alone can't tell them
+  // apart; both signals appear on genuinely rural PINs too). The one
+  // reliable marker is a "Head Post Office" record — that only exists for
+  // an actual city/town hub, never a village cluster. So: Head Post
+  // Office present → auto-serviceable. Otherwise → NOT serviceable by
+  // default, even if it has Sub Post Office entries (a real small town
+  // without its own Head PO will also land here) — add it via the admin
+  // override above once you've confirmed your courier actually covers it.
+  // This trades some false rejects (legitimate small towns) for zero
+  // false accepts (no village ships by accident), which is the safer
+  // default for a food-delivery business.
   try {
     const res = await fetch(`https://api.postalpincode.in/pincode/${clean}`);
     const data = await res.json();
@@ -96,8 +102,8 @@ export async function checkPincodeServiceability(pincode) {
     if (offices.length === 0) {
       return { serviceable: false, reason: "This PIN code could not be found. Please double-check and try again." };
     }
-    const hasTownOffice = offices.some((o) => o.BranchType && o.BranchType !== "Branch Post Office");
-    if (!hasTownOffice) {
+    const hasHeadOffice = offices.some((o) => o.BranchType === "Head Post Office");
+    if (!hasHeadOffice) {
       return { serviceable: false, reason: "Delivery not available at this PIN code. Please enter another serviceable PIN code." };
     }
     return {

@@ -109,7 +109,7 @@ export const DEFAULT_SITE_CONTENT = {
         // "GOODNESS," heading sits right at the very top edge of this crop —
         // shift the visible window down slightly so it isn't flush against
         // the sticky header.
-        mobileFocus: "bottom",
+        mobileFocusY: 70,
       },
       {
         desktopImage: "https://firebasestorage.googleapis.com/v0/b/jaishreedryfruits-973dd.firebasestorage.app/o/content%2Fhero%2Fhero-desktop-2-notevery.webp?alt=media&token=1c55d809-5467-4102-ae47-fd4b5e9db76b",
@@ -120,7 +120,7 @@ export const DEFAULT_SITE_CONTENT = {
         mobileImage: "https://firebasestorage.googleapis.com/v0/b/jaishreedryfruits-973dd.firebasestorage.app/o/content%2Fhero%2Fhero-mobile-3-goodfood.webp?alt=media&token=b0ffc6bd-81c5-48c2-a3fa-e5f58d7c434b",
         // Composition sits low in this crop — shift the visible window up
         // so the headline/model aren't pushed toward the bottom edge.
-        mobileFocus: "top",
+        mobileFocusY: 30,
       },
     ],
     ctaText: "Shop Now",

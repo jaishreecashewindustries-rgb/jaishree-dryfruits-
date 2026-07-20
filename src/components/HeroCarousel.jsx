@@ -4,12 +4,14 @@ import { AnimatePresence, motion } from "framer-motion";
 
 const AUTO_ADVANCE_MS = 3200;
 
-// Literal class names (not template-built) so Tailwind's JIT scanner picks
-// them up at build time — admin sets desktopFocus/mobileFocus per slide in
-// Content Management → Hero / Banner, this maps that to the matching
-// object-position utility for each breakpoint.
-const MOBILE_FOCUS_CLASS = { top: "object-top", center: "object-center", bottom: "object-bottom" };
-const DESKTOP_FOCUS_CLASS = { top: "md:object-top", center: "md:object-center", bottom: "md:object-bottom" };
+// The hero images already fill the frame exactly (pre-cropped to this
+// component's own aspect ratio), so plain object-position has zero slack
+// to move anything — that's why the old top/center/bottom dropdown had no
+// visible effect no matter what an admin picked. A fixed zoom creates real
+// slack, and transform-origin (driven by the admin's 0-100 slider) decides
+// which part of that zoomed image stays anchored — this is genuine
+// cropping, independent of whether the source image matches the frame.
+const CROP_ZOOM = 1.18;
 
 /**
  * Admin-controlled hero carousel — auto-rotates through slides, each with
@@ -34,6 +36,18 @@ export default function HeroCarousel({ slides, fallbackHeadline }) {
     return () => clearInterval(t);
   }, [next, paused, count]);
 
+  // Preload every slide's image up front — there are only ever 2-3 of them,
+  // so the cost is trivial, and it's what actually fixed the "blue screen"
+  // on transition: without it, an un-fetched image starts its opacity
+  // fade-in with nothing painted yet, so the container's background shows
+  // through for a beat until the browser finishes loading it.
+  useEffect(() => {
+    slides.forEach((s) => {
+      if (s.desktopImage) { const img = new Image(); img.src = s.desktopImage; }
+      if (s.mobileImage) { const img = new Image(); img.src = s.mobileImage; }
+    });
+  }, [slides]);
+
   const onTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
   const onTouchEnd = (e) => {
     if (touchStartX.current == null) return;
@@ -57,19 +71,21 @@ export default function HeroCarousel({ slides, fallbackHeadline }) {
           portrait / 16:9 landscape — see scripts/refit-hero-images.mjs), so
           object-cover here fills the frame edge-to-edge with zero surprise
           cropping and zero letterbox gaps. */}
-      <div className="relative w-full overflow-hidden aspect-[3/4] md:aspect-[16/9]" style={{ background: "var(--navy)" }}>
+      <div className="relative w-full overflow-hidden aspect-[3/4] md:aspect-[16/9]" style={{ background: "var(--cream)" }}>
         {/* mode="sync" (not "popLayout") keeps the outgoing slide mounted and
             painted underneath while the incoming one fades in on top, so
             there's never a frame with nothing rendered — popLayout could
             unmount the old slide a beat before the new one finished loading,
-            flashing the container's bare background through. */}
+            flashing the container's bare background through. Slow, gentle
+            crossfade + a whisper of continued zoom (Ken Burns) reads as
+            unhurried/premium rather than a hard cut. */}
         <AnimatePresence mode="sync">
           <motion.div
             key={index}
-            initial={{ opacity: 0, scale: 1.06 }}
+            initial={{ opacity: 0, scale: 1.04 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ opacity: { duration: 0.9, ease: [0.22, 1, 0.36, 1] }, scale: { duration: 3.5, ease: "easeOut" } }}
             className="absolute inset-0"
           >
             <Link to="/products" className="block w-full h-full">
@@ -81,7 +97,12 @@ export default function HeroCarousel({ slides, fallbackHeadline }) {
                   fetchpriority={index === 0 ? "high" : undefined}
                   loading={index === 0 ? "eager" : "lazy"}
                   decoding="async"
-                  className={`w-full h-full object-cover ${MOBILE_FOCUS_CLASS[slides[index].mobileFocus] || "object-center"} ${DESKTOP_FOCUS_CLASS[slides[index].desktopFocus] || "md:object-center"}`}
+                  className="w-full h-full object-cover hero-crop-img"
+                  style={{
+                    "--hero-zoom": CROP_ZOOM,
+                    "--hero-focus-y-mobile": `${slides[index].mobileFocusY ?? 50}%`,
+                    "--hero-focus-y-desktop": `${slides[index].desktopFocusY ?? 50}%`,
+                  }}
                 />
               </picture>
             </Link>
