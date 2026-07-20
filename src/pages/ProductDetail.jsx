@@ -333,7 +333,7 @@ export default function ProductDetail() {
           {/* Variants */}
           <div>
             <p className="text-xs font-bold uppercase tracking-[2.5px] text-brand-brown mb-3">Size / Weight — <span className="font-normal normal-case text-gray-400">larger packs save more</span></p>
-            <div className="flex gap-2 flex-wrap">
+            <div className="flex gap-x-2 gap-y-5 flex-wrap">
               {(() => {
                 const best = product.variants.reduce((min, v) => {
                   const pp = per100g(v.price, v.weight);

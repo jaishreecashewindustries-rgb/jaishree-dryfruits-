@@ -112,14 +112,14 @@ export default function ProductCard({ product }) {
               <img
                 src={product.images?.[0]}
                 alt={product.name}
-                className="w-full h-full object-contain product-image-zoom absolute inset-0 transition-opacity duration-300 group-hover:opacity-0"
+                className="w-full h-full object-contain product-image-zoom absolute inset-0 transition-opacity duration-300 md:group-hover:opacity-0"
                 loading="lazy"
               />
               <img
                 src={secondaryImage}
                 alt=""
                 aria-hidden="true"
-                className="w-full h-full object-contain absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block"
+                className="w-full h-full object-contain absolute inset-0 opacity-0 md:group-hover:opacity-100 transition-opacity duration-300 hidden md:block"
                 loading="lazy"
               />
             </div>

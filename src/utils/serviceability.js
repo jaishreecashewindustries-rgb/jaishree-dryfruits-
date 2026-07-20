@@ -79,13 +79,26 @@ export async function checkPincodeServiceability(pincode) {
     // than failing the whole PIN just because the override lookup failed.
   }
 
-  // 2. No override — verify against India Post's real PIN code directory.
+  // 2. No override — verify against India Post's real PIN code directory,
+  // and use it to tell an actual town/city apart from a rural village.
+  // Every post office record carries a BranchType: "Head Post Office" and
+  // "Sub Post Office" are town/city-level (courier-serviceable in
+  // practice); "Branch Post Office" (B.O.) is the rural/village tier most
+  // courier networks don't cover — so a PIN with ONLY branch offices is
+  // treated as not serviceable by default, same as the spec requires
+  // ("villages... must not be accepted unless explicitly marked
+  // serviceable"). An admin can still flip a specific village PIN to
+  // serviceable via the override above if it genuinely is covered.
   try {
     const res = await fetch(`https://api.postalpincode.in/pincode/${clean}`);
     const data = await res.json();
-    const ok = data?.[0]?.Status === "Success" && data[0].PostOffice?.length > 0;
-    if (!ok) {
+    const offices = data?.[0]?.Status === "Success" ? data[0].PostOffice || [] : [];
+    if (offices.length === 0) {
       return { serviceable: false, reason: "This PIN code could not be found. Please double-check and try again." };
+    }
+    const hasTownOffice = offices.some((o) => o.BranchType && o.BranchType !== "Branch Post Office");
+    if (!hasTownOffice) {
+      return { serviceable: false, reason: "Delivery not available at this PIN code. Please enter another serviceable PIN code." };
     }
     return {
       serviceable: true,

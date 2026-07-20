@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingBag } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+
+// Hidden on Product Detail — that page has its own dedicated sticky
+// Add to Cart / Buy Now bar (also fixed to the bottom), and having both
+// floating CTAs stacked was overlapping each other on mobile.
+const HIDDEN_PATHS_PREFIX = ["/product/", "/checkout", "/cart"];
 
 export default function StickyCTA() {
   const [visible, setVisible] = useState(false);
   const { totalItems } = useCart();
+  const location = useLocation();
+  const hidden = HIDDEN_PATHS_PREFIX.some((p) => location.pathname.startsWith(p));
 
   useEffect(() => {
+    if (hidden) { setVisible(false); return; }
     // Throttled via rAF — a bare scroll listener firing setState on every
     // event (dozens of times per second) was a real source of scroll jank.
     let ticking = false;
@@ -24,11 +32,11 @@ export default function StickyCTA() {
     };
     window.addEventListener("scroll", handler, { passive: true });
     return () => window.removeEventListener("scroll", handler);
-  }, []);
+  }, [hidden]);
 
   return (
     <AnimatePresence>
-      {visible && (
+      {visible && !hidden && (
         <motion.div
           initial={{ y: 80, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}

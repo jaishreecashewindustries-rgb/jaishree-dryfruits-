@@ -37,6 +37,12 @@ html {
      in one shot, footer included. */
   font-size: 112.5%;
 }
+/* Pull the root scale back down on phones — 112.5% site-wide reads fine on
+   desktop but was tight enough on narrow viewports to overlap badges,
+   pills and touch-target padding that all grew alongside it. */
+@media (max-width: 480px) {
+  html { font-size: 100%; }
+}
 html, body { overflow-x: hidden; max-width: 100vw; }
 body {
   font-family: 'DM Sans', system-ui, sans-serif;
