@@ -105,6 +105,10 @@ function Eyebrow({ children }) {
 export default function Home() {
   const { products: DEMO_PRODUCTS } = useProducts();
   const featured = DEMO_PRODUCTS.filter((p) => p.featured).slice(0, 8);
+  // Combo Packs & Gift Hampers are regular categories, managed the same way
+  // as any other product in Admin → Products (category dropdown) — this
+  // just showcases whatever's live in those two categories on the homepage.
+  const combosAndGifts = DEMO_PRODUCTS.filter((p) => p.category === "Combo Packs" || p.category === "Gift Hampers").slice(0, 8);
   const { siteContent } = useSiteSettings() || {};
   const hero = siteContent?.hero || {};
   const heroHeadline = hero.headline || "India's Finest\nDry Fruits";
@@ -208,6 +212,29 @@ export default function Home() {
           </FadeUp>
         </div>
       </section>
+
+      {/* ═══ COMBOS & GIFT HAMPERS — real products, managed the same way
+             as any other category in Admin → Products ═══ */}
+      {productsReady && combosAndGifts.length > 0 && (
+        <section className="py-16 px-4 bg-white">
+          <div className="max-w-7xl mx-auto">
+            <FadeUp className="text-center mb-10">
+              <Eyebrow>Combos &amp; Gift Hampers</Eyebrow>
+              <h2 className="font-serif font-bold text-3xl md:text-4xl text-brand-brown">Bundles &amp; Gifting, Ready to Ship</h2>
+            </FadeUp>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+              {combosAndGifts.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+            <FadeUp delay={0.15} className="text-center mt-10">
+              <Link to="/products?category=Gift Hampers" className="btn-outline inline-flex items-center gap-2 px-8 py-3">
+                Shop Combos &amp; Gift Hampers <ArrowRight size={16} />
+              </Link>
+            </FadeUp>
+          </div>
+        </section>
+      )}
 
       {/* ═══ SOURCING ORIGINS — real world map, product markers ══ */}
       <section className="py-16 px-4" style={{ background: "var(--bg2)" }}>
