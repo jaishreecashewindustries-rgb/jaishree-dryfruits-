@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart, User, Search, Menu, X, Heart, ChevronDown, LogOut, LayoutDashboard, Package, Compass, BookOpen, MapPin, HelpCircle, Truck } from "lucide-react";
+import { ShoppingCart, User, Search, Menu, X, Heart, ChevronDown, LogOut, LayoutDashboard, Package, Compass, BookOpen, MapPin, HelpCircle, Truck, Briefcase } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useCart } from "../context/CartContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -204,6 +204,7 @@ export default function Navbar() {
                       {[
                         { to: "/sourcing", label: tr("sourcingStory"), icon: <MapPin size={14} /> },
                         { to: "/blog", label: tr("ourBlog"), icon: <BookOpen size={14} /> },
+                        { to: "/corporate-gifting", label: "Corporate Gifting", icon: <Briefcase size={14} /> },
                         { to: "/track-order", label: tr("trackOrder"), icon: <Truck size={14} /> },
                         { to: "/faq", label: tr("faqs"), icon: <HelpCircle size={14} /> },
                       ].map((item) => (

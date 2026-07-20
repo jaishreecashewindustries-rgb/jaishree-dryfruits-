@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { Star, Heart, ShoppingCart, Zap, Shield, Truck, MessageCircle, ChevronRight, Minus, Plus, Share2, CheckCircle, XCircle, Award, Leaf, Package, Flame, ThumbsUp, BadgeCheck } from "lucide-react";
+import { Star, Heart, ShoppingCart, Zap, Shield, Truck, MessageCircle, ChevronRight, Minus, Plus, Share2, CheckCircle, XCircle, Package, Flame, ThumbsUp, BadgeCheck } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import ProductCard from "../components/ProductCard";
 import SEO from "../components/SEO";
-import B2BGiftingForm from "../components/B2BGiftingForm";
 import { formatPrice, discountPercent, whatsappProductLink, per100g } from "../utils/helpers";
 import toast from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,6 +17,7 @@ import SlotCounter from "../components/SlotCounter";
 import { collection, query, where, orderBy, limit, getDocs, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase/config";
 import { useProducts } from "../context/ProductsContext";
+import ProductBundle from "../components/ProductBundle";
 
 // Small curated fallback — shown only when a product has no live Firestore reviews yet
 const FALLBACK_REVIEWS = [
@@ -97,7 +97,6 @@ export default function ProductDetail() {
   const [wishlist, setWishlist] = useState(false);
   const [stickyVisible, setStickyVisible] = useState(false);
   const [helpfulVotes, setHelpfulVotes] = useState({});
-  const [showB2BForm, setShowB2BForm] = useState(false);
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [localReviews, setLocalReviews] = useState([]);
   const [notifying, setNotifying] = useState(false);
@@ -687,150 +686,32 @@ export default function ProductDetail() {
         )}
       </div>
 
-      {/* ═══ WHY JAI SHREE IS THE BEST ═══════════════════════════ */}
-      <div className="mb-16 rounded-3xl overflow-hidden" style={{ background: "linear-gradient(160deg, #0D1B35 0%, #1A2744 100%)" }}>
-        <div className="px-6 py-8 md:px-10">
-          <div className="text-center mb-8">
-            <span className="inline-block text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-3"
-              style={{ background: "rgba(201,168,76,0.15)", border: "1px solid rgba(201,168,76,0.3)", color: "#E8C97A" }}>
-              Why We're Different
-            </span>
-            <h2 className="font-serif text-2xl md:text-3xl font-bold text-white mt-2">
-              Why Jai Shree {product.category} Wins Every Time
-            </h2>
-            <p className="text-white/50 text-sm mt-2">Honest comparison — see what makes us #1</p>
-          </div>
-
-          {/* Visual comparison table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr>
-                  <th className="text-left py-3 px-4 text-white/50 font-medium text-xs uppercase tracking-wide w-1/4">What We Compare</th>
-                  <th className="py-3 px-4 text-center rounded-t-xl" style={{ background: "rgba(201,168,76,0.12)", borderBottom: "2px solid #C9A84C" }}>
-                    <div className="flex flex-col items-center gap-1">
-                      <img src="/logo.png" className="h-8 w-auto" alt="Jai Shree" />
-                      <span className="text-brand-gold font-bold text-xs">JAI SHREE</span>
-                    </div>
-                  </th>
-                  <th className="py-3 px-4 text-center text-white/60 font-medium">Local Market</th>
-                  <th className="py-3 px-4 text-center text-white/60 font-medium">Supermarket</th>
-                  <th className="py-3 px-4 text-center text-white/60 font-medium hidden md:table-cell">Other Online</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  { label: "Sourcing", us: "Direct from Kashmir / California", them: ["Unknown origin", "Imported bulk", "Third-party supplier"] },
-                  { label: "Freshness", us: "Packed within 48h of processing", them: ["Months old stock", "Weeks in warehouse", "Variable freshness"] },
-                  { label: "Quality Grade", us: "Premium A-grade, hand-sorted", them: ["Mixed grades", "B/C grade", "Not disclosed"] },
-                  { label: "Preservatives", us: "Zero additives, 100% natural", them: ["Sulphites added", "Mineral oil coating", "May contain additives"] },
-                  { label: "Packaging", us: "Vacuum sealed, resealable zip", them: ["Open trays", "Basic plastic bag", "Standard pouch"] },
-                  { label: "Certification", us: "FSSAI + Lab tested every batch", them: ["No certification", "FSSAI only", "Varies"] },
-                  { label: "Price/Value", us: "Best price for premium grade", them: ["Cheap but low quality", "High margin, avg quality", "Similar or higher price"] },
-                ].map((row, i) => (
-                  <tr key={row.label} className="border-t border-white/8" style={{ background: i % 2 === 0 ? "rgba(255,255,255,0.02)" : "transparent" }}>
-                    <td className="py-3.5 px-4 text-white/60 text-xs font-semibold uppercase tracking-wide">{row.label}</td>
-                    <td className="py-3.5 px-4 text-center rounded" style={{ background: "rgba(201,168,76,0.06)" }}>
-                      <div className="flex flex-col items-center gap-1">
-                        <CheckCircle size={16} className="text-green-400 flex-shrink-0" />
-                        <span className="text-white text-xs font-medium leading-tight">{row.us}</span>
-                      </div>
-                    </td>
-                    {row.them.map((t, j) => (
-                      <td key={j} className={`py-3.5 px-4 text-center ${j === 2 ? "hidden md:table-cell" : ""}`}>
-                        <div className="flex flex-col items-center gap-1">
-                          <XCircle size={14} className="text-red-400/70 flex-shrink-0" />
-                          <span className="text-white/40 text-xs leading-tight">{t}</span>
-                        </div>
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Key differentiators — visual cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-            {[
-              { icon: <Leaf size={20} />, stat: "0%", label: "Preservatives", sub: "100% natural always" },
-              { icon: <Award size={20} />, stat: "A+", label: "Quality Grade", sub: "Hand sorted, premium only" },
-              { icon: <Package size={20} />, stat: "48h", label: "Packed Fresh", sub: "Farm to door speed" },
-              { icon: <Shield size={20} />, stat: "100%", label: "FSSAI Certified", sub: "Every batch tested" },
-            ].map((item) => (
-              <div key={item.label} className="rounded-2xl p-4 text-center"
-                style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(201,168,76,0.15)" }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center text-brand-gold mx-auto mb-2"
-                  style={{ background: "rgba(201,168,76,0.12)" }}>
-                  {item.icon}
-                </div>
-                <p className="font-bold text-2xl text-brand-gold">{item.stat}</p>
-                <p className="text-white text-xs font-semibold mt-0.5">{item.label}</p>
-                <p className="text-white/40 text-[10px] mt-0.5">{item.sub}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ═══ CORPORATE GIFTING CONCIERGE ═══════════════════════ */}
-      <div className="mb-16 rounded-3xl overflow-hidden" style={{ background: "linear-gradient(160deg, #0D1B35 0%, #1A2744 100%)", border: "1px solid rgba(201,168,76,0.12)" }}>
-        <div className="grid md:grid-cols-2 gap-0">
-          {/* Left: Copy */}
-          <div className="px-8 py-10 md:px-12 md:py-14 border-b md:border-b-0 md:border-r border-white/8">
-            <p className="text-[10px] font-bold uppercase tracking-[4px] text-brand-gold mb-6">Corporate & Wedding Gifting</p>
-            <h2 className="font-serif text-3xl font-normal text-white leading-tight mb-5">
-              The Concierge<br />
-              <em style={{ color: "#E8C97A" }}>Gifting Programme</em>
-            </h2>
-            <p className="text-white/50 text-sm leading-relaxed mb-7">
-              For organisations, wedding planners, and procurement teams seeking premium branded gift boxes at scale. Minimum 50 units. Full customisation available — logo, message card, custom weight assortments.
-            </p>
-            <div className="space-y-2.5 mb-8">
-              {[
-                "Custom packaging with your logo or occasion message",
-                "Budget brackets from ₹500 to ₹5,000+ per box",
-                "Pan-India bulk delivery coordinated from Jaipur",
-                "Personalised catalogue and invoice within 2 hours",
-                "Dedicated account manager for repeat clients",
-              ].map(item => (
-                <div key={item} className="flex items-start gap-3 text-sm text-white/60">
-                  <span className="w-1 h-1 rounded-full bg-brand-gold flex-shrink-0 mt-2" />
-                  {item}
-                </div>
-              ))}
+      {/* ═══ WHY CHOOSE JAI SHREE — compact trust points, no comparison table ═══ */}
+      <div className="mb-16 rounded-2xl p-6 md:p-8" style={{ background: "var(--bg2)" }}>
+        <h2 className="font-serif text-xl font-bold text-brand-brown mb-5">Why Choose Jai Shree</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {[
+            "Direct Sourcing", "Freshly Processed", "Premium Grade",
+            "Lab Tested", "Secure Packaging", "FSSAI Licensed",
+          ].map((point) => (
+            <div key={point} className="flex items-center gap-2.5 text-sm font-semibold text-brand-brown">
+              <CheckCircle size={16} className="text-green-600 flex-shrink-0" />
+              {point}
             </div>
-            {!showB2BForm && (
-              <button
-                onClick={() => setShowB2BForm(true)}
-                className="btn-gold px-8 py-3.5 text-[10px] tracking-[3px]"
-              >
-                Request Corporate Catalogue
-              </button>
-            )}
-          </div>
-          {/* Right: Form */}
-          <div className="px-8 py-10 md:px-10 md:py-14">
-            {showB2BForm ? (
-              <B2BGiftingForm theme="dark" onClose={() => setShowB2BForm(false)} />
-            ) : (
-              <div className="grid grid-cols-2 gap-4 h-full content-center">
-                {[
-                  { num: "50+", label: "Min units" },
-                  { num: "₹500–₹5K", label: "Per box range" },
-                  { num: "2 hrs", label: "Response time" },
-                  { num: "100+", label: "Corporates served" },
-                ].map(s => (
-                  <div key={s.label} className="rounded-2xl p-5 text-center" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(201,168,76,0.12)" }}>
-                    <p className="font-serif text-2xl font-semibold text-brand-gold">{s.num}</p>
-                    <p className="text-white/40 text-[10px] uppercase tracking-wider mt-1">{s.label}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          ))}
         </div>
       </div>
+
+      {/* ═══ Corporate gifting — one small CTA, full pitch lives on its own page ═══ */}
+      <div className="mb-16 rounded-2xl p-6 flex items-center justify-between flex-wrap gap-4" style={{ background: "var(--navy)" }}>
+        <p className="text-white font-serif text-lg">Buying for your company?</p>
+        <Link to="/corporate-gifting" className="btn-gold btn-sheen px-6 py-3 text-[10px] tracking-[3px]">
+          Request Bulk Quote
+        </Link>
+      </div>
+
+      {/* ═══ Bundle products — Frequently Bought Together ═══ */}
+      <ProductBundle product={product} selectedVariant={selectedVariant} allProducts={DEMO_PRODUCTS} />
 
       {/* Related products */}
       {related.length > 0 && (

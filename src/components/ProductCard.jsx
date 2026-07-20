@@ -88,7 +88,10 @@ export default function ProductCard({ product }) {
   // percentage-off callout when both exist, since price already shows the strike-through.
   const label = product.badge || (discount >= 5 ? `${discount}% OFF` : null);
   const lowStock = !outOfStock && selectedVariant?.stock != null && selectedVariant.stock <= 10;
-  const secondaryImage = product.images?.[1];
+  // Demo/seed data often repeats the same URL as a placeholder second
+  // image — skip the crossfade entirely when it isn't actually different,
+  // there's nothing to reveal on hover.
+  const secondaryImage = product.images?.[1] && product.images[1] !== product.images[0] ? product.images[1] : null;
 
   return (
     /**
@@ -101,21 +104,30 @@ export default function ProductCard({ product }) {
       {/* ── Image ─── plain Link, only contains img + non-interactive overlays ── */}
       <div className="relative overflow-hidden bg-brand-cream aspect-square flex-shrink-0">
         <Link to={`/product/${product.id}`} className="block w-full h-full" tabIndex={-1}>
-          <img
-            src={product.images?.[0]}
-            alt={product.name}
-            className={`w-full h-full object-contain product-image-zoom absolute inset-0 transition-opacity duration-300 ${secondaryImage ? "group-hover:opacity-0" : ""}`}
-            loading="lazy"
-          />
-          {/* Secondary hover image — desktop only, swaps on hover to show a
-              second angle/lifestyle shot (spec §6). No-op on touch devices
-              since there's no hover state there — first image stays. */}
-          {secondaryImage && (
+          {secondaryImage ? (
+            // Two real, distinct images — crossfade wrapper only exists in
+            // this case, so single-image products (the common case) render
+            // the plain non-absolute <img> below instead, same as before.
+            <div className="relative w-full h-full">
+              <img
+                src={product.images?.[0]}
+                alt={product.name}
+                className="w-full h-full object-contain product-image-zoom absolute inset-0 transition-opacity duration-300 group-hover:opacity-0"
+                loading="lazy"
+              />
+              <img
+                src={secondaryImage}
+                alt=""
+                aria-hidden="true"
+                className="w-full h-full object-contain absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block"
+                loading="lazy"
+              />
+            </div>
+          ) : (
             <img
-              src={secondaryImage}
-              alt=""
-              aria-hidden="true"
-              className="w-full h-full object-contain absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block"
+              src={product.images?.[0]}
+              alt={product.name}
+              className="w-full h-full object-contain product-image-zoom"
               loading="lazy"
             />
           )}

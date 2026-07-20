@@ -46,6 +46,7 @@ const BlogPost = lazy(() => import("./pages/BlogPost"));
 const SourcingStory = lazy(() => import("./pages/SourcingStory"));
 const AboutPage = lazy(() => import("./pages/AboutPage"));
 const CityLanding = lazy(() => import("./pages/CityLanding"));
+const CorporateGifting = lazy(() => import("./pages/CorporateGifting"));
 
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
@@ -139,6 +140,7 @@ export default function App() {
                       <Route path="/blog" element={<MainLayout><Blog /></MainLayout>} />
                       <Route path="/blog/:id" element={<MainLayout><BlogPost /></MainLayout>} />
                       <Route path="/sourcing" element={<MainLayout><SourcingStory /></MainLayout>} />
+                      <Route path="/corporate-gifting" element={<MainLayout><CorporateGifting /></MainLayout>} />
                       <Route path="/dry-fruits-delivery/:city" element={<MainLayout><CityLanding /></MainLayout>} />
                       <Route path="/shipping" element={<MainLayout><ShippingPage /></MainLayout>} />
                       <Route path="/returns" element={<MainLayout><ReturnsPage /></MainLayout>} />

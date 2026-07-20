@@ -121,7 +121,7 @@ export default function PincodeManagement() {
           <h1 className="font-serif text-2xl font-bold text-brand-brown flex items-center gap-2">
             <MapPin size={22} className="text-brand-gold" /> Pincode Serviceability
           </h1>
-          <p className="text-sm text-gray-500 mt-1">Only PIN codes listed here as serviceable can complete a purchase.</p>
+          <p className="text-sm text-gray-500 mt-1">Every valid Indian PIN code is deliverable by default (checked live against India Post). Add a PIN here only to <strong>block</strong> it, or to set custom delivery days/COD/courier for it.</p>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setShowImport(true)} className="btn-outline flex items-center gap-2 text-sm px-4 py-2">
@@ -179,7 +179,7 @@ export default function PincodeManagement() {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={6} className="text-center text-gray-400 py-8">No PIN codes yet — add one or bulk import.</td></tr>
+              <tr><td colSpan={6} className="text-center text-gray-400 py-8">No overrides yet — every valid Indian PIN is deliverable by default. Add one here only to block a PIN or customize its terms.</td></tr>
             )}
           </tbody>
         </table>

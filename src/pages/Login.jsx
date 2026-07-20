@@ -150,8 +150,8 @@ export default function Login() {
       setLoading(true);
       await loginWithGoogle();
       navigate(from, { replace: true });
-    } catch {
-      toast.error("Google login failed. Please try again.");
+    } catch (err) {
+      toast.error(err?.message || "Google login failed. Please try again.");
     } finally {
       setLoading(false);
     }
