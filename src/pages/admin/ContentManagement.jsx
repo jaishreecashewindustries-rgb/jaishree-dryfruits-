@@ -196,6 +196,9 @@ export default function ContentManagement() {
               <p className="text-xs text-gray-400 -mt-2 mb-1">
                 Each slide has its own headline/CTA baked into the image design — upload a desktop (wide) and a mobile (tall/portrait) version per slide. The site auto-rotates through all slides, shows dots to jump between them, and always picks the right image per device.
               </p>
+              <p className="text-xs font-semibold text-brand-brown bg-brand-cream rounded-lg px-3 py-2 mb-2">
+                Use the exact pixel sizes below for each image — the hero box on screen is that exact shape, so a same-ratio image fills it perfectly with zero cropping or stretching. A different-ratio image will get cropped to fit.
+              </p>
               <div className="space-y-4">
                 {(data.hero.slides || []).map((slide, i) => (
                   <div key={i} className="border border-gray-100 rounded-2xl p-4 relative">
@@ -211,7 +214,7 @@ export default function ContentManagement() {
                     </div>
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
-                        <ImageUpload label="Desktop / Web Image (wide)" value={slide.desktopImage} onChange={url => updateNested("hero", "slides", i, "desktopImage", url)} folder="content/hero" />
+                        <ImageUpload label="Desktop / Web Image — exact size 1600×900px (16:9)" value={slide.desktopImage} onChange={url => updateNested("hero", "slides", i, "desktopImage", url)} folder="content/hero" />
                         <label className="block text-xs font-semibold text-gray-500 mt-2 mb-1">
                           Desktop crop position — {(slide.desktopFocusY ?? 50) < 34 ? "Top" : (slide.desktopFocusY ?? 50) > 66 ? "Bottom" : "Center"}
                         </label>
@@ -223,7 +226,7 @@ export default function ContentManagement() {
                         />
                       </div>
                       <div>
-                        <ImageUpload label="Mobile Image (tall / portrait)" value={slide.mobileImage} onChange={url => updateNested("hero", "slides", i, "mobileImage", url)} folder="content/hero" />
+                        <ImageUpload label="Mobile Image — exact size 900×1200px (3:4)" value={slide.mobileImage} onChange={url => updateNested("hero", "slides", i, "mobileImage", url)} folder="content/hero" />
                         <label className="block text-xs font-semibold text-gray-500 mt-2 mb-1">
                           Mobile crop position — {(slide.mobileFocusY ?? 50) < 34 ? "Top" : (slide.mobileFocusY ?? 50) > 66 ? "Bottom" : "Center"}
                         </label>
