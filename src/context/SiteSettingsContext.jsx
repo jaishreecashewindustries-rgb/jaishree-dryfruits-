@@ -97,30 +97,27 @@ export const DEFAULT_SITE_CONTENT = {
     // stretched wide looks cropped/blurry. Admin-editable in Content
     // Management → Hero / Banner; these defaults are the launch creative.
     desktopImage: "https://firebasestorage.googleapis.com/v0/b/jaishreedryfruits-973dd.firebasestorage.app/o/content%2Fhero%2Fhero-desktop-1-goodness.webp?alt=media&token=8d37a2d6-ce92-481f-827a-b594828dfc4a",
-    mobileImage: "https://firebasestorage.googleapis.com/v0/b/jaishreedryfruits-973dd.firebasestorage.app/o/content%2Fhero%2Fhero-mobile-1-goodness.webp?alt=media&token=c5a84343-9595-47db-bdaa-4dc7032187d1",
+    mobileImage: "/hero/hero-mobile-1-goodness.webp",
     // Hero carousel — multiple desktop/mobile creative pairs that auto-rotate
     // with dot navigation. `desktopImage`/`mobileImage` above stay as a
     // single-image fallback for older content; when `slides` has entries,
     // the homepage renders the carousel instead.
+    //
+    // Mobile images are served from /public/hero/ (not Firebase Storage) —
+    // pre-cropped by hand to the exact 900×1200 (3:4) hero box, so no
+    // focus/zoom override is needed, unlike the earlier auto-cropped set.
     slides: [
       {
         desktopImage: "https://firebasestorage.googleapis.com/v0/b/jaishreedryfruits-973dd.firebasestorage.app/o/content%2Fhero%2Fhero-desktop-1-goodness.webp?alt=media&token=8d37a2d6-ce92-481f-827a-b594828dfc4a",
-        mobileImage: "https://firebasestorage.googleapis.com/v0/b/jaishreedryfruits-973dd.firebasestorage.app/o/content%2Fhero%2Fhero-mobile-1-goodness.webp?alt=media&token=c5a84343-9595-47db-bdaa-4dc7032187d1",
-        // "GOODNESS," heading sits right at the very top edge of this crop —
-        // shift the visible window down slightly so it isn't flush against
-        // the sticky header.
-        mobileFocusY: 70,
+        mobileImage: "/hero/hero-mobile-1-goodness.webp",
       },
       {
         desktopImage: "https://firebasestorage.googleapis.com/v0/b/jaishreedryfruits-973dd.firebasestorage.app/o/content%2Fhero%2Fhero-desktop-2-notevery.webp?alt=media&token=1c55d809-5467-4102-ae47-fd4b5e9db76b",
-        mobileImage: "https://firebasestorage.googleapis.com/v0/b/jaishreedryfruits-973dd.firebasestorage.app/o/content%2Fhero%2Fhero-mobile-2-notevery.webp?alt=media&token=76707db0-5d62-4849-b1da-32fe6dab4301",
+        mobileImage: "/hero/hero-mobile-2-notevery.webp",
       },
       {
         desktopImage: "https://firebasestorage.googleapis.com/v0/b/jaishreedryfruits-973dd.firebasestorage.app/o/content%2Fhero%2Fhero-desktop-3-goodfood.webp?alt=media&token=e6628c17-2603-47b1-a4c8-a20c693110b8",
-        mobileImage: "https://firebasestorage.googleapis.com/v0/b/jaishreedryfruits-973dd.firebasestorage.app/o/content%2Fhero%2Fhero-mobile-3-goodfood.webp?alt=media&token=b0ffc6bd-81c5-48c2-a3fa-e5f58d7c434b",
-        // Composition sits low in this crop — shift the visible window up
-        // so the headline/model aren't pushed toward the bottom edge.
-        mobileFocusY: 30,
+        mobileImage: "/hero/hero-mobile-3-goodfood.webp",
       },
     ],
     ctaText: "Shop Now",

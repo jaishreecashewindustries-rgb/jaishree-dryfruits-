@@ -11,7 +11,7 @@ const AUTO_ADVANCE_MS = 3200;
 // slack, and transform-origin (driven by the admin's 0-100 slider) decides
 // which part of that zoomed image stays anchored — this is genuine
 // cropping, independent of whether the source image matches the frame.
-const CROP_ZOOM = 1.18;
+const CROP_ZOOM = 1.08;
 
 /**
  * Admin-controlled hero carousel — auto-rotates through slides, each with
