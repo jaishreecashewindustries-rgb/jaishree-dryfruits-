@@ -4,14 +4,13 @@ import { AnimatePresence, motion } from "framer-motion";
 
 const AUTO_ADVANCE_MS = 3200;
 
-// The hero images already fill the frame exactly (pre-cropped to this
-// component's own aspect ratio), so plain object-position has zero slack
-// to move anything — that's why the old top/center/bottom dropdown had no
-// visible effect no matter what an admin picked. A fixed zoom creates real
-// slack, and transform-origin (driven by the admin's 0-100 slider) decides
-// which part of that zoomed image stays anchored — this is genuine
-// cropping, independent of whether the source image matches the frame.
-const CROP_ZOOM = 1.08;
+// No forced zoom — admin-uploaded images are hand-cropped to this
+// component's exact aspect ratio (900×1200 mobile / 1600×900 desktop),
+// so they already fill the frame edge-to-edge with zero slack needed.
+// A fixed zoom here would crop a perfectly-fit image for no reason; the
+// focus-Y custom properties stay wired up (harmless no-op at zoom 1) in
+// case a badly-cropped image ever needs the old adjustment again.
+const CROP_ZOOM = 1;
 
 /**
  * Admin-controlled hero carousel — auto-rotates through slides, each with
@@ -78,14 +77,18 @@ export default function HeroCarousel({ slides, fallbackHeadline }) {
             unmount the old slide a beat before the new one finished loading,
             flashing the container's bare background through. Slow, gentle
             crossfade + a whisper of continued zoom (Ken Burns) reads as
-            unhurried/premium rather than a hard cut. */}
+            unhurried/premium rather than a hard cut — modelled on Apple's
+            product-page hero transitions: a long, deliberate cross-dissolve
+            with no movement/slide, just a whisper of continued scale that
+            settles to exactly 1 (never past it, so the fit stays perfect
+            on both mobile and desktop). */}
         <AnimatePresence mode="sync">
           <motion.div
             key={index}
-            initial={{ opacity: 0, scale: 1.04 }}
+            initial={{ opacity: 0, scale: 1.02 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ opacity: { duration: 0.9, ease: [0.22, 1, 0.36, 1] }, scale: { duration: 3.5, ease: "easeOut" } }}
+            transition={{ opacity: { duration: 1.1, ease: [0.25, 0.1, 0.25, 1] }, scale: { duration: 4, ease: [0.25, 0.1, 0.25, 1] } }}
             className="absolute inset-0"
           >
             <Link to="/products" className="block w-full h-full">

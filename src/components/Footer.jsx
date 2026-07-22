@@ -62,7 +62,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 py-14 grid grid-cols-2 md:grid-cols-5 gap-10 md:gap-8">
 
         {/* Brand */}
-        <FadeIn className="col-span-2 md:col-span-1">
+        <FadeIn className="col-span-2 md:col-span-1 min-w-0">
           <div className="mb-5 flex items-center gap-2.5">
             <img src="/logo.png" alt="Jai Shree Dry Fruits" style={{ width: 40, height: 40, objectFit: "contain" }} />
             <div>
@@ -94,7 +94,7 @@ export default function Footer() {
         </FadeIn>
 
         {/* Quick Links */}
-        <FadeIn delay={0.05}>
+        <FadeIn delay={0.05} className="min-w-0">
           <FooterSection title="Quick Links" open={openSection === "links"} onToggle={() => toggle("links")}>
             <ul className="space-y-3 text-sm md:text-base font-medium text-white/75">
               {[
@@ -113,7 +113,7 @@ export default function Footer() {
         </FadeIn>
 
         {/* Our Products */}
-        <FadeIn delay={0.1}>
+        <FadeIn delay={0.1} className="min-w-0">
           <FooterSection title="Our Products" open={openSection === "products"} onToggle={() => toggle("products")}>
             <ul className="space-y-3 text-sm md:text-base font-medium text-white/75">
               {PRODUCT_CATEGORIES.slice(0, 5).map((c) => (
@@ -129,7 +129,7 @@ export default function Footer() {
         </FadeIn>
 
         {/* Policy */}
-        <FadeIn delay={0.15}>
+        <FadeIn delay={0.15} className="min-w-0">
           <FooterSection title="Policy" open={openSection === "policy"} onToggle={() => toggle("policy")}>
             <ul className="space-y-3 text-sm md:text-base font-medium text-white/75">
               {[
@@ -147,7 +147,7 @@ export default function Footer() {
         </FadeIn>
 
         {/* Contact Us */}
-        <FadeIn delay={0.2} className="col-span-2 md:col-span-1">
+        <FadeIn delay={0.2} className="col-span-2 md:col-span-1 min-w-0">
           <h4 className="mb-5 uppercase text-base tracking-[2px] font-bold text-white/80">Contact Us</h4>
           <ul className="space-y-4">
             <li className="flex gap-3 items-start text-sm md:text-base font-medium text-white/75 leading-relaxed">

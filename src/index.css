@@ -29,19 +29,13 @@ html {
   /* Prevent any scroll-jacking: native momentum on all platforms */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  /* Every Tailwind text-* / spacing utility is rem-based, sized off THIS
-     root font-size — not body's. Bumping body's font-size alone (below)
-     only affected raw unstyled text; it never touched text-xs/text-sm/etc,
-     which is why most of the site (footer included) looked unchanged after
-     that fix. Scaling the root instead raises every rem-based size sitewide
-     in one shot, footer included. */
-  font-size: 112.5%;
-}
-/* Pull the root scale back down on phones — 112.5% site-wide reads fine on
-   desktop but was tight enough on narrow viewports to overlap badges,
-   pills and touch-target padding that all grew alongside it. */
-@media (max-width: 480px) {
-  html { font-size: 92%; }
+  /* Standard 100% — the earlier 112.5% blanket bump (meant to fix a few
+     genuinely-tiny labels) ended up over-scaling the whole site instead,
+     reported as "too zoomed in" on both mobile and desktop. Individual
+     small elements (badges, nav links, buttons) already got their own
+     explicit size bumps elsewhere in this file, so this reverts only the
+     global multiplier, not those targeted fixes. */
+  font-size: 100%;
 }
 html, body { overflow-x: hidden; max-width: 100vw; }
 body {
