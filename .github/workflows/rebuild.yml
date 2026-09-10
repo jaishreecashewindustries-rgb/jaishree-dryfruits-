@@ -1,12 +1,19 @@
-name: Nightly rebuild & deploy
+name: Build & deploy
 
 # Keeps the prerendered (crawlable) HTML fresh — any product added/edited via
 # the admin panel today gets picked up and redeployed within 24h, with no
 # manual "remember to rebuild" step. See scripts/prerender.js for why this
 # exists and scripts/handle-prerender-report.js for failure handling.
+#
+# Also runs on every push to main — a code change (not just admin-panel
+# content) goes live automatically a few minutes after pushing, without
+# anyone needing to run `npm run build` + `firebase deploy` locally and
+# wait around for it.
 on:
   schedule:
     - cron: "0 21 * * *" # 21:00 UTC = 2:30 AM IST
+  push:
+    branches: [main]
   workflow_dispatch: {} # allows manually triggering a run from the Actions tab
 
 permissions:
