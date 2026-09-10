@@ -5,6 +5,14 @@ import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  // REACT_APP_FIREBASE_AUTH_DOMAIN is set to our own domain
+  // (jaishreedryfruits.com), NOT the default *.firebaseapp.com — Safari's
+  // Intelligent Tracking Prevention treats firebaseapp.com as a third-party
+  // tracker and silently drops the storage the signInWithRedirect Google
+  // login handshake needs, so the redirect never completes on Safari
+  // (mobile and desktop). Firebase Hosting already serves /__/auth/handler
+  // and /__/auth/iframe on our own connected custom domain, so pointing
+  // authDomain at it makes the whole flow first-party and Safari-safe.
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
   storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,

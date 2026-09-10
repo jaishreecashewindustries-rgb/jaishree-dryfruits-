@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { NavLink, Navigate, Outlet, useLocation } from "react-router-dom";
-import { LayoutDashboard, Package, ShoppingBag, Users, Star, Tag, LogOut, Menu, ChevronRight, MessageSquare, BookOpen, Coins, Image, TrendingUp, FileText, Settings, Truck, Boxes, CreditCard, Mail, MapPin } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, Users, Star, Tag, LogOut, Menu, ChevronRight, MessageSquare, BookOpen, Coins, Image, TrendingUp, FileText, Settings, Truck, Boxes, CreditCard, Mail, MapPin, LayoutTemplate } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
 const NAV_LINKS = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/admin/products", label: "Products", icon: Package },
+  { to: "/admin/categories", label: "Categories", icon: LayoutTemplate },
   { to: "/admin/stock", label: "Stock", icon: Boxes },
   { to: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { to: "/admin/courier", label: "Courier & Tracking", icon: Truck },

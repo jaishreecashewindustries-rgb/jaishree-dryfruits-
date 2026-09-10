@@ -51,6 +51,7 @@ const CorporateGifting = lazy(() => import("./pages/CorporateGifting"));
 const AdminLayout = lazy(() => import("./pages/admin/AdminLayout"));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const ProductManagement = lazy(() => import("./pages/admin/ProductManagement"));
+const CategoryManagement = lazy(() => import("./pages/admin/CategoryManagement"));
 const StockManagement = lazy(() => import("./pages/admin/StockManagement"));
 const PaymentsManagement = lazy(() => import("./pages/admin/PaymentsManagement"));
 const NewsletterManagement = lazy(() => import("./pages/admin/NewsletterManagement"));
@@ -151,6 +152,7 @@ export default function App() {
                       <Route path="/admin" element={<AdminLayout />}>
                         <Route index element={<AdminDashboard />} />
                         <Route path="products" element={<ProductManagement />} />
+                        <Route path="categories" element={<CategoryManagement />} />
                         <Route path="stock" element={<StockManagement />} />
                         <Route path="payments" element={<PaymentsManagement />} />
                         <Route path="newsletter" element={<NewsletterManagement />} />

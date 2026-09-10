@@ -36,13 +36,22 @@ export const DEFAULT_ANNOUNCEMENT = {
 };
 
 export const DEFAULT_CATEGORIES = [
-  { name: "Almonds",      img: "https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=400&q=80", link: "/products?category=Almonds" },
-  { name: "Cashews",      img: "https://images.unsplash.com/photo-1573555657105-47a0bb37c3ea?w=400&q=80", link: "/products?category=Cashews" },
-  { name: "Pistachios",   img: "https://images.unsplash.com/photo-1502825751399-28baa9b81efe?w=400&q=80", link: "/products?category=Pistachios" },
-  { name: "Walnuts",      img: "https://images.unsplash.com/photo-1524593656068-fbac72624bb0?w=400&q=80", link: "/products?category=Walnuts" },
-  { name: "Dates",        img: "https://images.unsplash.com/photo-1691657917109-c6e027eac44a?w=400&q=80", link: "/products?category=Dates" },
-  { name: "Gift Hampers", img: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400&q=80", link: "/products?category=Gift Hampers" },
+  { name: "Almonds",      img: "https://images.unsplash.com/photo-1508061253366-f7da158b6d46?w=400&q=80", headerImage: "", link: "/products?category=Almonds" },
+  { name: "Cashews",      img: "https://images.unsplash.com/photo-1573555657105-47a0bb37c3ea?w=400&q=80", headerImage: "", link: "/products?category=Cashews" },
+  { name: "Pistachios",   img: "https://images.unsplash.com/photo-1502825751399-28baa9b81efe?w=400&q=80", headerImage: "", link: "/products?category=Pistachios" },
+  { name: "Walnuts",      img: "https://images.unsplash.com/photo-1524593656068-fbac72624bb0?w=400&q=80", headerImage: "", link: "/products?category=Walnuts" },
+  { name: "Dates",        img: "https://images.unsplash.com/photo-1691657917109-c6e027eac44a?w=400&q=80", headerImage: "", link: "/products?category=Dates" },
+  { name: "Gift Hampers", img: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400&q=80", headerImage: "", link: "/products?category=Gift Hampers" },
 ];
+
+// Banner shown at the top of the "All Products" page (/products with no
+// category selected) — the Collection Hero. Per-category banners live on
+// each DEFAULT_CATEGORIES entry's headerImage instead.
+export const DEFAULT_PRODUCTS_HEADER = {
+  image: "",
+  title: "",
+  subtitle: "",
+};
 
 export const DEFAULT_HEALTH_GOALS = [
   { goal: "Heart Health",  icon: "Heart",       link: "/products?goal=heart" },
@@ -181,6 +190,7 @@ export function SiteSettingsProvider({ children }) {
   const [hero, setHero] = useState(DEFAULT_HERO);
   const [announcement, setAnnouncement] = useState(DEFAULT_ANNOUNCEMENT);
   const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const [productsHeader, setProductsHeader] = useState(DEFAULT_PRODUCTS_HEADER);
   const [healthGoals, setHealthGoals] = useState(DEFAULT_HEALTH_GOALS);
   const [combos, setCombos] = useState(DEFAULT_COMBOS);
   const [whyUs, setWhyUs] = useState(DEFAULT_WHY_US);
@@ -203,6 +213,7 @@ export function SiteSettingsProvider({ children }) {
             if (d.hero)         setHero(h => ({ ...h, ...d.hero }));
             if (d.announcement) setAnnouncement(a => ({ ...a, ...d.announcement }));
             if (d.categories?.length)  setCategories(d.categories);
+            if (d.productsHeader)      setProductsHeader(h => ({ ...h, ...d.productsHeader }));
             if (d.healthGoals?.length) setHealthGoals(d.healthGoals);
             if (d.combos?.length)      setCombos(d.combos);
             if (d.whyUs?.length)       setWhyUs(d.whyUs);
@@ -233,8 +244,27 @@ export function SiteSettingsProvider({ children }) {
     return () => { cancelled = true; };
   }, []);
 
+  // Re-fetch just the categories/productsHeader (settings/homepage) on
+  // demand — this context loads everything once on app mount, so without
+  // this, a category added/edited/deleted from Admin > Categories wouldn't
+  // appear anywhere else in the already-open app (e.g. the Products
+  // dropdown in Admin > Products) until a full page reload. Category
+  // Management calls this right after a successful save/delete.
+  const refreshCategories = async () => {
+    try {
+      const snap = await getDoc(doc(db, "settings", "homepage"));
+      if (snap.exists()) {
+        const d = snap.data();
+        if (d.categories) setCategories(d.categories);
+        if (d.productsHeader) setProductsHeader(h => ({ ...h, ...d.productsHeader }));
+      }
+    } catch (e) {
+      console.warn("SiteSettings refreshCategories error:", e);
+    }
+  };
+
   return (
-    <SiteSettingsContext.Provider value={{ coinsRules, hero, announcement, categories, healthGoals, combos, whyUs, origins, siteContent, loaded }}>
+    <SiteSettingsContext.Provider value={{ coinsRules, hero, announcement, categories, productsHeader, healthGoals, combos, whyUs, origins, siteContent, loaded, refreshCategories }}>
       {children}
     </SiteSettingsContext.Provider>
   );

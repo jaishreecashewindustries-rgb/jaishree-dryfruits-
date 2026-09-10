@@ -108,10 +108,37 @@ export const AuthProvider = ({ children }) => {
   const isSafariBrowser = () =>
     /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
 
+  // Turns a raw Firebase Auth error into something the user (and whoever's
+  // debugging a report from them) can actually act on. Was previously only
+  // done for the popup path — the redirect path (mobile/Safari) had no
+  // try/catch at all, so any failure here (blocked storage, unauthorized
+  // domain, private-browsing mode) surfaced as nothing happening rather
+  // than an error, which is exactly the "randomly doesn't work" complaint.
+  const explainGoogleSignInError = (err) => {
+    console.error("Google sign-in error:", err.code, err.message);
+    if (err.code === "auth/unauthorized-domain") {
+      return `This domain (${window.location.hostname}) isn't authorized for Google sign-in yet — add it under Firebase Console → Authentication → Settings → Authorized domains.`;
+    }
+    if (err.code === "auth/web-storage-unsupported" || err.code === "auth/operation-not-supported-in-this-environment") {
+      return "Google sign-in needs cookies/site storage enabled. If you're in Private Browsing mode, or have \"Prevent Cross-Site Tracking\" strictly blocking this site, please turn that off for this site and try again.";
+    }
+    if (err.code === "auth/network-request-failed") {
+      return "Network error — please check your connection and try again.";
+    }
+    return err.message || "Google login failed. Please try again.";
+  };
+
   const loginWithGoogle = async () => {
     if (isMobileBrowser() || isSafariBrowser()) {
-      await signInWithRedirect(auth, googleProvider);
-      return; // page navigates away; result is picked up by getRedirectResult on return
+      try {
+        await signInWithRedirect(auth, googleProvider);
+        return; // page navigates away; result is picked up by getRedirectResult on return
+      } catch (err) {
+        // Without this catch, a redirect that fails before the page even
+        // navigates away (blocked storage, unauthorized domain, etc.) threw
+        // silently — the button just did nothing with no feedback at all.
+        throw new Error(explainGoogleSignInError(err));
+      }
     }
     try {
       const res = await signInWithPopup(auth, googleProvider);
@@ -119,22 +146,18 @@ export const AuthProvider = ({ children }) => {
       toast.success(`Welcome, ${res.user.displayName}!`);
       return res;
     } catch (err) {
-      // Surface the real Firebase error code — "Google login failed" alone
-      // hides whether this is an unauthorized-domain config issue (needs a
-      // Firebase Console fix, not a code fix), a blocked popup, or the user
-      // just closing the window.
-      console.error("Google sign-in error:", err.code, err.message);
       if (err.code === "auth/popup-blocked") {
-        await signInWithRedirect(auth, googleProvider);
+        try {
+          await signInWithRedirect(auth, googleProvider);
+        } catch (err2) {
+          throw new Error(explainGoogleSignInError(err2));
+        }
         return;
-      }
-      if (err.code === "auth/unauthorized-domain") {
-        throw new Error(`This domain (${window.location.hostname}) isn't authorized for Google sign-in yet — add it under Firebase Console → Authentication → Settings → Authorized domains.`);
       }
       if (err.code === "auth/cancelled-popup-request" || err.code === "auth/popup-closed-by-user") {
         return; // user closed it — not a real error, no toast needed
       }
-      throw err;
+      throw new Error(explainGoogleSignInError(err));
     }
   };
 
@@ -222,12 +245,7 @@ export const AuthProvider = ({ children }) => {
       })
       .catch((err) => {
         if (err?.code && err.code !== "auth/no-current-user") {
-          console.error("Google redirect sign-in error:", err.code, err.message);
-          if (err.code === "auth/unauthorized-domain") {
-            toast.error(`This domain (${window.location.hostname}) isn't authorized for Google sign-in — add it under Firebase Console → Authentication → Settings → Authorized domains.`, { duration: 6000 });
-          } else {
-            toast.error("Google sign-in failed — please try again");
-          }
+          toast.error(explainGoogleSignInError(err), { duration: 6000 });
         }
       });
   }, []);

@@ -7,6 +7,7 @@ import { SkeletonCard } from "../components/SkeletonCard";
 import SEO from "../components/SEO";
 import { PRODUCT_CATEGORIES } from "../utils/helpers";
 import { useProducts } from "../context/ProductsContext";
+import { useSiteSettings } from "../context/SiteSettingsContext";
 
 const PAGE_SIZE = 12;
 
@@ -20,6 +21,10 @@ const SORT_OPTIONS = [
 
 export default function Products() {
   const { products: DEMO_PRODUCTS, loading: productsLoading } = useProducts();
+  const { categories: liveCategories, productsHeader } = useSiteSettings() || {};
+  // Category tiles/photos are admin-managed (Category Management page);
+  // fall back to the static name list until Firestore data loads.
+  const categoryList = liveCategories?.length ? liveCategories : PRODUCT_CATEGORIES.map((name) => ({ name }));
   const [params, setParams] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sort, setSort] = useState("featured");
@@ -87,6 +92,17 @@ export default function Products() {
   const GOAL_LABELS = { heart: "Heart Health", brain: "Brain Power", energy: "Energy Boost", immunity: "Immunity", weight: "Weight Loss", bones: "Bone Strength", skin: "Skin & Hair", kids: "Kids" };
   const pageTitle = activeCategory || (activeGoal ? GOAL_LABELS[activeGoal] || activeGoal : "") || activeBadge || (search ? `"${search}"` : "All Products");
 
+  // Collection Hero image: the selected category's own banner when one is
+  // set from Admin > Categories, otherwise the site-wide "All Products"
+  // header image, falling back to the original stock photo if neither is
+  // configured yet.
+  const activeCategoryData = activeCategory ? categoryList.find((c) => c.name === activeCategory) : null;
+  const heroImage = activeCategoryData?.headerImage || (!activeCategory ? productsHeader?.image : "") ||
+    "https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?w=1600&q=80";
+  const heroSubtitle = !activeCategory && productsHeader?.subtitle
+    ? productsHeader.subtitle
+    : (activeCategory ? `Premium ${activeCategory.toLowerCase()}, sourced direct.` : "");
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 min-h-screen" data-prerender-ready={productsLoading ? "false" : "true"}>
       <SEO
@@ -110,18 +126,22 @@ export default function Products() {
         <span className="text-brand-brown font-medium">{pageTitle}</span>
       </div>
 
-      {/* ── Collection Hero — image + title only, no promo/shipping copy ── */}
+      {/* ── Collection Hero — image + title only, no promo/shipping copy ──
+          Image managed from Admin > Categories (per-category banner, or the
+          site-wide "All Products" header when no category is selected). ── */}
       <div className="relative rounded-2xl overflow-hidden mb-8" style={{ aspectRatio: "21/6", background: "var(--navy)" }}>
         <img
-          src="https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?w=1600&q=80"
+          src={heroImage}
           alt=""
           aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover opacity-50"
         />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-          <h1 className="font-serif font-extrabold text-2xl md:text-4xl text-white">{pageTitle}</h1>
-          {activeCategory && (
-            <p className="text-white/70 text-sm mt-1.5 hidden md:block">Premium {activeCategory.toLowerCase()}, sourced direct.</p>
+          <h1 className="font-serif font-extrabold text-2xl md:text-4xl text-white">
+            {(!activeCategory && productsHeader?.title) || pageTitle}
+          </h1>
+          {heroSubtitle && (
+            <p className="text-white/70 text-sm mt-1.5 hidden md:block">{heroSubtitle}</p>
           )}
         </div>
       </div>
@@ -140,7 +160,7 @@ export default function Products() {
                 >
                   All Products ({DEMO_PRODUCTS.length})
                 </button>
-                {PRODUCT_CATEGORIES.map((c) => {
+                {categoryList.map(({ name: c }) => {
                   const count = DEMO_PRODUCTS.filter((p) => p.category === c).length;
                   if (!count) return null;
                   return (
@@ -351,7 +371,7 @@ export default function Products() {
             <div className="space-y-4">
               <p className="text-xs font-semibold text-gray-500 uppercase">Categories</p>
               <div className="grid grid-cols-2 gap-2">
-                {PRODUCT_CATEGORIES.filter((c) => DEMO_PRODUCTS.some((p) => p.category === c)).map((c) => (
+                {categoryList.map((c) => c.name).filter((c) => DEMO_PRODUCTS.some((p) => p.category === c)).map((c) => (
                   <button
                     key={c}
                     onClick={() => { setCategory(c); setFiltersOpen(false); }}

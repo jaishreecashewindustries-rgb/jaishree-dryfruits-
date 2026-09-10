@@ -81,20 +81,26 @@ export async function checkPincodeServiceability(pincode) {
 
   // 2. No override — verify against India Post's real PIN code directory.
   //
-  // India Post PINs don't cleanly separate "village" from "small town" —
-  // one PIN often bundles a real town with the villages around it (e.g.
-  // 303801 lists 8 "Branch Post Office" villages PLUS "Kaladera", itself a
-  // real town, as a "Sub Post Office" — BranchType alone can't tell them
-  // apart; both signals appear on genuinely rural PINs too). The one
-  // reliable marker is a "Head Post Office" record — that only exists for
-  // an actual city/town hub, never a village cluster. So: Head Post
-  // Office present → auto-serviceable. Otherwise → NOT serviceable by
-  // default, even if it has Sub Post Office entries (a real small town
-  // without its own Head PO will also land here) — add it via the admin
-  // override above once you've confirmed your courier actually covers it.
-  // This trades some false rejects (legitimate small towns) for zero
-  // false accepts (no village ships by accident), which is the safer
-  // default for a food-delivery business.
+  // Requiring a literal "Head Post Office" record (the previous rule here)
+  // over-rejected: a Head PO only exists in the ONE pincode that happens to
+  // host a district/city hub, so entire major-city localities that are 100%
+  // urban — Goregaon in Mumbai (400104), Electronics City in Bengaluru
+  // (560100), Murlipura in Jaipur (302039) — have no Head Post Office of
+  // their own and were being told "not serviceable" right alongside actual
+  // villages. That's the opposite of the intent: reject remote/rural PINs,
+  // accept city ones.
+  //
+  // India Post's own `Division` field is the better signal: a genuinely
+  // rural cluster of villages is filed under a "Moffusil" (countryside)
+  // division — e.g. 303801's villages sit under "Jaipur Moffusil" — while
+  // every city locality, Head PO or not, is filed under a division named
+  // for the city itself ("Jaipur City", "Mumbai North West", "Bangalore
+  // South", etc.). So: reject only when EVERY office record for this PIN
+  // is filed under a Moffusil/Rural division and none is a Head Post
+  // Office. Everything else — including ordinary city Sub/Branch Post
+  // Offices — is serviceable by default. Use the admin override above to
+  // hand-block a specific PIN your courier genuinely doesn't cover, or to
+  // allow a specific rural PIN you've confirmed is deliverable.
   try {
     const res = await fetch(`https://api.postalpincode.in/pincode/${clean}`);
     const data = await res.json();
@@ -103,7 +109,8 @@ export async function checkPincodeServiceability(pincode) {
       return { serviceable: false, reason: "This PIN code could not be found. Please double-check and try again." };
     }
     const hasHeadOffice = offices.some((o) => o.BranchType === "Head Post Office");
-    if (!hasHeadOffice) {
+    const isRuralDivision = offices.every((o) => /moffusil|rural/i.test(o.Division || ""));
+    if (!hasHeadOffice && isRuralDivision) {
       return { serviceable: false, reason: "Delivery not available at this PIN code. Please enter another serviceable PIN code." };
     }
     return {

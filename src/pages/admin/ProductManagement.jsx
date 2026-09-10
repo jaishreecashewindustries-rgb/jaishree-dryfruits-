@@ -4,6 +4,7 @@ import { db } from "../../firebase/config";
 import { Plus, Edit2, Trash2, Search, X, Image, Save } from "lucide-react";
 import { DEMO_PRODUCTS, PRODUCT_CATEGORIES, formatPrice } from "../../utils/helpers";
 import { useProducts } from "../../context/ProductsContext";
+import { useSiteSettings } from "../../context/SiteSettingsContext";
 import ImageUpload from "../../components/ImageUpload";
 import toast from "react-hot-toast";
 
@@ -15,6 +16,11 @@ const EMPTY_PRODUCT = {
 
 export default function ProductManagement() {
   const { products: liveProducts, loading: liveLoading, refresh: refreshLiveProducts } = useProducts();
+  const { categories: liveCategories } = useSiteSettings() || {};
+  // Category names come from the admin-managed category list (Category
+  // Management page) so newly added categories are immediately selectable
+  // here; falls back to the static list until that loads.
+  const categoryNames = liveCategories?.length ? liveCategories.map((c) => c.name) : PRODUCT_CATEGORIES;
   const [products, setProducts] = useState(DEMO_PRODUCTS);
   const [search, setSearch] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -225,7 +231,7 @@ export default function ProductManagement() {
                     <label className="text-xs font-semibold text-gray-500 block mb-1">Category *</label>
                     <select name="category" value={form.category} onChange={handleField} className="input-field">
                       <option value="">Select...</option>
-                      {PRODUCT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                      {categoryNames.map((c) => <option key={c} value={c}>{c}</option>)}
                     </select>
                   </div>
                   <div>
