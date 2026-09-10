@@ -92,22 +92,6 @@ export const AuthProvider = ({ children }) => {
     return res;
   };
 
-  // Mobile browsers (especially Chrome on Android) frequently block or
-  // silently fail signInWithPopup — third-party cookie restrictions and the
-  // popup's own focus/lifecycle inside a mobile webview make it flaky,
-  // hence needing "2-3 tries" to actually log in. Redirect-based sign-in
-  // sidesteps all of that since there's no popup window involved.
-  const isMobileBrowser = () => /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-
-  // Safari (desktop AND iOS) enforces Intelligent Tracking Prevention,
-  // which partitions/blocks the third-party storage signInWithPopup's auth
-  // handshake relies on — the popup opens but silently never resolves, no
-  // error, just a login that "does nothing". Same fix as mobile: redirect
-  // instead of popup. Detected by excluding Chrome/Chromium/Android from
-  // the "Safari" UA token, since Chrome on iOS/macOS also includes it.
-  const isSafariBrowser = () =>
-    /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent);
-
   // Turns a raw Firebase Auth error into something the user (and whoever's
   // debugging a report from them) can actually act on. Was previously only
   // done for the popup path — the redirect path (mobile/Safari) had no
@@ -128,31 +112,47 @@ export const AuthProvider = ({ children }) => {
     return err.message || "Google login failed. Please try again.";
   };
 
+  // Always try the popup first, on every platform including mobile/Safari.
+  //
+  // This used to force redirect-only on mobile/Safari because
+  // signInWithPopup's cross-window handshake ran through the default
+  // *.firebaseapp.com auth domain, which Safari's Intelligent Tracking
+  // Prevention treats as third-party and silently blocks — the popup would
+  // open and just never resolve.
+  //
+  // Now that authDomain points at our own connected domain
+  // (jaishreedryfruits.com — first-party), that specific problem is gone.
+  // Popup is also the MORE reliable option on iOS Safari specifically:
+  // signInWithRedirect requires the "a sign-in is pending" flag to survive
+  // a full-page navigation away to accounts.google.com and back, and iOS
+  // Safari is well known for dropping that state on the return trip —
+  // symptom: redirects to Google, comes back, but never actually logs in,
+  // with no error at all since nothing technically "failed". A popup never
+  // navigates the main page away, so there's no round-trip state to lose.
+  //
+  // Redirect is kept only as the fallback for when a popup is genuinely
+  // blocked or unsupported (e.g. an in-app WebView like WhatsApp/Instagram's
+  // built-in browser, which Google itself refuses to sign in through
+  // regardless of popup vs redirect — that shows Google's own
+  // "this browser may not be secure" page and needs the user to open the
+  // site in their actual browser app, not something we can code around).
   const loginWithGoogle = async () => {
-    if (isMobileBrowser() || isSafariBrowser()) {
-      try {
-        await signInWithRedirect(auth, googleProvider);
-        return; // page navigates away; result is picked up by getRedirectResult on return
-      } catch (err) {
-        // Without this catch, a redirect that fails before the page even
-        // navigates away (blocked storage, unauthorized domain, etc.) threw
-        // silently — the button just did nothing with no feedback at all.
-        throw new Error(explainGoogleSignInError(err));
-      }
-    }
     try {
       const res = await signInWithPopup(auth, googleProvider);
       await createUserDoc(res.user);
       toast.success(`Welcome, ${res.user.displayName}!`);
       return res;
     } catch (err) {
-      if (err.code === "auth/popup-blocked") {
+      if (
+        err.code === "auth/popup-blocked" ||
+        err.code === "auth/operation-not-supported-in-this-environment"
+      ) {
         try {
           await signInWithRedirect(auth, googleProvider);
         } catch (err2) {
           throw new Error(explainGoogleSignInError(err2));
         }
-        return;
+        return; // page navigates away; result is picked up by getRedirectResult on return
       }
       if (err.code === "auth/cancelled-popup-request" || err.code === "auth/popup-closed-by-user") {
         return; // user closed it — not a real error, no toast needed

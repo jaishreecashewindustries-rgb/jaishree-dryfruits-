@@ -43,9 +43,11 @@ export default function Login() {
   const location = useLocation();
   const from = location.state?.from || "/";
 
-  // Mobile Google sign-in uses a full-page redirect (see AuthContext) — the
-  // page reloads back on this same /login route once it completes, so there's
-  // no in-flight promise to await here. Once `user` becomes truthy, move on.
+  // Google sign-in is popup-first (see AuthContext) but can still fall back
+  // to a full-page redirect when a popup is blocked/unsupported — the page
+  // reloads back on this same /login route once that completes, so there's
+  // no in-flight promise to await for that path. Once `user` becomes
+  // truthy (popup or redirect), move on.
   useEffect(() => {
     if (user) navigate(from, { replace: true });
   }, [user]);
