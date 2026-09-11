@@ -487,7 +487,14 @@ export default function ProductDetail() {
                 <tr><th className="text-left px-4 py-2 text-brand-brown">Nutrient</th><th className="text-right px-4 py-2 text-brand-brown">Per 100g</th></tr>
               </thead>
               <tbody>
-                {[["Energy", "579 kcal"], ["Protein", "21.2g"], ["Carbohydrates", "21.7g"], ["Fat", "49.9g"], ["Fiber", "12.5g"], ["Calcium", "264mg"], ["Iron", "3.7mg"]].map(([n, v]) => (
+                {/* product.nutrition is admin-editable per product (Admin > Products).
+                    Falls back to the old generic almond-profile table for any
+                    product that hasn't had real values entered yet, so nothing
+                    regresses for existing catalogue entries. */}
+                {(product.nutrition?.length
+                  ? product.nutrition.map((n) => [n.label, n.value])
+                  : [["Energy", "579 kcal"], ["Protein", "21.2g"], ["Carbohydrates", "21.7g"], ["Fat", "49.9g"], ["Fiber", "12.5g"], ["Calcium", "264mg"], ["Iron", "3.7mg"]]
+                ).map(([n, v]) => (
                   <tr key={n} className="border-t border-gray-100 hover:bg-gray-50">
                     <td className="px-4 py-2 text-gray-600">{n}</td>
                     <td className="px-4 py-2 text-right font-medium text-brand-brown">{v}</td>

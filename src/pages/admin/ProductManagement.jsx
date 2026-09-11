@@ -12,6 +12,13 @@ const EMPTY_PRODUCT = {
   name: "", category: "", description: "", badge: "",
   images: [""], featured: false, tags: "",
   variants: [{ id: "v1", weight: "250g", price: "", originalPrice: "", stock: "" }],
+  nutrition: [
+    { label: "Energy", value: "" },
+    { label: "Protein", value: "" },
+    { label: "Carbohydrates", value: "" },
+    { label: "Fat", value: "" },
+    { label: "Fiber", value: "" },
+  ],
 };
 
 export default function ProductManagement() {
@@ -55,6 +62,14 @@ export default function ProductManagement() {
 
   const removeVariant = (i) => setForm({ ...form, variants: form.variants.filter((_, idx) => idx !== i) });
 
+  const handleNutrient = (i, field, value) => {
+    const n = [...form.nutrition];
+    n[i] = { ...n[i], [field]: value };
+    setForm({ ...form, nutrition: n });
+  };
+  const addNutrient = () => setForm({ ...form, nutrition: [...form.nutrition, { label: "", value: "" }] });
+  const removeNutrient = (i) => setForm({ ...form, nutrition: form.nutrition.filter((_, idx) => idx !== i) });
+
   const handleImage = (i, value) => {
     const imgs = [...form.images];
     imgs[i] = value;
@@ -77,6 +92,7 @@ export default function ProductManagement() {
       ...p,
       tags: Array.isArray(p.tags) ? p.tags.join(", ") : p.tags || "",
       images: p.images?.length ? p.images : [""],
+      nutrition: p.nutrition?.length ? p.nutrition : EMPTY_PRODUCT.nutrition,
     });
     setEditingId(p.id);
     setShowForm(true);
@@ -103,6 +119,11 @@ export default function ProductManagement() {
           originalPrice: v.originalPrice ? Number(v.originalPrice) : null,
           stock: Number(v.stock),
         })),
+        // Drop template rows the admin left blank rather than saving empty
+        // nutrient entries — ProductDetail falls back to the generic table
+        // when nutrition is empty, so an all-blank array would silently
+        // hide real, previously-saved values behind nothing useful.
+        nutrition: form.nutrition.filter((n) => n.label.trim() && n.value.trim()),
         rating: form.rating || 4.5,
         reviewCount: form.reviewCount || 0,
         updatedAt: serverTimestamp(),
@@ -332,6 +353,26 @@ export default function ProductManagement() {
                             <button type="button" onClick={() => removeVariant(i)} className="text-red-400 hover:text-red-600 p-1"><X size={14} /></button>
                           )}
                         </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Nutrition */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-semibold text-gray-500 uppercase">Nutrition (per 100g)</label>
+                    <button type="button" onClick={addNutrient} className="text-xs text-brand-gold flex items-center gap-1 hover:underline">
+                      <Plus size={12} /> Add Row
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-gray-400 mb-2">Leave a row blank to skip it. If every row is left blank, the product page shows a generic placeholder table instead.</p>
+                  <div className="space-y-2">
+                    {form.nutrition.map((n, i) => (
+                      <div key={i} className="grid grid-cols-5 gap-2 bg-gray-50 p-2 rounded-xl">
+                        <input value={n.label} onChange={(e) => handleNutrient(i, "label", e.target.value)} className="input-field text-xs py-2 col-span-2" placeholder="e.g. Energy" />
+                        <input value={n.value} onChange={(e) => handleNutrient(i, "value", e.target.value)} className="input-field text-xs py-2 col-span-2" placeholder="e.g. 579 kcal" />
+                        <button type="button" onClick={() => removeNutrient(i)} className="text-red-400 hover:text-red-600 p-1 flex items-center justify-center"><X size={14} /></button>
                       </div>
                     ))}
                   </div>
