@@ -217,7 +217,7 @@ export default function ProductCard({ product }) {
                 animate={{ rotateX: 0, opacity: 1 }}
                 exit={{ rotateX: 90, opacity: 0 }}
                 transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-                className="font-serif text-brand-brown font-extrabold text-lg inline-block"
+                className="font-sans text-gray-900 font-black text-lg inline-block"
                 style={{ transformOrigin: "center", display: "inline-block" }}
               >
                 {formatPrice(selectedVariant?.price)}

@@ -282,7 +282,10 @@ export default function ProductDetail() {
         <div className="space-y-5">
           <div>
             <p className="text-brand-gold text-sm font-extrabold uppercase tracking-widest">{product.category}</p>
-            <h1 className="font-serif text-4xl md:text-5xl font-extrabold text-brand-brown mt-2 leading-tight">{product.name}</h1>
+            {/* Bold sans-serif title, matching standard e-commerce PDP styling
+                (heavy weight, near-black, tight leading) rather than the
+                elegant display serif — that stays for section headlines. */}
+            <h1 className="font-sans text-4xl md:text-5xl font-black text-gray-900 mt-2 leading-[1.1] tracking-tight">{product.name}</h1>
             {/* Rating row */}
             <div className="flex items-center gap-3 mt-4 flex-wrap">
               <div className="flex gap-0.5">
@@ -313,7 +316,7 @@ export default function ProductDetail() {
                 animate={{ rotateX: 0, opacity: 1 }}
                 exit={{ rotateX: 90, opacity: 0 }}
                 transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                className="font-serif font-extrabold text-5xl text-brand-brown inline-block"
+                className="font-sans font-black text-5xl text-gray-900 inline-block"
                 style={{ transformOrigin: "center" }}
               >
                 {formatPrice(selectedVariant.price)}
