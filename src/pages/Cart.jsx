@@ -22,7 +22,7 @@ const FALLBACK_COUPONS = [
 ];
 
 export default function Cart() {
-  const { items, removeFromCart, updateQty, subtotal, shipping, total } = useCart();
+  const { items, removeFromCart, updateQty, subtotal, shipping, total, freeShippingThreshold } = useCart();
   const { products: allProducts } = useProducts();
   // "You might also like" — products not already in the cart, best-rated
   // first. Shown on both the empty-cart state and the filled cart, below
@@ -191,7 +191,7 @@ export default function Cart() {
     );
   }
 
-  const FREE_SHIPPING_THRESHOLD = 499;
+  const FREE_SHIPPING_THRESHOLD = freeShippingThreshold;
   const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
   const progress = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
 
@@ -395,8 +395,8 @@ export default function Cart() {
                   <span>− ₹{coinsDiscount}</span>
                 </div>
               )}
-              {subtotal < 499 && (
-                <p className="text-xs text-blue-500">Add {formatPrice(499 - subtotal)} more for free shipping</p>
+              {subtotal < freeShippingThreshold && (
+                <p className="text-xs text-blue-500">Add {formatPrice(freeShippingThreshold - subtotal)} more for free shipping</p>
               )}
               <div className="border-t border-gray-100 pt-3 flex justify-between font-bold text-brand-brown text-base">
                 <span>Total</span><span>{formatPrice(finalTotal)}</span>
@@ -429,7 +429,7 @@ export default function Cart() {
           <div className="border border-gray-100 p-4 space-y-2.5">
             {[
               { Icon: Lock,      text: "Secure checkout — 256-bit SSL encryption" },
-              { Icon: Package,   text: "Free shipping on orders above ₹499" },
+              { Icon: Package,   text: `Free shipping on orders above ₹${freeShippingThreshold}` },
               { Icon: RotateCcw, text: "7-day hassle-free returns" },
             ].map(({ Icon, text }) => (
               <p key={text} className="flex items-center gap-2 text-xs text-gray-500">

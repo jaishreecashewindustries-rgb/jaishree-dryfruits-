@@ -8,6 +8,7 @@ import { RecaptchaVerifier, signInWithPhoneNumber } from "firebase/auth";
 import { useCart } from "../context/CartContext";
 import { useAuth } from "../context/AuthContext";
 import { useCoins, COINS_RULES } from "../context/CoinsContext";
+import { useSiteSettings } from "../context/SiteSettingsContext";
 import { formatPrice } from "../utils/helpers";
 import { checkPincodeServiceability } from "../utils/serviceability";
 import toast from "react-hot-toast";
@@ -93,6 +94,13 @@ export default function Checkout() {
     coinsRedeemed: coinsRedeemedFromCart = 0,
   } = location.state || {};
 
+  // Admin > Content > Shipping & Pricing — global COD on/off switch.
+  // Defaults to enabled so nothing changes for anyone until an admin
+  // actually turns it off.
+  const { siteContent } = useSiteSettings() || {};
+  const codEnabled = siteContent?.shipping?.codEnabled !== false;
+  const payMethods = PAY_METHODS.filter((m) => m.id !== "cod" || codEnabled);
+
   const [step, setStep] = useState(0);
   const [gstinOpen, setGstinOpen] = useState(false);
   const [gstinData, setGstinData] = useState({ company: "", gstin: "" });
@@ -111,6 +119,13 @@ export default function Checkout() {
   const [serviceability, setServiceability] = useState(null); // null | {serviceable, reason, codAvailable}
   const [fieldErrors, setFieldErrors] = useState({});
   const [payMethod, setPayMethod] = useState("razorpay");
+
+  // Defensive: if COD was selected and an admin turns it off while this
+  // page is already open, fall back to online payment rather than letting
+  // an order submit with a payment method that's no longer offered.
+  useEffect(() => {
+    if (payMethod === "cod" && !codEnabled) setPayMethod("razorpay");
+  }, [codEnabled, payMethod]);
   const [loading, setLoading] = useState(false);
   const [orderId, setOrderId] = useState(null);
   const [coinsEarned, setCoinsEarned] = useState(0);
@@ -1053,7 +1068,7 @@ export default function Checkout() {
             <motion.div key="step1" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }} transition={{ duration: 0.25 }} className="card-luxury p-6">
               <h2 className="font-serif text-xl font-normal text-brand-brown mb-5">Payment Method</h2>
               <div className="space-y-3">
-                {PAY_METHODS.map((m) => (
+                {payMethods.map((m) => (
                   <label key={m.id}
                     className={`flex items-center gap-4 p-4 border-2 cursor-pointer transition-all ${payMethod === m.id ? "border-brand-gold bg-amber-50/20" : "border-gray-100 hover:border-gray-200"}`}>
                     <input type="radio" name="pay" value={m.id} checked={payMethod === m.id}

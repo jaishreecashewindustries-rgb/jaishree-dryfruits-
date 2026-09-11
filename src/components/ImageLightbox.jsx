@@ -22,6 +22,9 @@ export default function ImageLightbox({ images = [], alt = "" }) {
     return () => { document.body.style.overflow = ""; };
   }, [open]);
 
+  const next = (e) => { e.stopPropagation(); setActive((p) => (p + 1) % images.length); };
+  const prev = (e) => { e.stopPropagation(); setActive((p) => (p - 1 + images.length) % images.length); };
+
   return (
     <>
       {/* Main image — object-contain (not cover) so non-square product photos
@@ -41,20 +44,47 @@ export default function ImageLightbox({ images = [], alt = "" }) {
             transition={{ duration: 0.25 }}
           />
         </AnimatePresence>
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all flex items-center justify-center pointer-events-none">
           <ZoomIn size={28} className="text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
         </div>
+
+        {/* Next/prev on the main image itself — previously this only existed
+            inside the full-screen lightbox, so browsing photos required an
+            extra click to zoom in first. Visible on hover on desktop,
+            always visible on touch devices (no hover state to reveal them). */}
+        {images.length > 1 && (
+          <>
+            <button
+              onClick={prev}
+              aria-label="Previous photo"
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full bg-white/90 shadow-md text-brand-brown opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-white z-10"
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <button
+              onClick={next}
+              aria-label="Next photo"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center rounded-full bg-white/90 shadow-md text-brand-brown opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity hover:bg-white z-10"
+            >
+              <ChevronRight size={18} />
+            </button>
+            {/* Photo counter */}
+            <span className="absolute bottom-2 right-2 bg-black/60 text-white text-[11px] font-medium px-2 py-0.5 rounded-full">
+              {active + 1} / {images.length}
+            </span>
+          </>
+        )}
       </div>
 
-      {/* Thumbnails — side-scrollable row */}
+      {/* Thumbnails — modern grid, not a cramped scroll strip */}
       {images.length > 1 && (
-        <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
+        <div className="grid grid-cols-5 sm:grid-cols-6 gap-2 mt-3">
           {images.map((img, i) => (
             <button
               key={i}
               onClick={() => setActive(i)}
-              className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 bg-gray-50 transition-all ${
-                active === i ? "border-brand-gold shadow-md" : "border-transparent opacity-60 hover:opacity-100"
+              className={`aspect-square rounded-xl overflow-hidden border-2 bg-gray-50 transition-all ${
+                active === i ? "border-brand-gold shadow-md ring-2 ring-brand-gold/20" : "border-transparent opacity-60 hover:opacity-100 hover:border-gray-200"
               }`}
             >
               <img src={img} alt={`${alt} — photo ${i + 1}`} loading="lazy" className="w-full h-full object-contain" />

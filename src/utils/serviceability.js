@@ -81,37 +81,20 @@ export async function checkPincodeServiceability(pincode) {
 
   // 2. No override — verify against India Post's real PIN code directory.
   //
-  // Requiring a literal "Head Post Office" record (the previous rule here)
-  // over-rejected: a Head PO only exists in the ONE pincode that happens to
-  // host a district/city hub, so entire major-city localities that are 100%
-  // urban — Goregaon in Mumbai (400104), Electronics City in Bengaluru
-  // (560100), Murlipura in Jaipur (302039) — have no Head Post Office of
-  // their own and were being told "not serviceable" right alongside actual
-  // villages. That's the opposite of the intent: reject remote/rural PINs,
-  // accept city ones.
-  //
-  // India Post's own `Division` field is the better signal: a genuinely
-  // rural cluster of villages is filed under a "Moffusil" (countryside)
-  // division — e.g. 303801's villages sit under "Jaipur Moffusil" — while
-  // every city locality, Head PO or not, is filed under a division named
-  // for the city itself ("Jaipur City", "Mumbai North West", "Bangalore
-  // South", etc.). So: reject only when EVERY office record for this PIN
-  // is filed under a Moffusil/Rural division and none is a Head Post
-  // Office. Everything else — including ordinary city Sub/Branch Post
-  // Offices — is serviceable by default. Use the admin override above to
-  // hand-block a specific PIN your courier genuinely doesn't cover, or to
-  // allow a specific rural PIN you've confirmed is deliverable.
+  // Previously rejected PINs filed under a rural/Moffusil India Post
+  // Division, on the reasoning that we'd rather over-reject than ship to
+  // an unreachable village. That's no longer the business rule — delivery
+  // is Pan-India via courier partners that reach genuinely remote areas
+  // too, so any PIN that actually exists in India Post's directory is
+  // serviceable. Use the admin override above to hand-block a specific
+  // PIN your courier genuinely doesn't cover, or to set custom delivery
+  // terms (days/COD/courier) for one.
   try {
     const res = await fetch(`https://api.postalpincode.in/pincode/${clean}`);
     const data = await res.json();
     const offices = data?.[0]?.Status === "Success" ? data[0].PostOffice || [] : [];
     if (offices.length === 0) {
       return { serviceable: false, reason: "This PIN code could not be found. Please double-check and try again." };
-    }
-    const hasHeadOffice = offices.some((o) => o.BranchType === "Head Post Office");
-    const isRuralDivision = offices.every((o) => /moffusil|rural/i.test(o.Division || ""));
-    if (!hasHeadOffice && isRuralDivision) {
-      return { serviceable: false, reason: "Delivery not available at this PIN code. Please enter another serviceable PIN code." };
     }
     return {
       serviceable: true,

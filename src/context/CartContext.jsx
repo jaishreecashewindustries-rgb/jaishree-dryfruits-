@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 import toast from "react-hot-toast";
+import { useSiteSettings, DEFAULT_SHIPPING } from "./SiteSettingsContext";
 
 const CartContext = createContext();
 export const useCart = () => useContext(CartContext);
@@ -60,6 +61,12 @@ const cartReducer = (state, action) => {
 };
 
 export const CartProvider = ({ children }) => {
+  // Admin > Content > Shipping & Pricing — was hardcoded here as 999/₹99
+  // while every banner/badge site-wide said "free shipping above ₹499",
+  // so the real cart total silently charged shipping on orders those same
+  // banners promised would ship free. Both now read the same setting.
+  const { siteContent } = useSiteSettings() || {};
+  const shippingSettings = siteContent?.shipping || DEFAULT_SHIPPING;
   const stored = JSON.parse(localStorage.getItem("jsd_cart") || "[]");
   const [state, dispatch] = useReducer(cartReducer, {
     items: stored,
@@ -130,7 +137,7 @@ export const CartProvider = ({ children }) => {
 
   const totalItems = state.items.reduce((s, i) => s + i.qty, 0);
   const subtotal = state.items.reduce((s, i) => s + i.price * i.qty, 0);
-  const shipping = subtotal >= 999 ? 0 : 99;
+  const shipping = subtotal >= shippingSettings.freeThreshold ? 0 : shippingSettings.flatRate;
   const total = subtotal + shipping;
 
   return (
@@ -142,6 +149,7 @@ export const CartProvider = ({ children }) => {
         subtotal,
         shipping,
         total,
+        freeShippingThreshold: shippingSettings.freeThreshold,
         addToCart,
         removeFromCart,
         updateQty,

@@ -109,12 +109,19 @@ export default function Home() {
   // as any other product in Admin → Products (category dropdown) — this
   // just showcases whatever's live in those two categories on the homepage.
   const combosAndGifts = DEMO_PRODUCTS.filter((p) => p.category === "Combo Packs" || p.category === "Gift Hampers").slice(0, 8);
-  const { siteContent, categories: liveCategories } = useSiteSettings() || {};
+  const { siteContent, categories: liveCategories, loaded: settingsLoaded } = useSiteSettings() || {};
   // Categories are admin-managed (Admin > Categories) — only fall back to
   // the old fixed 6-item list until that loads, so newly added categories
   // (and their photos) actually appear here instead of being stuck at
   // whatever this file shipped with.
-  const categoriesToShow = liveCategories?.length ? liveCategories : CATEGORIES;
+  //
+  // SiteSettingsContext's `categories` starts as a hardcoded stock-photo
+  // default (not empty) so it's always "truthy" — without gating on
+  // `loaded`, every page load flashed those old default photos for a
+  // moment before swapping to the real admin-set ones once Firestore
+  // resolved. Showing a skeleton until `loaded` means the very first
+  // real paint is already correct.
+  const categoriesToShow = settingsLoaded ? (liveCategories?.length ? liveCategories : CATEGORIES) : null;
   const hero = siteContent?.hero || {};
   const heroHeadline = hero.headline || "India's Finest\nDry Fruits";
   const heroDesktopImg = hero.desktopImage || "";
@@ -171,7 +178,14 @@ export default function Home() {
           <h2 className="font-serif font-bold text-3xl md:text-4xl text-brand-brown">Everyday to Gifting</h2>
         </FadeUp>
         <div className="grid grid-cols-3 md:grid-cols-6 gap-4 md:gap-6">
-          {categoriesToShow.map((cat, i) => (
+          {!categoriesToShow
+            ? [...Array(6)].map((_, i) => (
+                <div key={i} className="flex flex-col items-center gap-2.5">
+                  <div className="w-full rounded-full bg-gray-100 animate-pulse" style={{ aspectRatio: "1/1" }} />
+                  <div className="w-12 h-2.5 bg-gray-100 rounded animate-pulse" />
+                </div>
+              ))
+            : categoriesToShow.map((cat, i) => (
             <FadeUp key={cat.name} delay={i * 0.05}>
               <Link to={`/products?category=${cat.name}`} className="group flex flex-col items-center gap-2.5">
                 <div className="relative w-full rounded-full overflow-hidden transition-transform duration-300 group-hover:-translate-y-1.5 bg-brand-cream flex items-center justify-center" style={{ aspectRatio: "1/1" }}>

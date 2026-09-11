@@ -23,7 +23,21 @@ permissions:
 jobs:
   rebuild:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Was 30 — with the catalogue now at 20+ products (up from 6), total
+    # prerender routes crossed ~100 (static + 14 categories + 45 city pages
+    # + product pages + blog), and STATIC/CATEGORY/CITY routes run before
+    # product routes in the route list — so when the job ran out of time,
+    # product pages were the ones silently skipped. A skipped route has no
+    # static snapshot file, so Firebase Hosting's catch-all rewrite served
+    # the homepage's own index.html for it instead — meaning every product
+    # page was shipping the HOMEPAGE's title and canonical tag in its raw
+    # HTML (confirmed live on jaishreedryfruits.com). Client-side React
+    # corrects it after JS runs, but Googlebot's initial HTML crawl — the
+    # one that decides whether a URL even gets queued for the JS-render
+    # pass — saw canonical=homepage on every /product/:id URL, which reads
+    # as "this page is a duplicate of the homepage, don't bother indexing
+    # it separately". Real SEO harm, not just a display glitch.
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v4
 

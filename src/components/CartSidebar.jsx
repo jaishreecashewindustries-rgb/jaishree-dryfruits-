@@ -3,11 +3,22 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ShoppingBag, Minus, Plus, Trash2, ArrowRight } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { useProducts } from "../context/ProductsContext";
 import { formatPrice } from "../utils/helpers";
 import useBodyScrollLock from "../hooks/useBodyScrollLock";
 
 export default function CartSidebar() {
-  const { items, isOpen, closeCart, removeFromCart, updateQty, subtotal, shipping, total, totalItems } = useCart();
+  const { items, isOpen, closeCart, removeFromCart, updateQty, subtotal, shipping, total, totalItems, freeShippingThreshold } = useCart();
+  const { products: allProducts } = useProducts();
+  // "Also Add This" — lives inside the scrollable items area (below the
+  // cart list), never in the fixed footer, so it can never end up
+  // overlapping the Checkout button regardless of how many items are in
+  // the cart or how small the viewport is.
+  const cartIds = new Set(items.map((it) => it.id));
+  const recommended = [...allProducts]
+    .filter((p) => !cartIds.has(p.id))
+    .sort((a, b) => (b.rating || 0) - (a.rating || 0) || (b.reviewCount || 0) - (a.reviewCount || 0))
+    .slice(0, 4);
 
   // Lock body scroll when sidebar is open
   useBodyScrollLock(isOpen);
@@ -45,20 +56,20 @@ export default function CartSidebar() {
         </div>
 
         {/* Free shipping progress */}
-        {subtotal < 499 && subtotal > 0 && (
+        {subtotal < freeShippingThreshold && subtotal > 0 && (
           <div className="px-5 py-3 bg-brand-cream">
             <p className="text-xs text-brand-brown">
-              Add <span className="font-bold text-brand-gold">{formatPrice(499 - subtotal)}</span> more for FREE shipping!
+              Add <span className="font-bold text-brand-gold">{formatPrice(freeShippingThreshold - subtotal)}</span> more for FREE shipping!
             </p>
             <div className="mt-1.5 bg-white rounded-full h-1.5 overflow-hidden">
               <div
                 className="h-full bg-brand-gold rounded-full transition-all duration-500"
-                style={{ width: `${Math.min((subtotal / 499) * 100, 100)}%` }}
+                style={{ width: `${Math.min((subtotal / freeShippingThreshold) * 100, 100)}%` }}
               />
             </div>
           </div>
         )}
-        {subtotal >= 499 && subtotal > 0 && (
+        {subtotal >= freeShippingThreshold && subtotal > 0 && (
           <div className="px-5 py-2 bg-green-50 text-green-700 text-xs font-semibold text-center">
             🎉 You've unlocked FREE shipping!
           </div>
@@ -115,6 +126,24 @@ export default function CartSidebar() {
                 </div>
               </div>
             ))
+          )}
+
+          {/* Also Add This — inside the scroll area, so it never crowds the fixed checkout button below */}
+          {items.length > 0 && recommended.length > 0 && (
+            <div className="pt-2 border-t border-gray-100">
+              <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-3">Also Add This</p>
+              <div className="grid grid-cols-2 gap-3">
+                {recommended.map((p) => (
+                  <Link key={p.id} to={`/product/${p.id}`} onClick={closeCart} className="group">
+                    <div className="aspect-square rounded-lg overflow-hidden bg-gray-50 mb-1.5">
+                      <img src={p.images?.[0]} alt={p.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    </div>
+                    <p className="text-xs font-semibold text-brand-brown leading-tight line-clamp-2">{p.name}</p>
+                    <p className="text-xs text-brand-gold font-bold mt-0.5">{formatPrice(p.variants?.[0]?.price)}</p>
+                  </Link>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../../firebase/config";
-import { Save, Loader2, LayoutDashboard, Users, Home, MapPin, Phone, Star, Plus, Trash2 } from "lucide-react";
+import { Save, Loader2, LayoutDashboard, Users, Home, MapPin, Phone, Star, Plus, Trash2, Truck, Gift } from "lucide-react";
 import ImageUpload from "../../components/ImageUpload";
 import toast from "react-hot-toast";
 
@@ -12,6 +12,8 @@ const TABS = [
   { id: "sourcing", label: "Sourcing Story", icon: MapPin },
   { id: "contact", label: "Contact & Footer", icon: Phone },
   { id: "trust", label: "Trust Bar", icon: Star },
+  { id: "shipping", label: "Shipping & Pricing", icon: Truck },
+  { id: "popup", label: "Discount Popup", icon: Gift },
 ];
 
 // Mirrors SiteSettingsContext's DEFAULT_SITE_CONTENT — these two must stay
@@ -88,6 +90,20 @@ const DEFAULTS = {
       { icon: "🔒", text: "Secure Payments" },
       { icon: "↩️", text: "Easy Returns" },
     ],
+  },
+  shipping: {
+    freeThreshold: 499,
+    flatRate: 60,
+    codEnabled: true,
+  },
+  popup: {
+    enabled: true,
+    delaySeconds: 18,
+    headline: "Exclusive 15% Off",
+    subtext: "Join 50,000+ families. Get your first order discount delivered to your inbox.",
+    buttonText: "Claim My 15% Discount",
+    couponCode: "WELCOME100",
+    confirmationText: "Use code {code} at checkout",
   },
 };
 
@@ -394,6 +410,62 @@ export default function ContentManagement() {
                 </Field>
               </div>
             ))}
+          </Section>
+        )}
+
+        {/* SHIPPING & PRICING */}
+        {activeTab === "shipping" && (
+          <Section title="Free Shipping & Delivery Charges">
+            <p className="text-xs text-gray-400 mb-3">
+              This is the one place that controls free-shipping everywhere on the site (cart, checkout, product pages) —
+              they all read from here now instead of each having their own separate number.
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Free Shipping Threshold (₹)">
+                <input type="number" value={data.shipping.freeThreshold} onChange={e => update("shipping", "freeThreshold", Number(e.target.value))} className="input-field" placeholder="499" />
+              </Field>
+              <Field label="Flat Shipping Charge Below Threshold (₹)">
+                <input type="number" value={data.shipping.flatRate} onChange={e => update("shipping", "flatRate", Number(e.target.value))} className="input-field" placeholder="60" />
+              </Field>
+            </div>
+            <div className="border-t border-gray-100 mt-4 pt-4">
+              <div className="flex items-center gap-2">
+                <input type="checkbox" id="cod-enabled" checked={data.shipping.codEnabled} onChange={e => update("shipping", "codEnabled", e.target.checked)} className="accent-brand-gold w-4 h-4" />
+                <label htmlFor="cod-enabled" className="text-sm text-gray-600 cursor-pointer">Accept Cash on Delivery (COD)</label>
+              </div>
+              <p className="text-[11px] text-gray-400 mt-1 ml-6">
+                Turn this off to temporarily stop offering COD site-wide (e.g. during a courier issue) — customers will only see online payment (UPI/Card/Net Banking) at checkout until you turn it back on.
+              </p>
+            </div>
+          </Section>
+        )}
+
+        {/* DISCOUNT POPUP */}
+        {activeTab === "popup" && (
+          <Section title="Exclusive Discount Popup (shown to first-time visitors)">
+            <div className="flex items-center gap-2 mb-1">
+              <input type="checkbox" id="popup-enabled" checked={data.popup.enabled} onChange={e => update("popup", "enabled", e.target.checked)} className="accent-brand-gold w-4 h-4" />
+              <label htmlFor="popup-enabled" className="text-sm text-gray-600 cursor-pointer">Show this popup to visitors</label>
+            </div>
+            <Field label="Delay Before Showing (seconds)">
+              <input type="number" value={data.popup.delaySeconds} onChange={e => update("popup", "delaySeconds", Number(e.target.value))} className="input-field" placeholder="18" />
+            </Field>
+            <Field label="Headline">
+              <input value={data.popup.headline} onChange={e => update("popup", "headline", e.target.value)} className="input-field" placeholder="Exclusive 15% Off" />
+            </Field>
+            <Field label="Subtext">
+              <textarea value={data.popup.subtext} onChange={e => update("popup", "subtext", e.target.value)} rows={2} className="input-field resize-none" />
+            </Field>
+            <Field label="Button Text">
+              <input value={data.popup.buttonText} onChange={e => update("popup", "buttonText", e.target.value)} className="input-field" placeholder="Claim My 15% Discount" />
+            </Field>
+            <Field label="Coupon Code">
+              <input value={data.popup.couponCode} onChange={e => update("popup", "couponCode", e.target.value.toUpperCase())} className="input-field" placeholder="WELCOME100" />
+              <p className="text-[11px] text-gray-400 mt-1">Must match a real, active code in Admin → Coupons — otherwise customers get shown a code that doesn't work at checkout.</p>
+            </Field>
+            <Field label="Confirmation Message (use {code} where the coupon code should appear)">
+              <input value={data.popup.confirmationText} onChange={e => update("popup", "confirmationText", e.target.value)} className="input-field" placeholder="Use code {code} at checkout" />
+            </Field>
           </Section>
         )}
       </div>

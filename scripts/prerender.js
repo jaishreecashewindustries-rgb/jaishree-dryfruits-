@@ -384,6 +384,18 @@ ${items.join("\n")}
 }
 
 async function main() {
+  // Preserve the plain, un-prerendered CRA shell as early as possible —
+  // before anything below can fail or exit — so it exists even if this
+  // script aborts partway through. See the long comment further down
+  // (search "app-shell.html") for why this matters: Firebase Hosting's
+  // catch-all rewrite falls back to whatever this file points at for any
+  // route that never gets its own prerendered snapshot, and that fallback
+  // must not carry another page's baked-in title/canonical.
+  const shellPath = path.join(BUILD_DIR, "index.html");
+  if (fs.existsSync(shellPath)) {
+    fs.copyFileSync(shellPath, path.join(BUILD_DIR, "app-shell.html"));
+  }
+
   console.log("[prerender] fetching product catalogue for route list + content checks...");
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);

@@ -44,6 +44,33 @@ export const DEFAULT_CATEGORIES = [
   { name: "Gift Hampers", img: "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400&q=80", headerImage: "", link: "/products?category=Gift Hampers" },
 ];
 
+// Free shipping threshold + flat rate below it — was hardcoded as 499/60
+// independently in ~10 different files (Cart, CartSidebar, SEO structured
+// data, ProductDetail, etc.), which is exactly how they drift out of sync
+// with each other. This is the one source of truth; each of those reads
+// from here now.
+export const DEFAULT_SHIPPING = {
+  freeThreshold: 499,
+  flatRate: 60,
+  // Global Cash on Delivery switch — previously there was no way to turn
+  // COD off site-wide at all; it was always offered as a payment option
+  // regardless of any operational reason to pause it.
+  codEnabled: true,
+};
+
+// The "Exclusive X% Off" email-capture popup — was fully hardcoded (fixed
+// 15%, a coupon code "WELCOME15" that didn't even exist in the real coupon
+// list) with no admin control at all.
+export const DEFAULT_POPUP = {
+  enabled: true,
+  delaySeconds: 18,
+  headline: "Exclusive 15% Off",
+  subtext: "Join 50,000+ families. Get your first order discount delivered to your inbox.",
+  buttonText: "Claim My 15% Discount",
+  couponCode: "WELCOME100",
+  confirmationText: "Use code {code} at checkout",
+};
+
 // Banner shown at the top of the "All Products" page (/products with no
 // category selected) — the Collection Hero. Per-category banners live on
 // each DEFAULT_CATEGORIES entry's headerImage instead.
@@ -180,6 +207,8 @@ export const DEFAULT_SITE_CONTENT = {
       { icon: "↩️", text: "Easy Returns" },
     ],
   },
+  shipping: DEFAULT_SHIPPING,
+  popup: DEFAULT_POPUP,
 };
 
 const SiteSettingsContext = createContext(null);
@@ -231,6 +260,8 @@ export function SiteSettingsProvider({ children }) {
               sourcing: { ...prev.sourcing, ...c.sourcing },
               contact: { ...prev.contact, ...c.contact },
               trust: c.trust?.items?.length ? c.trust : prev.trust,
+              shipping: { ...prev.shipping, ...c.shipping },
+              popup: { ...prev.popup, ...c.popup },
             }));
           }
         }

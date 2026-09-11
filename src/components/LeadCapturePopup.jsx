@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Gift, Tag } from "lucide-react";
 import toast from "react-hot-toast";
+import { useSiteSettings, DEFAULT_POPUP } from "../context/SiteSettingsContext";
 
 const HIDDEN_PATHS = ["/checkout", "/cart", "/login", "/admin"];
 
@@ -12,13 +13,16 @@ export default function LeadCapturePopup() {
   const [submitted, setSubmitted] = useState(false);
   const location = useLocation();
   const isHidden = HIDDEN_PATHS.some(p => location.pathname.startsWith(p));
+  // Admin > Content > Discount Popup — was fully hardcoded before (fixed
+  // 15%, a coupon code that didn't exist), with no way to turn it off.
+  const { siteContent } = useSiteSettings() || {};
+  const popup = siteContent?.popup || DEFAULT_POPUP;
 
   useEffect(() => {
-    if (isHidden) return;
+    if (isHidden || !popup.enabled) return;
     const dismissed = sessionStorage.getItem("lead_popup_dismissed");
     if (dismissed) return;
-    // Show after 18 seconds
-    const timer = setTimeout(() => setOpen(true), 18000);
+    const timer = setTimeout(() => setOpen(true), (popup.delaySeconds || 18) * 1000);
     // Also show on exit intent
     const handleMouseLeave = (e) => {
       if (e.clientY <= 0 && !sessionStorage.getItem("lead_popup_dismissed")) {
@@ -31,7 +35,7 @@ export default function LeadCapturePopup() {
       document.removeEventListener("mouseleave", handleMouseLeave);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isHidden]);
+  }, [isHidden, popup.enabled, popup.delaySeconds]);
 
   const dismiss = () => {
     setOpen(false);
@@ -48,7 +52,7 @@ export default function LeadCapturePopup() {
     }, 2500);
   };
 
-  if (isHidden) return null;
+  if (isHidden || !popup.enabled) return null;
 
   return (
     <AnimatePresence>
@@ -94,10 +98,10 @@ export default function LeadCapturePopup() {
                 {!submitted ? (
                   <>
                     <h2 className="font-serif text-2xl text-white text-center font-semibold mb-1">
-                      Exclusive 15% Off
+                      {popup.headline}
                     </h2>
                     <p className="text-white/60 text-sm text-center mb-6">
-                      Join 50,000+ families. Get your first order discount delivered to your inbox.
+                      {popup.subtext}
                     </p>
 
                     <form onSubmit={handleSubmit} className="space-y-3">
@@ -117,7 +121,7 @@ export default function LeadCapturePopup() {
                         className="btn-sheen w-full py-3 rounded-xl font-semibold text-sm text-brand-brown"
                         style={{ background: "linear-gradient(135deg, #C9A84C, #E8C96A)" }}
                       >
-                        Claim My 15% Discount
+                        {popup.buttonText}
                       </motion.button>
                     </form>
 
@@ -134,7 +138,14 @@ export default function LeadCapturePopup() {
                   >
                     <p className="text-2xl mb-2">✓</p>
                     <h3 className="font-serif text-xl text-white mb-1">Welcome to Jai Shree Family!</h3>
-                    <p className="text-white/60 text-sm">Use code <span className="text-brand-gold font-bold">WELCOME15</span> at checkout</p>
+                    <p className="text-white/60 text-sm">
+                      {(popup.confirmationText || "Use code {code} at checkout").split("{code}").map((part, i, arr) => (
+                        <React.Fragment key={i}>
+                          {part}
+                          {i < arr.length - 1 && <span className="text-brand-gold font-bold">{popup.couponCode}</span>}
+                        </React.Fragment>
+                      ))}
+                    </p>
                   </motion.div>
                 )}
               </div>
