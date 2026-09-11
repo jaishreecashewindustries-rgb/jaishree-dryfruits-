@@ -172,7 +172,7 @@ export default function Navbar() {
                         {tr("products")}
                       </Link>
                       <div className="grid grid-cols-2 gap-1">
-                        {PRODUCT_CATEGORIES.slice(0, 8).map((c) => (
+                        {(categories?.length ? categories.map((x) => x.name) : PRODUCT_CATEGORIES).slice(0, 8).map((c) => (
                           <Link key={c} to={`/products?category=${c}`} className="text-xs text-gray-600 hover:text-brand-gold hover:bg-brand-cream px-2 py-1 rounded transition-all">
                             {c}
                           </Link>
@@ -421,7 +421,7 @@ export default function Navbar() {
               style={{ overflow: "hidden" }}
             >
               <div className="pl-9 pr-2 pb-2 grid grid-cols-3 gap-3">
-                {PRODUCT_CATEGORIES.map((c) => {
+                {(categories?.length ? categories.map((x) => x.name) : PRODUCT_CATEGORIES).map((c) => {
                   const catData = categories?.find((x) => x.name === c);
                   return (
                     <Link key={c} to={`/products?category=${c}`} className="flex flex-col items-center gap-1.5 text-center group">

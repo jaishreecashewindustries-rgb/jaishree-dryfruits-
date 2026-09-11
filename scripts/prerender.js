@@ -61,7 +61,14 @@ const STATIC_ROUTES = [
   "/track-order", "/shipping", "/returns", "/privacy", "/terms",
 ];
 
-const CATEGORY_ROUTES = [
+// Fallback only — the real, current list comes from Firestore
+// (settings/homepage.categories, the same admin-managed list Category
+// Management writes to) via fetchCategoryRoutesForPrerender below. Without
+// that, any category added after this file last shipped (exactly what
+// happened with BERRIES, Dried Fruits, Makhana, etc.) would silently never
+// get a prerendered page or a sitemap entry — invisible to Google even
+// though it's live and browsable on the site.
+const CATEGORY_ROUTES_FALLBACK = [
   "Almonds", "Cashews", "Pistachios", "Walnuts", "Raisins", "Dates",
   "Figs", "Apricots", "Combo Packs", "Gift Hampers", "Seeds", "Mixed Nuts",
 ].map((c) => `/products?category=${encodeURIComponent(c)}`);
@@ -125,6 +132,20 @@ async function fetchProductsForPrerender(db) {
   const liveIds = new Set(live.map((p) => p.id));
   const demoOnly = DEMO_ONLY_PRODUCTS.filter((p) => !liveIds.has(p.id));
   return [...live, ...demoOnly];
+}
+
+async function fetchCategoryRoutesForPrerender(db) {
+  try {
+    const { doc, getDoc } = require("firebase/firestore");
+    const snap = await getDoc(doc(db, "settings", "homepage"));
+    const categories = snap.exists() ? snap.data().categories : null;
+    if (Array.isArray(categories) && categories.length > 0) {
+      return categories.map((c) => `/products?category=${encodeURIComponent(c.name)}`);
+    }
+  } catch {
+    // fall through to the static fallback below
+  }
+  return CATEGORY_ROUTES_FALLBACK;
 }
 
 function waitForPort(port, timeoutMs) {
@@ -368,9 +389,11 @@ async function main() {
   const db = getFirestore(app);
   let products = [];
   let blogRoutes = [];
+  let categoryRoutes = CATEGORY_ROUTES_FALLBACK;
   try {
     products = await fetchProductsForPrerender(db);
     blogRoutes = await fetchBlogRoutesForPrerender(db);
+    categoryRoutes = await fetchCategoryRoutesForPrerender(db);
   } catch (err) {
     console.error("[prerender] FATAL — could not fetch products, aborting prerender (build/deploy will continue with plain SPA output):", err.message);
     process.exit(0); // Non-fatal to the overall build — just skip prerendering entirely this run. Explicit exit for the same reason as below.
@@ -379,7 +402,7 @@ async function main() {
   const productRoutes = products.map((p) => ({ route: `/product/${p.id}`, expectedText: p.name }));
   const allRoutes = [
     ...STATIC_ROUTES.map((r) => ({ route: r, expectedText: null })),
-    ...CATEGORY_ROUTES.map((r) => ({ route: r, expectedText: null })),
+    ...categoryRoutes.map((r) => ({ route: r, expectedText: null })),
     ...CITY_ROUTES.map((r) => ({ route: r, expectedText: null })),
     ...productRoutes,
     ...blogRoutes,

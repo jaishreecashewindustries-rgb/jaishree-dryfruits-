@@ -49,7 +49,8 @@ function FooterSection({ title, open, onToggle, children }) {
 }
 
 export default function Footer() {
-  const { siteContent } = useSiteSettings() || {};
+  const { siteContent, categories } = useSiteSettings() || {};
+  const footerCategoryNames = categories?.length ? categories.map((c) => c.name) : PRODUCT_CATEGORIES;
   const { tr } = useLanguage();
   const contact = siteContent?.contact || {};
   const [openSection, setOpenSection] = useState(null);
@@ -116,7 +117,7 @@ export default function Footer() {
         <FadeIn delay={0.1} className="min-w-0">
           <FooterSection title="Our Products" open={openSection === "products"} onToggle={() => toggle("products")}>
             <ul className="space-y-3 text-sm md:text-base font-medium text-white/75">
-              {PRODUCT_CATEGORIES.slice(0, 5).map((c) => (
+              {footerCategoryNames.slice(0, 5).map((c) => (
                 <li key={c}>
                   <Link to={`/products?category=${c}`} className="hover:text-white transition-colors">{c}</Link>
                 </li>

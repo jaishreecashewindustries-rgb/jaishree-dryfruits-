@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { SlidersHorizontal, X, ChevronDown, Search } from "lucide-react";
 import { motion } from "framer-motion";
@@ -8,8 +8,6 @@ import SEO from "../components/SEO";
 import { PRODUCT_CATEGORIES } from "../utils/helpers";
 import { useProducts } from "../context/ProductsContext";
 import { useSiteSettings } from "../context/SiteSettingsContext";
-
-const PAGE_SIZE = 12;
 
 const SORT_OPTIONS = [
   { value: "featured", label: "Featured" },
@@ -36,7 +34,6 @@ export default function Products() {
   const [priceRange, setPriceRange] = useState([0, 5000]);
   const [inStockOnly, setInStockOnly] = useState(false);
   const [activeWeight, setActiveWeight] = useState("");
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [seoOpen, setSeoOpen] = useState(false);
 
   const setCategory = (c) => {
@@ -71,22 +68,11 @@ export default function Products() {
     }
   }, [DEMO_PRODUCTS, activeCategory, activeBadge, activeGoal, search, priceRange, sort, activeWeight, inStockOnly]);
 
-  const visible = filtered.slice(0, visibleCount);
-  const hasMore = visibleCount < filtered.length;
-
-  // Reset pagination whenever the active filter set changes, not on every
-  // render — otherwise "Load More" clicks would immediately get wiped out
-  // by the next filtered-array recompute.
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [activeCategory, activeBadge, activeGoal, search, activeWeight, inStockOnly, priceRange[1], sort]);
-
   const resetFilters = () => {
     setParams({});
     setPriceRange([0, 5000]);
     setInStockOnly(false);
     setActiveWeight("");
-    setVisibleCount(PAGE_SIZE);
   };
 
   const GOAL_LABELS = { heart: "Heart Health", brain: "Brain Power", energy: "Energy Boost", immunity: "Immunity", weight: "Weight Loss", bones: "Bone Strength", skin: "Skin & Hair", kids: "Kids" };
@@ -307,27 +293,18 @@ export default function Products() {
               {[...Array(8)].map((_, i) => <SkeletonCard key={i} />)}
             </div>
           ) : filtered.length > 0 ? (
-            <>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-                {visible.map((p, i) => (
-                  <motion.div
-                    key={p.id}
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.35, delay: Math.min(i, 8) * 0.04, ease: [0.22, 1, 0.36, 1] }}
-                  >
-                    <ProductCard product={p} />
-                  </motion.div>
-                ))}
-              </div>
-              {hasMore && (
-                <div className="text-center mt-10">
-                  <button onClick={() => setVisibleCount((c) => c + PAGE_SIZE)} className="btn-outline px-8 py-3">
-                    Load More
-                  </button>
-                </div>
-              )}
-            </>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+              {filtered.map((p, i) => (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: Math.min(i, 8) * 0.04, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <ProductCard product={p} />
+                </motion.div>
+              ))}
+            </div>
           ) : (
             <div className="text-center py-24">
               <Search size={36} className="mx-auto mb-4 text-gray-300" />
