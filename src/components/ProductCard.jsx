@@ -160,7 +160,13 @@ export default function ProductCard({ product }) {
       <div className="pt-3 flex flex-col flex-1">
         <Link
           to={`/product/${product.id}`}
-          className="font-serif font-bold text-brand-brown text-base leading-tight mb-1 hover:text-brand-gold transition-colors block line-clamp-2 min-h-[2.6em]"
+          // Product-card titles use the sans body font at a moderate weight,
+          // not the display serif — the elegant serif is right for large
+          // headlines (hero, product-page H1) but reads heavy/cramped at
+          // card size, especially for our longer bilingual names. This
+          // matches how major e-commerce sites style card-level product
+          // names: clean sans-serif, medium/semibold weight, compact size.
+          className="font-sans font-semibold text-brand-brown text-[15px] leading-snug mb-1 hover:text-brand-gold transition-colors block line-clamp-2 min-h-[2.6em]"
         >
           {product.name}
         </Link>
