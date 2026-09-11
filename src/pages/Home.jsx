@@ -109,7 +109,12 @@ export default function Home() {
   // as any other product in Admin → Products (category dropdown) — this
   // just showcases whatever's live in those two categories on the homepage.
   const combosAndGifts = DEMO_PRODUCTS.filter((p) => p.category === "Combo Packs" || p.category === "Gift Hampers").slice(0, 8);
-  const { siteContent } = useSiteSettings() || {};
+  const { siteContent, categories: liveCategories } = useSiteSettings() || {};
+  // Categories are admin-managed (Admin > Categories) — only fall back to
+  // the old fixed 6-item list until that loads, so newly added categories
+  // (and their photos) actually appear here instead of being stuck at
+  // whatever this file shipped with.
+  const categoriesToShow = liveCategories?.length ? liveCategories : CATEGORIES;
   const hero = siteContent?.hero || {};
   const heroHeadline = hero.headline || "India's Finest\nDry Fruits";
   const heroDesktopImg = hero.desktopImage || "";
@@ -166,11 +171,15 @@ export default function Home() {
           <h2 className="font-serif font-bold text-3xl md:text-4xl text-brand-brown">Everyday to Gifting</h2>
         </FadeUp>
         <div className="grid grid-cols-3 md:grid-cols-6 gap-4 md:gap-6">
-          {CATEGORIES.map((cat, i) => (
+          {categoriesToShow.map((cat, i) => (
             <FadeUp key={cat.name} delay={i * 0.05}>
               <Link to={`/products?category=${cat.name}`} className="group flex flex-col items-center gap-2.5">
-                <div className="relative w-full rounded-full overflow-hidden transition-transform duration-300 group-hover:-translate-y-1.5" style={{ aspectRatio: "1/1" }}>
-                  <img src={cat.img} alt={cat.name} className="w-full h-full object-cover" />
+                <div className="relative w-full rounded-full overflow-hidden transition-transform duration-300 group-hover:-translate-y-1.5 bg-brand-cream flex items-center justify-center" style={{ aspectRatio: "1/1" }}>
+                  {cat.img ? (
+                    <img src={cat.img} alt={cat.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-2xl md:text-3xl">🌰</span>
+                  )}
                 </div>
                 <span className="text-[11px] md:text-xs font-semibold text-brand-brown group-hover:text-brand-gold transition-colors text-center">{cat.name}</span>
               </Link>

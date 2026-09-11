@@ -8,8 +8,10 @@ import { useCart } from "../context/CartContext";
 import { useCoins, COINS_RULES } from "../context/CoinsContext";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
+import { useProducts } from "../context/ProductsContext";
 import { formatPrice } from "../utils/helpers";
 import PincodeEstimator from "../components/PincodeEstimator";
+import ProductCard from "../components/ProductCard";
 import toast from "react-hot-toast";
 
 // Fallback hardcoded coupons (used if Firestore is empty) — mirrors Checkout.jsx
@@ -21,6 +23,15 @@ const FALLBACK_COUPONS = [
 
 export default function Cart() {
   const { items, removeFromCart, updateQty, subtotal, shipping, total } = useCart();
+  const { products: allProducts } = useProducts();
+  // "You might also like" — products not already in the cart, best-rated
+  // first. Shown on both the empty-cart state and the filled cart, below
+  // the order summary.
+  const cartIds = new Set(items.map((it) => it.id));
+  const recommended = [...allProducts]
+    .filter((p) => !cartIds.has(p.id))
+    .sort((a, b) => (b.rating || 0) - (a.rating || 0) || (b.reviewCount || 0) - (a.reviewCount || 0))
+    .slice(0, 4);
   const { tr } = useLanguage();
   const { user } = useAuth();
   const { coins, coinsWorth, redeemCoins } = useCoins() || {};
@@ -161,11 +172,21 @@ export default function Cart() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-20">
-        <ShoppingBag size={72} className="text-gray-200 mb-4" />
-        <h2 className="font-serif text-2xl font-bold text-brand-brown mb-2">Your cart is empty</h2>
-        <p className="text-gray-400 mb-6">Looks like you haven't added anything yet.</p>
-        <Link to="/products" className="btn-primary">Continue Shopping</Link>
+      <div className="min-h-screen px-4 py-20">
+        <div className="flex flex-col items-center justify-center mb-16">
+          <ShoppingBag size={72} className="text-gray-200 mb-4" />
+          <h2 className="font-serif text-2xl font-bold text-brand-brown mb-2">Your cart is empty</h2>
+          <p className="text-gray-400 mb-6">Looks like you haven't added anything yet.</p>
+          <Link to="/products" className="btn-primary">Continue Shopping</Link>
+        </div>
+        {recommended.length > 0 && (
+          <div className="max-w-6xl mx-auto">
+            <h3 className="font-serif text-xl font-bold text-brand-brown mb-5 text-center">You Might Also Like</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+              {recommended.map((p) => <ProductCard key={p.id} product={p} />)}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -419,6 +440,17 @@ export default function Cart() {
           </div>
         </div>
       </div>
+
+      {/* Also Add This — cross-sell strip below the order summary */}
+      {recommended.length > 0 && (
+        <div className="mt-14">
+          <h2 className="section-title text-left mb-2">Also Add This</h2>
+          <div className="w-12 h-1 bg-brand-gold rounded-full mb-8" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+            {recommended.map((p) => <ProductCard key={p.id} product={p} />)}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

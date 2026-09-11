@@ -92,13 +92,10 @@ function needsDataReadyMarker(route) {
 // pages were never in the sitemap and never prerendered — Googlebot saw a
 // blank JS shell for them, same class of bug the prerendering step exists
 // to prevent everywhere else.
-const DEMO_ONLY_PRODUCTS = [
-  { id: "p2", name: "Whole Cashews W320" },
-  { id: "p3", name: "Iranian Green Pistachios" },
-  { id: "p4", name: "Kashmiri Walnuts (Akhrot)" },
-  { id: "p5", name: "Royal Gift Hamper" },
-  { id: "p6", name: "Premium Mix Dry Fruits" },
-];
+// Kept in sync by hand with src/utils/helpers.js's DEMO_PRODUCTS — currently
+// empty (all demo/placeholder products were removed once real catalogue
+// products existed for their categories).
+const DEMO_ONLY_PRODUCTS = [];
 
 // Built-in seed blog posts (src/pages/Blog.jsx SEED_POSTS) — same CJS/ESM
 // mismatch reason as DEMO_ONLY_PRODUCTS above prevents requiring that file
